@@ -16,6 +16,7 @@
                         <th class="p-2">Tipo</th>
                         <th class="p-2">Ubicación</th>
                         <th class="p-2">Estado</th>
+                        <th class="p-2">Etiqueta</th>
                         <th class="p-2">Fecha Registro</th>
                         <th class="p-2">Acciones</th>
                     </tr>
@@ -28,13 +29,17 @@
                             <td class="p-2">{{ $item->tipo }}</td>
                             <td class="p-2">{{ $item->ubicacion }}</td>
                             <td class="p-2">{{ ucfirst($item->estado) }}</td>
+                            <td class="p-2">{{ $item->etiqueta }}</td>
                             <td class="p-2">{{ $item->fecha_registro }}</td>
                             <td class="p-2 space-x-2">
-                                <a href="{{ route('mobiliario.edit', $item->id) }}" class="text-blue-600 hover:underline">Editar</a>
-                                <form action="{{ route('mobiliario.destroy', $item->id) }}" method="POST" class="inline">
+                                <a href="{{ route('mobiliario.edit', $item->id) }}"
+                                    class="text-blue-600 hover:underline">Editar</a>
+                                <form action="{{ route('mobiliario.destroy', $item->id) }}" method="POST"
+                                    class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button onclick="return confirm('¿Eliminar este registro?')" class="text-red-600 hover:underline">
+                                    <button onclick="return confirm('¿Eliminar este registro?')"
+                                        class="text-red-600 hover:underline">
                                         Eliminar
                                     </button>
                                 </form>

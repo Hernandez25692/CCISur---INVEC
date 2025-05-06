@@ -12,5 +12,6 @@ class Mobiliario extends Model
         'ubicacion',
         'estado',
         'fecha_registro',
+        'etiqueta',
     ];
 }

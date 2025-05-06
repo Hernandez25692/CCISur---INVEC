@@ -31,10 +31,17 @@ class MobiliarioController extends Controller
             'fecha_registro' => 'required|date',
         ]);
 
-        Mobiliario::create($request->all());
+        // Creamos primero el registro sin la etiqueta
+        $mobiliario = Mobiliario::create($request->all());
+
+        // Generamos la etiqueta y actualizamos
+        $etiqueta = 'INV-MOB-' . date('Y') . '-' . str_pad($mobiliario->id, 4, '0', STR_PAD_LEFT);
+        $mobiliario->etiqueta = $etiqueta;
+        $mobiliario->save();
 
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario registrado correctamente.');
     }
+
 
     // Mostrar formulario de edición
     public function edit(Mobiliario $mobiliario)
