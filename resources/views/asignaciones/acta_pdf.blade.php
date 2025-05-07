@@ -42,6 +42,7 @@
     <div class="seccion"><strong>Área:</strong> {{ $asignacion->area }}</div>
     <div class="seccion"><strong>Tipo de bien:</strong> {{ ucfirst($asignacion->tipo) }}</div>
     <div class="seccion"><strong>Elemento asignado:</strong> {{ $item->nombre ?? 'N/A' }}</div>
+    <div class="seccion"><strong>Etiqueta:</strong> {{ $item->etiqueta ?? 'N/A' }}</div>
     <div class="seccion"><strong>Fecha de entrega:</strong> {{ $asignacion->fecha_entrega }}</div>
     <div class="seccion"><strong>Entregado por:</strong> {{ $asignacion->entregado_por }}</div>
     <div class="seccion"><strong>Observaciones:</strong> {{ $asignacion->observaciones ?? 'Ninguna' }}</div>

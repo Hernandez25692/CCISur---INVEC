@@ -14,6 +14,12 @@
                     required
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
+            <div>
+                <label for="etiqueta" class="block text-sm font-medium text-gray-700">Etiqueta de Inventario</label>
+                <input type="text" id="etiqueta" name="etiqueta" value="{{ $mobiliario->etiqueta }}"
+                    class="w-full mt-1 border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+                    readonly>
+            </div>
 
             <!-- Tipo -->
             <div>

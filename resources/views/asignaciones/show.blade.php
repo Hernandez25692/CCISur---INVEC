@@ -7,6 +7,7 @@
             <p><strong>Área / Departamento:</strong> {{ $asignacion->area }}</p>
             <p><strong>Tipo de Bien:</strong> {{ ucfirst($asignacion->tipo) }}</p>
             <p><strong>Elemento:</strong> {{ $item->nombre ?? 'N/A' }}</p>
+            <p><strong>Elemento:</strong> {{ $item->etiqueta ?? 'N/A' }}</p>
             <p><strong>Fecha de Entrega:</strong> {{ $asignacion->fecha_entrega }}</p>
             <p><strong>Entregado por:</strong> {{ $asignacion->entregado_por }}</p>
             <p><strong>Observaciones:</strong> {{ $asignacion->observaciones ?? 'Ninguna' }}</p>

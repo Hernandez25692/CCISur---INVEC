@@ -16,7 +16,9 @@
                         <th class="p-2">Colaborador</th>
                         <th class="p-2">Tipo</th>
                         <th class="p-2">Elemento</th>
+                        <th class="p-2">Etiqueta</th>
                         <th class="p-2">Área</th>
+                        
                         <th class="p-2">Fecha</th>
                         <th class="p-2">Acciones</th>
                     </tr>
@@ -34,6 +36,7 @@
                             <td class="p-2">{{ $item->colaborador }}</td>
                             <td class="p-2 capitalize">{{ $item->tipo }}</td>
                             <td class="p-2">{{ $referencia->nombre ?? 'N/A' }}</td>
+                            <td class="p-2 text-xs text-gray-500">{{ $referencia->etiqueta ?? '---' }}</td>
                             <td class="p-2">{{ $item->area }}</td>
                             <td class="p-2">{{ $item->fecha_entrega }}</td>
                             <td class="p-2 space-x-2">

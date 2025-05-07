@@ -60,7 +60,8 @@ class MobiliarioController extends Controller
             'fecha_registro' => 'required|date',
         ]);
 
-        $mobiliario->update($request->all());
+        $mobiliario->update($request->except('etiqueta'));
+
 
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario actualizado correctamente.');
     }

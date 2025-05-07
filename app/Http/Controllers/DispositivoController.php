@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Dispositivo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
 
 class DispositivoController extends Controller
 {
@@ -25,16 +27,18 @@ class DispositivoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'tipo' => 'required|string|max:255',
             'marca' => 'required|string|max:255',
             'modelo' => 'required|string|max:255',
-            'n_serie' => 'required|string|max:255|unique:dispositivos,n_serie',
             'ubicacion' => 'required|string|max:255',
             'estado' => 'required|in:bueno,regular,dañado',
             'fecha_registro' => 'required|date',
         ]);
 
-        Dispositivo::create($request->all());
+        $dispositivo = new Dispositivo($request->all());
+        $dispositivo->save();
+
+        $dispositivo->etiqueta = 'INV-DIS-' . date('Y') . '-' . str_pad($dispositivo->id, 4, '0', STR_PAD_LEFT);
+        $dispositivo->save();
 
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo registrado correctamente.');
     }
@@ -59,7 +63,8 @@ class DispositivoController extends Controller
             'fecha_registro' => 'required|date',
         ]);
 
-        $dispositivo->update($request->all());
+        $dispositivo->update($request->except('etiqueta'));
+
 
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo actualizado correctamente.');
     }

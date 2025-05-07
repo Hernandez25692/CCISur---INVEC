@@ -3,7 +3,7 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-blue-700">Inventario de Dispositivos</h2>
             <a href="{{ route('dispositivos.create') }}"
-               class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                 + Nuevo Dispositivo
             </a>
         </div>
@@ -17,6 +17,7 @@
                         <th class="p-2">Marca</th>
                         <th class="p-2">Modelo</th>
                         <th class="p-2">Estado</th>
+                        <th class="p-2">Etiqueta</th>
                         <th class="p-2">Acciones</th>
                     </tr>
                 </thead>
@@ -28,21 +29,23 @@
                             <td class="p-2">{{ $dispositivo->marca }}</td>
                             <td class="p-2">{{ $dispositivo->modelo }}</td>
                             <td class="p-2">
-                                <span class="px-2 py-1 rounded text-xs font-semibold
+                                <span
+                                    class="px-2 py-1 rounded text-xs font-semibold
                                     {{ $dispositivo->estado === 'asignado' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700' }}">
                                     {{ ucfirst($dispositivo->estado ?? 'disponible') }}
                                 </span>
                             </td>
+                            <td class="p-2 font-mono text-sm text-gray-700">{{ $dispositivo->etiqueta ?? 'N/A' }}</td>
                             <td class="p-2 space-x-2">
                                 <a href="{{ route('dispositivos.edit', $dispositivo->id) }}"
-                                   class="text-blue-600 hover:underline">Editar</a>
+                                    class="text-blue-600 hover:underline">Editar</a>
 
-                                <form action="{{ route('dispositivos.destroy', $dispositivo->id) }}"
-                                      method="POST" class="inline">
+                                <form action="{{ route('dispositivos.destroy', $dispositivo->id) }}" method="POST"
+                                    class="inline">
                                     @csrf @method('DELETE')
                                     <button type="submit"
-                                            onclick="return confirm('¿Deseas eliminar este dispositivo?')"
-                                            class="text-red-600 hover:underline">
+                                        onclick="return confirm('¿Deseas eliminar este dispositivo?')"
+                                        class="text-red-600 hover:underline">
                                         Eliminar
                                     </button>
                                 </form>
@@ -52,7 +55,8 @@
 
                     @if ($dispositivos->isEmpty())
                         <tr>
-                            <td colspan="6" class="text-center text-gray-500 py-4">No hay dispositivos registrados.</td>
+                            <td colspan="6" class="text-center text-gray-500 py-4">No hay dispositivos registrados.
+                            </td>
                         </tr>
                     @endif
                 </tbody>
