@@ -12,6 +12,10 @@ Route::get('/', function () {
     return view('inicio');
 });
 
+Route::get('/verificacion-asignacion/{uuid}', [App\Http\Controllers\AsignacionController::class, 'verPublica'])
+    ->name('verificar.asignacion');
+
+
 // Dashboard (requiere login)
 Route::get('/dashboard', function () {
     return view('dashboard.index');
@@ -40,6 +44,9 @@ Route::middleware(['auth'])->group(function () {
     // Reportes
     Route::get('/reportes/asignados', [ReporteController::class, 'asignados'])->name('reportes.asignados');
     Route::get('/reportes/disponibles', [ReporteController::class, 'disponibles'])->name('reportes.disponibles');
+    Route::get('/asignaciones/colaborador/{colaborador}', [App\Http\Controllers\AsignacionController::class, 'historial'])->name('asignaciones.historial');
+    Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class);
+    Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->name('devoluciones.pdf');
 });
 
 // API para obtener ítems por tipo (uso en formularios dinámicos)

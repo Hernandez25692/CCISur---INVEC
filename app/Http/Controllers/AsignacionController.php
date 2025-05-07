@@ -7,6 +7,11 @@ use App\Models\Dispositivo;
 use App\Models\Mobiliario;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Storage;
+
+
 
 class AsignacionController extends Controller
 {
@@ -65,7 +70,34 @@ class AsignacionController extends Controller
             ? \App\Models\Mobiliario::find($asignacion->id_referencia)
             : \App\Models\Dispositivo::find($asignacion->id_referencia);
 
-        $pdf = Pdf::loadView('asignaciones.acta_pdf', compact('asignacion', 'item'));
+        // Generar el QR en formato SVG
+        $qrSvg = QrCode::format('svg')->size(150)->generate(route('verificar.asignacion', $asignacion->uuid));
+
+        $pdf = Pdf::loadView('asignaciones.acta_pdf', compact('asignacion', 'item', 'qrSvg'));
         return $pdf->stream('Acta_Entrega_' . $asignacion->id . '.pdf');
+    }
+
+    public function verPublica($uuid)
+    {
+        $asignacion = Asignacion::where('uuid', $uuid)->firstOrFail();
+
+        $item = $asignacion->tipo === 'mobiliario'
+            ? Mobiliario::find($asignacion->id_referencia)
+            : Dispositivo::find($asignacion->id_referencia);
+
+        return view('asignaciones.publica', compact('asignacion', 'item'));
+    }
+
+    public function historial($colaborador)
+    {
+        $asignaciones = Asignacion::where('colaborador', $colaborador)->latest()->get();
+
+        foreach ($asignaciones as $asignacion) {
+            $asignacion->item = $asignacion->tipo === 'mobiliario'
+                ? \App\Models\Mobiliario::find($asignacion->id_referencia)
+                : \App\Models\Dispositivo::find($asignacion->id_referencia);
+        }
+
+        return view('asignaciones.historial', compact('asignaciones', 'colaborador'));
     }
 }

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('observaciones')->nullable();
             $table->date('fecha_entrega');
             $table->string('entregado_por');
+            $table->uuid('uuid')->unique()->nullable();
             $table->timestamps();
         });
     }

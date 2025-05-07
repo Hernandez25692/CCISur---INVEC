@@ -18,7 +18,7 @@
                         <th class="p-2">Elemento</th>
                         <th class="p-2">Etiqueta</th>
                         <th class="p-2">Área</th>
-                        
+
                         <th class="p-2">Fecha</th>
                         <th class="p-2">Acciones</th>
                     </tr>
@@ -43,7 +43,9 @@
                                 <a href="{{ route('asignaciones.show', ['asignacion' => $item->id]) }}">
                                     Ver Acta
                                 </a>
-                                |
+                                |<a href="{{ route('asignaciones.historial', $item->colaborador) }}"
+                                    class="text-blue-600 hover:underline">Historial</a> |
+
                                 <a href="{{ route('asignaciones.pdf', ['asignacion' => $item->id]) }}"
                                     class="text-blue-600 hover:underline" target="_blank">PDF</a>
 

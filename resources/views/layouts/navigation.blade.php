@@ -266,6 +266,11 @@
                             class="nav-link {{ request()->routeIs('reportes.disponibles') ? 'active' : '' }}">
                             Reporte Disponibles
                         </a>
+                        <a href="{{ route('devoluciones.index') }}"
+                            class="nav-link {{ request()->routeIs('devoluciones.*') ? 'active' : '' }}">
+                            Devoluciones
+                        </a>
+
                     </div>
                 </div>
 
@@ -319,6 +324,11 @@
                     class="mobile-link {{ request()->routeIs('reportes.disponibles') ? 'active' : '' }}">
                     Reporte Disponibles
                 </a>
+                <a href="{{ route('devoluciones.index') }}"
+                    class="mobile-link {{ request()->routeIs('devoluciones.*') ? 'active' : '' }}">
+                    Devoluciones
+                </a>
+
             </div>
 
             <div class="mobile-user-info">

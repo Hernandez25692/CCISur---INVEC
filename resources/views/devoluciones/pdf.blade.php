@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
-    <title>Acta de Entrega - {{ $asignacion->colaborador }}</title>
+    <title>Acta de Devolución</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
             line-height: 1.6;
-            color: #333;
             padding: 40px;
+            color: #333;
         }
 
-        h1,
-        h2 {
+        h1, h2 {
             text-align: center;
             margin-bottom: 20px;
         }
@@ -44,36 +42,30 @@
             margin-right: auto;
         }
 
-        .qr {
-            text-align: center;
-            margin-top: 40px;
-        }
-
         .footer {
             position: absolute;
             bottom: 40px;
+            width: 100%;
             text-align: center;
             font-size: 10px;
-            width: 100%;
-            color: #888;
+            color: #999;
         }
     </style>
 </head>
-
 <body>
 
-    <h1>Acta de Entrega de Bienes</h1>
+    <h1>Acta de Devolución de Bienes</h1>
     <h2>CCISur - Sistema INVEC</h2>
 
     <div class="section">
-        <p><span class="bold">Colaborador:</span> {{ $asignacion->colaborador }}</p>
-        <p><span class="bold">Área / Departamento:</span> {{ $asignacion->area }}</p>
-        <p><span class="bold">Tipo de Bien:</span> {{ ucfirst($asignacion->tipo) }}</p>
+        <p><span class="bold">Colaborador:</span> {{ $devolucion->asignacion->colaborador }}</p>
+        <p><span class="bold">Área / Departamento:</span> {{ $devolucion->asignacion->area }}</p>
+        <p><span class="bold">Tipo de Bien:</span> {{ ucfirst($devolucion->asignacion->tipo) }}</p>
         <p><span class="bold">Elemento:</span> {{ $item->nombre ?? 'N/A' }}</p>
         <p><span class="bold">Correlativo de Inventario:</span> {{ $item->etiqueta ?? 'N/A' }}</p>
-        <p><span class="bold">Fecha de Entrega:</span> {{ $asignacion->fecha_entrega }}</p>
-        <p><span class="bold">Entregado por:</span> {{ $asignacion->entregado_por }}</p>
-        <p><span class="bold">Observaciones:</span> {{ $asignacion->observaciones ?? 'Ninguna' }}</p>
+        <p><span class="bold">Fecha de Devolución:</span> {{ $devolucion->fecha_devolucion }}</p>
+        <p><span class="bold">Recibido por:</span> {{ $devolucion->recibido_por }}</p>
+        <p><span class="bold">Observaciones:</span> {{ $devolucion->observaciones ?? 'Ninguna' }}</p>
     </div>
 
     <div class="firma">
@@ -81,17 +73,9 @@
         <div class="line"></div>
     </div>
 
- 
-
-
-
-
-
-
     <div class="footer">
-        Documento generado automáticamente por el Sistema INVEC - {{ now()->format('d/m/Y H:i') }}
+        Documento generado por el Sistema INVEC - {{ now()->format('d/m/Y H:i') }}
     </div>
 
 </body>
-
 </html>
