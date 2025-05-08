@@ -19,9 +19,15 @@ class DevolucionController extends Controller
 
     public function create()
     {
-        $asignaciones = Asignacion::all();
+        // Solo asignaciones que no tienen devolución registrada
+        $asignaciones = \App\Models\Asignacion::with(['mobiliario', 'dispositivo'])
+            ->whereDoesntHave('devolucion')
+            ->latest()
+            ->get();
+
         return view('devoluciones.create', compact('asignaciones'));
     }
+
 
     public function store(Request $request)
     {
@@ -100,5 +106,28 @@ class DevolucionController extends Controller
             : \App\Models\Dispositivo::find($asignacion->id_referencia);
 
         return view('devoluciones.publica', compact('devolucion', 'asignacion', 'item'));
+    }
+
+    public function buscarAsignaciones(Request $request)
+    {
+        $q = $request->get('q');
+
+        $asignaciones = Asignacion::whereDoesntHave('devolucion') // solo no devueltos
+            ->where(function ($query) use ($q) {
+                $query->where('colaborador', 'like', "%$q%")
+                    ->orWhereHas('mobiliario', function ($sub) use ($q) {
+                        $sub->where('etiqueta', 'like', "%$q%")
+                            ->orWhere('nombre', 'like', "%$q%");
+                    })
+                    ->orWhereHas('dispositivo', function ($sub) use ($q) {
+                        $sub->where('etiqueta', 'like', "%$q%")
+                            ->orWhere('nombre', 'like', "%$q%");
+                    });
+            })
+            ->with(['mobiliario', 'dispositivo'])
+            ->latest()
+            ->get();
+
+        return response()->json($asignaciones);
     }
 }

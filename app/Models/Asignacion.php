@@ -26,6 +26,15 @@ class Asignacion extends Model
         });
     }
 
+    public function mobiliario()
+    {
+        return $this->belongsTo(\App\Models\Mobiliario::class, 'id_referencia');
+    }
+
+    public function dispositivo()
+    {
+        return $this->belongsTo(\App\Models\Dispositivo::class, 'id_referencia');
+    }
     public function devolucion()
     {
         return $this->hasOne(\App\Models\Devolucion::class);

@@ -47,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/asignaciones/colaborador/{colaborador}', [App\Http\Controllers\AsignacionController::class, 'historial'])->name('asignaciones.historial');
     Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class);
     Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->name('devoluciones.pdf');
+    Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
 });
 
 // API para obtener ítems por tipo (uso en formularios dinámicos)
@@ -61,6 +62,7 @@ Route::get('/api/obtener-items/{tipo}', function ($tipo) {
     return response()->json([]);
 });
 
+Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
 
 
 
