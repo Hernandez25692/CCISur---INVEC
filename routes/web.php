@@ -52,12 +52,13 @@ Route::middleware(['auth'])->group(function () {
 // API para obtener ítems por tipo (uso en formularios dinámicos)
 Route::get('/api/obtener-items/{tipo}', function ($tipo) {
     if ($tipo === 'mobiliario') {
-        return \App\Models\Mobiliario::select('id', 'nombre', 'etiqueta')->get();
+        return \App\Models\Mobiliario::where('estado', 'disponible')->select('id', 'nombre', 'etiqueta')->get();
     } elseif ($tipo === 'dispositivo') {
-        return \App\Models\Dispositivo::select('id', 'nombre', 'etiqueta')->get();
+        return \App\Models\Dispositivo::where('estado', 'disponible')->select('id', 'nombre', 'etiqueta')->get();
     }
     return response()->json([]);
 });
+
 
 
 // Rutas de autenticación generadas por Breeze

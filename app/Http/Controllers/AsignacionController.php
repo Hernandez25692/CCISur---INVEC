@@ -40,7 +40,24 @@ class AsignacionController extends Controller
             'entregado_por' => 'required|string|max:255',
         ]);
 
-        Asignacion::create($request->all());
+        // Verificar si ya está asignado
+        $existe = Asignacion::where('tipo', $request->tipo)
+            ->where('id_referencia', $request->id_referencia)
+            ->exists();
+
+        if ($existe) {
+            return redirect()->back()->with('error', 'Este bien ya ha sido asignado a otro colaborador.');
+        }
+
+        // Crear la asignación
+        $asignacion = Asignacion::create($request->all());
+
+        // Cambiar estado a "asignado"
+        if ($request->tipo === 'mobiliario') {
+            Mobiliario::where('id', $request->id_referencia)->update(['estado' => 'asignado']);
+        } else {
+            Dispositivo::where('id', $request->id_referencia)->update(['estado' => 'asignado']);
+        }
 
         return redirect()->route('asignaciones.index')->with('success', 'Asignación registrada correctamente.');
     }
