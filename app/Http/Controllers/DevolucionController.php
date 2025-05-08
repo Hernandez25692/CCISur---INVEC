@@ -36,22 +36,22 @@ class DevolucionController extends Controller
         $yaDevuelto = \App\Models\Devolucion::where('asignacion_id', $request->asignacion_id)->exists();
 
         if ($yaDevuelto) {
-            return redirect()->back()->with('error', 'Este bien ya fue devuelto y no puede devolverse nuevamente.');
+            return redirect()->back()->with('error', 'Este bien ya fue devuelto.');
         }
 
-        $asignacion = \App\Models\Asignacion::findOrFail($request->asignacion_id);
+        $asignacion = Asignacion::findOrFail($request->asignacion_id);
 
-        // Cambiar estado del bien a disponible
+        // Cambiar disponibilidad a disponible
         $item = $asignacion->tipo === 'mobiliario'
             ? \App\Models\Mobiliario::find($asignacion->id_referencia)
             : \App\Models\Dispositivo::find($asignacion->id_referencia);
 
         if ($item) {
-            $item->estado = 'disponible';
+            $item->disponibilidad = 'disponible';
             $item->save();
         }
 
-        // Registrar devolución
+        // Registrar la devolución
         \App\Models\Devolucion::create([
             'asignacion_id' => $request->asignacion_id,
             'fecha_devolucion' => $request->fecha_devolucion,
@@ -64,10 +64,14 @@ class DevolucionController extends Controller
 
 
 
-    public function show(Devolucion $devolucion)
+
+    public function show($id)
     {
+        $devolucion = Devolucion::with('asignacion')->findOrFail($id);
+
         return view('devoluciones.show', compact('devolucion'));
     }
+
 
     public function pdf(Devolucion $devolucion)
     {

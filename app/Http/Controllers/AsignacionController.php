@@ -40,27 +40,37 @@ class AsignacionController extends Controller
             'entregado_por' => 'required|string|max:255',
         ]);
 
-        // Verificar si ya está asignado
-        $existe = Asignacion::where('tipo', $request->tipo)
-            ->where('id_referencia', $request->id_referencia)
+        // Verificar si el bien ya está asignado
+        $existeAsignacion = Asignacion::where('id_referencia', $request->id_referencia)
+            ->where('tipo', $request->tipo)
+            ->doesntHave('devolucion') // sin devolución
             ->exists();
 
-        if ($existe) {
-            return redirect()->back()->with('error', 'Este bien ya ha sido asignado a otro colaborador.');
+        if ($existeAsignacion) {
+            return redirect()->back()->with('error', 'Este bien ya ha sido asignado y no ha sido devuelto.');
         }
 
         // Crear la asignación
-        $asignacion = Asignacion::create($request->all());
+        $asignacion = Asignacion::create([
+            ...$request->all(),
+            'uuid' => \Illuminate\Support\Str::uuid()
+        ]);
 
-        // Cambiar estado a "asignado"
+        // Cambiar disponibilidad
         if ($request->tipo === 'mobiliario') {
-            Mobiliario::where('id', $request->id_referencia)->update(['estado' => 'asignado']);
+            $item = \App\Models\Mobiliario::find($request->id_referencia);
         } else {
-            Dispositivo::where('id', $request->id_referencia)->update(['estado' => 'asignado']);
+            $item = \App\Models\Dispositivo::find($request->id_referencia);
+        }
+
+        if ($item) {
+            $item->disponibilidad = 'asignado';
+            $item->save();
         }
 
         return redirect()->route('asignaciones.index')->with('success', 'Asignación registrada correctamente.');
     }
+
 
     // Mostrar detalles (opcional para PDF)
     public function show(Asignacion $asignacion)

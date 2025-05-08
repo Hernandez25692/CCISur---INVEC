@@ -14,7 +14,7 @@
                         <option value="">Seleccione una asignación</option>
                         @foreach ($asignaciones as $asignacion)
                             <option value="{{ $asignacion->id }}">
-                                {{ $asignacion->colaborador }} - {{ ucfirst($asignacion->tipo) }}
+                                {{ $asignacion->colaborador }} - {{ ucfirst($asignacion->tipo) }} 
                             </option>
                         @endforeach
                     </select>

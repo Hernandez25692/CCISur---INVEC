@@ -25,4 +25,9 @@ class Asignacion extends Model
             $model->uuid = Str::uuid()->toString();
         });
     }
+
+    public function devolucion()
+    {
+        return $this->hasOne(\App\Models\Devolucion::class);
+    }
 }

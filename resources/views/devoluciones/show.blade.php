@@ -31,7 +31,7 @@
                 </div>
                 <div>
                     <strong>Correlativo de Inventario:</strong><br>
-                    {{ $item->correlativo ?? 'N/A' }}
+                    {{ $item->etiqueta ?? 'N/A' }}
                 </div>
                 <div>
                     <strong>Fecha de Devolución:</strong><br>

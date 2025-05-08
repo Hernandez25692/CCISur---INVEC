@@ -17,6 +17,6 @@ class Devolucion extends Model
 
     public function asignacion()
     {
-        return $this->belongsTo(Asignacion::class);
+        return $this->belongsTo(\App\Models\Asignacion::class);
     }
 }
