@@ -11,11 +11,21 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class DevolucionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $devoluciones = Devolucion::with('asignacion')->latest()->get();
+        $buscar = $request->input('buscar');
+
+        $devoluciones = Devolucion::with(['asignacion' => function ($query) use ($buscar) {
+            $query->when($buscar, function ($q) use ($buscar) {
+                $q->where('colaborador', 'like', "%$buscar%")
+                    ->orWhereHas('mobiliario', fn($sub) => $sub->where('etiqueta', 'like', "%$buscar%"))
+                    ->orWhereHas('dispositivo', fn($sub) => $sub->where('etiqueta', 'like', "%$buscar%"));
+            });
+        }])->paginate(10);
+
         return view('devoluciones.index', compact('devoluciones'));
     }
+
 
     public function create()
     {

@@ -1,34 +1,53 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <title>Acta de Entrega - {{ $asignacion->colaborador }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            color: #1f2937;
             line-height: 1.6;
-            color: #333;
             padding: 40px;
         }
 
-        h1,
-        h2 {
+        header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+
+        header h2 {
+            font-size: 16px;
+            color: #6b7280;
         }
 
         .section {
             margin-bottom: 25px;
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            padding: 20px;
+            border-radius: 8px;
         }
 
         .section p {
             margin: 6px 0;
         }
 
-        .bold {
-            font-weight: bold;
+        .label {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .value {
+            color: #374151;
         }
 
         .firma {
@@ -37,61 +56,68 @@
         }
 
         .firma .line {
-            margin-top: 40px;
+            margin-top: 50px;
             border-top: 1px solid #000;
-            width: 200px;
+            width: 250px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        .qr {
-            text-align: center;
-            margin-top: 40px;
+        .firma p {
+            margin-top: 8px;
+            font-weight: 600;
         }
 
         .footer {
             position: absolute;
             bottom: 40px;
+            width: 100%;
             text-align: center;
             font-size: 10px;
-            width: 100%;
-            color: #888;
+            color: #9ca3af;
+        }
+
+        .qr {
+            margin-top: 40px;
+            text-align: center;
         }
     </style>
 </head>
-
 <body>
 
-    <h1>Acta de Entrega de Bienes</h1>
-    <h2>CCISur - Sistema INVEC</h2>
+    <header>
+        <h1>Acta de Entrega de Bienes</h1>
+        <h2>CCISur - Sistema INVEC</h2>
+    </header>
 
     <div class="section">
-        <p><span class="bold">Colaborador:</span> {{ $asignacion->colaborador }}</p>
-        <p><span class="bold">Área / Departamento:</span> {{ $asignacion->area }}</p>
-        <p><span class="bold">Tipo de Bien:</span> {{ ucfirst($asignacion->tipo) }}</p>
-        <p><span class="bold">Elemento:</span> {{ $item->nombre ?? 'N/A' }}</p>
-        <p><span class="bold">Correlativo de Inventario:</span> {{ $item->etiqueta ?? 'N/A' }}</p>
-        <p><span class="bold">Fecha de Entrega:</span> {{ $asignacion->fecha_entrega }}</p>
-        <p><span class="bold">Entregado por:</span> {{ $asignacion->entregado_por }}</p>
-        <p><span class="bold">Observaciones:</span> {{ $asignacion->observaciones ?? 'Ninguna' }}</p>
+        <p><span class="label">Colaborador:</span> <span class="value">{{ $asignacion->colaborador }}</span></p>
+        <p><span class="label">Área / Departamento:</span> <span class="value">{{ $asignacion->area }}</span></p>
+        <p><span class="label">Tipo de Bien:</span> <span class="value">{{ ucfirst($asignacion->tipo) }}</span></p>
+        <p><span class="label">Elemento:</span> <span class="value">{{ $item->nombre ?? 'N/A' }}</span></p>
+        <p><span class="label">Correlativo de Inventario:</span> <span class="value">{{ $item->etiqueta ?? 'N/A' }}</span></p>
+        <p><span class="label">Fecha de Entrega:</span> <span class="value">{{ $asignacion->fecha_entrega }}</span></p>
+        <p><span class="label">Entregado por:</span> <span class="value">{{ $asignacion->entregado_por }}</span></p>
+        <p><span class="label">Observaciones:</span> <span class="value">{{ $asignacion->observaciones ?? 'Ninguna' }}</span></p>
     </div>
 
     <div class="firma">
-        <p class="bold">Firma del Colaborador</p>
+        <p>Firma del Colaborador</p>
         <div class="line"></div>
+        <p>{{ $asignacion->colaborador }}</p>
     </div>
 
- 
-
-
-
-
-
+    {{-- QR opcional --}}
+    @isset($qrSvg)
+        <div class="qr">
+            {!! $qrSvg !!}
+            <p style="font-size: 10px; color: #6b7280;">Verificación Digital</p>
+        </div>
+    @endisset
 
     <div class="footer">
         Documento generado automáticamente por el Sistema INVEC - {{ now()->format('d/m/Y H:i') }}
     </div>
 
 </body>
-
 </html>

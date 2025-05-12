@@ -16,11 +16,28 @@ use Illuminate\Support\Facades\Storage;
 class AsignacionController extends Controller
 {
     // Listar asignaciones
-    public function index()
+    public function index(Request $request)
     {
-        $asignaciones = Asignacion::latest()->get();
+        $query = Asignacion::with('devolucion');
+
+        if ($request->filled('buscar')) {
+            $buscar = $request->buscar;
+            $query->where('colaborador', 'like', "%$buscar%");
+
+            $query->orWhereHas('mobiliario', function ($q) use ($buscar) {
+                $q->where('etiqueta', 'like', "%$buscar%");
+            });
+
+            $query->orWhereHas('dispositivo', function ($q) use ($buscar) {
+                $q->where('etiqueta', 'like', "%$buscar%");
+            });
+        }
+
+        $asignaciones = $query->orderBy('created_at', 'desc')->paginate(10);
+
         return view('asignaciones.index', compact('asignaciones'));
     }
+
 
     // Formulario para nueva asignación
     public function create()

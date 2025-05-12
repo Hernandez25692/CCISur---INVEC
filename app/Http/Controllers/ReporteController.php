@@ -19,9 +19,12 @@ class ReporteController extends Controller
     // Reporte de bienes disponibles (no asignados)
     public function disponibles()
     {
-        $mobiliarios = \App\Models\Mobiliario::where('estado', 'disponible')->get();
-        $dispositivos = \App\Models\Dispositivo::where('estado', 'disponible')->get();
+        $asignadosIdsDispositivos = Asignacion::where('tipo', 'dispositivo')->pluck('id_referencia')->toArray();
+        $asignadosIdsMobiliario = Asignacion::where('tipo', 'mobiliario')->pluck('id_referencia')->toArray();
 
-        return view('reportes.disponibles', compact('mobiliarios', 'dispositivos'));
+        $dispositivos = Dispositivo::whereNotIn('id', $asignadosIdsDispositivos)->get();
+        $mobiliarios = Mobiliario::whereNotIn('id', $asignadosIdsMobiliario)->get();
+
+        return view('reportes.disponibles', compact('dispositivos', 'mobiliarios'));
     }
 }
