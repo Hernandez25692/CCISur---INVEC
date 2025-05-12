@@ -63,7 +63,7 @@ class DevolucionController extends Controller
             : \App\Models\Dispositivo::find($asignacion->id_referencia);
 
         if ($item) {
-            $item->disponibilidad = 'disponible';
+            $item->disponibilidad = 'Sin Asignar';
             $item->save();
         }
 

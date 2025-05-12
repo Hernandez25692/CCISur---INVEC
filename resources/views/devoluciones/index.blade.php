@@ -212,7 +212,7 @@
 
                                 @if ($asig)
                                     <tr>
-                                        <td>{{ $asig->colaborador }}</td>
+                                        <td>{{ $asig->empleado->nombre_completo ?? 'N/A' }}</td>
                                         <td>{{ ucfirst($asig->tipo) }}</td>
                                         <td>{{ $item->nombre ?? 'N/A' }}</td>
                                         <td>{{ $item->etiqueta ?? 'N/A' }}</td>

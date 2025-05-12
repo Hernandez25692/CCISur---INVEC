@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('asignacions', function (Blueprint $table) {
             $table->id();
-            $table->enum('tipo', ['mobiliario', 'dispositivo']);
+            $table->string('tipo');
             $table->unsignedBigInteger('id_referencia');
-            $table->string('colaborador');
+            $table->foreignId('empleado_id')->constrained('empleados');
             $table->string('area');
             $table->text('observaciones')->nullable();
             $table->date('fecha_entrega');
             $table->string('entregado_por');
-            $table->uuid('uuid')->unique()->nullable();
+            $table->uuid('uuid')->unique();
             $table->timestamps();
         });
     }

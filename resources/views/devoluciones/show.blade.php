@@ -69,8 +69,8 @@
 
         <div class="info-grid">
             <div>
-                <strong>Colaborador:</strong>
-                {{ $devolucion->asignacion->colaborador }}
+                <strong>Empleado:</strong>
+                {{ $devolucion->asignacion->empleado->nombre_completo ?? 'N/A' }}
             </div>
             <div>
                 <strong>Área / Departamento:</strong>
@@ -83,9 +83,10 @@
             <div>
                 <strong>Elemento:</strong>
                 @php
-                    $item = $devolucion->asignacion->tipo === 'mobiliario'
-                        ? \App\Models\Mobiliario::find($devolucion->asignacion->id_referencia)
-                        : \App\Models\Dispositivo::find($devolucion->asignacion->id_referencia);
+                    $item =
+                        $devolucion->asignacion->tipo === 'mobiliario'
+                            ? \App\Models\Mobiliario::find($devolucion->asignacion->id_referencia)
+                            : \App\Models\Dispositivo::find($devolucion->asignacion->id_referencia);
                 @endphp
                 {{ $item->nombre ?? 'N/A' }}
             </div>

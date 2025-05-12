@@ -75,7 +75,8 @@
                 font-size: 1.5rem;
             }
 
-            .btn-pdf, .btn-back {
+            .btn-pdf,
+            .btn-back {
                 width: 100%;
                 text-align: center;
                 justify-content: center;
@@ -87,7 +88,7 @@
         <h2 class="acta-title">Acta de Entrega</h2>
 
         <div class="acta-content">
-            <p><strong>Colaborador:</strong> {{ $asignacion->colaborador }}</p>
+            <p><strong>Empleado:</strong> {{ $asignacion->empleado->nombre_completo ?? 'N/A' }}</p>
             <p><strong>Área / Departamento:</strong> {{ $asignacion->area }}</p>
             <p><strong>Tipo de Bien:</strong> {{ ucfirst($asignacion->tipo) }}</p>
             <p><strong>Elemento:</strong> {{ $item->nombre ?? 'N/A' }}</p>

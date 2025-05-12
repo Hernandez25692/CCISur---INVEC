@@ -13,8 +13,21 @@ return new class extends Migration
             $table->string('nombre');
             $table->string('tipo');
             $table->string('ubicacion');
-            $table->enum('estado', ['bueno', 'regular', 'dañado']);
-            $table->enum('disponibilidad', ['disponible', 'asignado', 'inactivo'])->default('disponible');
+            $table->enum('estado',  [
+                'Nuevo / En perfectas condiciones',
+                'Con pequeños detalles / Imperfecciones leves',
+                'Usado / Segunda mano',
+                'Dañado / Defectuoso',
+                'En reparación / En revisión',
+                'Producto incompleto',
+                'Caducado / No apto para uso'
+            ]);
+            $table->enum('disponibilidad', [
+                'Asignado',
+                'Sin Asignar',
+                'No Aplica para asignación'
+            ])->default('Sin Asignar');
+
             $table->string('etiqueta')->unique()->nullable();
             $table->date('fecha_registro')->default(now());
             $table->timestamps();

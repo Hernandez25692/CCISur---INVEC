@@ -30,9 +30,10 @@ class DispositivoController extends Controller
             'marca' => 'required|string|max:255',
             'modelo' => 'required|string|max:255',
             'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:bueno,regular,dañado',
+            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
             'fecha_registro' => 'required|date',
         ]);
+
 
         $dispositivo = new Dispositivo($request->all());
         $dispositivo->save();
@@ -54,14 +55,13 @@ class DispositivoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'tipo' => 'required|string|max:255',
             'marca' => 'required|string|max:255',
             'modelo' => 'required|string|max:255',
-            'n_serie' => 'required|string|max:255|unique:dispositivos,n_serie,' . $dispositivo->id,
             'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:bueno,regular,dañado',
+            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
             'fecha_registro' => 'required|date',
         ]);
+
 
         $dispositivo->update($request->except('etiqueta'));
 

@@ -53,10 +53,10 @@ Route::middleware(['auth'])->group(function () {
 // API para obtener ítems por tipo (uso en formularios dinámicos)
 Route::get('/api/obtener-items/{tipo}', function ($tipo) {
     if ($tipo === 'mobiliario') {
-        return \App\Models\Mobiliario::where('disponibilidad', 'disponible')
+        return \App\Models\Mobiliario::where('disponibilidad', 'Sin Asignar')
             ->select('id', 'nombre', 'etiqueta')->get();
     } elseif ($tipo === 'dispositivo') {
-        return \App\Models\Dispositivo::where('disponibilidad', 'disponible')
+        return \App\Models\Dispositivo::where('disponibilidad', 'Sin Asignar')
             ->select('id', 'nombre', 'etiqueta')->get();
     }
     return response()->json([]);

@@ -17,7 +17,7 @@
         <!-- Formulario de búsqueda -->
         <form method="GET" action="{{ route('asignaciones.index') }}" class="mb-4">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <input type="text" name="buscar" placeholder="Buscar por colaborador o etiqueta"
+                <input type="text" name="buscar" placeholder="Buscar por empleado  o etiqueta"
                     value="{{ request('buscar') }}"
                     class="w-full sm:w-72 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300">
                 <button type="submit"
@@ -37,7 +37,7 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Colaborador</th>
+                                Empleado</th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Tipo</th>
@@ -104,7 +104,7 @@
                                                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </a>
-                                        <a href="{{ route('asignaciones.historial', $item->colaborador) }}"
+                                        <a href="{{ route('asignaciones.historial', $item->empleado_id) }}"
                                             class="text-indigo-600 hover:text-indigo-900" title="Historial">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">

@@ -88,8 +88,9 @@
     </header>
 
     <div class="section">
-        <p><span class="label">Colaborador:</span> <span class="value">{{ $devolucion->asignacion->colaborador }}</span>
-        </p>
+        <p><span class="label">Empleado:</span> <span
+                class="value">{{ $devolucion->asignacion->empleado->nombre_completo ?? 'N/A' }}</span></p>
+
         <p><span class="label">Área / Departamento:</span> <span
                 class="value">{{ $devolucion->asignacion->area }}</span></p>
         <p><span class="label">Tipo de Bien:</span> <span
@@ -107,7 +108,8 @@
     <div class="firma">
         <p>Firma del Colaborador</p>
         <div class="line"></div>
-        <p>{{ $devolucion->asignacion->colaborador }}</p>
+        <p>{{ $devolucion->asignacion->empleado->nombre_completo ?? 'N/A' }}</p>
+
     </div>
 
     <footer>

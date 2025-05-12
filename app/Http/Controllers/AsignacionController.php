@@ -22,7 +22,10 @@ class AsignacionController extends Controller
 
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
-            $query->where('colaborador', 'like', "%$buscar%");
+
+            $query->whereHas('empleado', function ($q) use ($buscar) {
+                $q->where('nombre_completo', 'like', "%$buscar%");
+            });
 
             $query->orWhereHas('mobiliario', function ($q) use ($buscar) {
                 $q->where('etiqueta', 'like', "%$buscar%");
@@ -32,6 +35,7 @@ class AsignacionController extends Controller
                 $q->where('etiqueta', 'like', "%$buscar%");
             });
         }
+
 
         $asignaciones = $query->orderBy('created_at', 'desc')->paginate(10);
 

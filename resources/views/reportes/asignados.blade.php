@@ -87,7 +87,7 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Colaborador</th>
+                        <th>Empleado</th>
                         <th>Tipo</th>
                         <th>Elemento</th>
                         <th>Área</th>
@@ -105,7 +105,7 @@
                         @endphp
                         <tr>
                             <td>{{ $a->id }}</td>
-                            <td>{{ $a->colaborador }}</td>
+                            <td>{{ $a->empleado->nombre_completo ?? 'N/A' }}</td>
                             <td class="capitalize">{{ $a->tipo }}</td>
                             <td>{{ $ref->nombre ?? 'N/A' }}</td>
                             <td>{{ $a->area }}</td>

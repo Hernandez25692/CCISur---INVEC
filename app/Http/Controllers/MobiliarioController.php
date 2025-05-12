@@ -27,9 +27,10 @@ class MobiliarioController extends Controller
             'nombre' => 'required|string|max:255',
             'tipo' => 'required|string|max:255',
             'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:bueno,regular,dañado',
+            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
             'fecha_registro' => 'required|date',
         ]);
+
 
         // Creamos primero el registro sin la etiqueta
         $mobiliario = Mobiliario::create($request->all());
@@ -56,9 +57,10 @@ class MobiliarioController extends Controller
             'nombre' => 'required|string|max:255',
             'tipo' => 'required|string|max:255',
             'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:bueno,regular,dañado',
+            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
             'fecha_registro' => 'required|date',
         ]);
+
 
         $mobiliario->update($request->except('etiqueta'));
 

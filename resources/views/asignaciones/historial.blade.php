@@ -101,11 +101,12 @@
     </style>
 
     <div class="historial-container">
-        <h2 class="historial-title">Historial de Asignaciones para: {{ $colaborador }}</h2>
+        <h2 class="historial-title">Historial de Asignaciones para: {{ $empleado->nombre_completo }}</h2>
+
 
         <div class="card-box">
             @if ($asignaciones->isEmpty())
-                <p class="no-records">Este colaborador no tiene asignaciones registradas.</p>
+                <p class="no-records">Este empleado no tiene asignaciones registradas.</p>
             @else
                 <table>
                     <thead>
@@ -121,11 +122,17 @@
                     </thead>
                     <tbody>
                         @foreach ($asignaciones as $item)
+                            @php
+                                $referencia =
+                                    $item->tipo === 'mobiliario'
+                                        ? \App\Models\Mobiliario::find($item->id_referencia)
+                                        : \App\Models\Dispositivo::find($item->id_referencia);
+                            @endphp
                             <tr>
                                 <td>{{ $item->id }}</td>
                                 <td>{{ ucfirst($item->tipo) }}</td>
-                                <td>{{ $item->item->nombre ?? 'N/A' }}</td>
-                                <td>{{ $item->item->etiqueta ?? 'N/A' }}</td>
+                                <td>{{ $referencia->nombre ?? 'N/A' }}</td>
+                                <td>{{ $referencia->etiqueta ?? 'N/A' }}</td>
                                 <td>{{ $item->area }}</td>
                                 <td>{{ $item->fecha_entrega }}</td>
                                 <td>
@@ -134,6 +141,7 @@
                                 </td>
                             </tr>
                         @endforeach
+
                     </tbody>
                 </table>
             @endif

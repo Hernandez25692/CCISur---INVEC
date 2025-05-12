@@ -31,12 +31,19 @@
             <div>
                 <label for="estado" class="block text-sm font-medium text-gray-700">Estado</label>
                 <select name="estado" id="estado" required
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
                     <option value="">-- Seleccionar --</option>
-                    <option value="bueno">Bueno</option>
-                    <option value="regular">Regular</option>
-                    <option value="dañado">Dañado</option>
+                    <option value="Nuevo / En perfectas condiciones">Nuevo / En perfectas condiciones</option>
+                    <option value="Con pequeños detalles / Imperfecciones leves">Con pequeños detalles / Imperfecciones
+                        leves</option>
+                    <option value="Usado / Segunda mano">Usado / Segunda mano</option>
+                    <option value="Dañado / Defectuoso">Dañado / Defectuoso</option>
+                    <option value="En reparación / En revisión">En reparación / En revisión</option>
+                    <option value="Producto incompleto">Producto incompleto</option>
+                    <option value="Caducado / No apto para uso">Caducado / No apto para uso</option>
                 </select>
+
+
             </div>
 
             <!-- Fecha -->
