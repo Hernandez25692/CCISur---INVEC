@@ -40,16 +40,26 @@
 
             {{-- Colaborador --}}
             <div>
-                <label for="colaborador" class="block text-sm font-medium text-gray-700">Nombre del Colaborador</label>
-                <input type="text" name="colaborador" id="colaborador" required
+                <label for="empleado_id" class="block text-sm font-medium text-gray-700">Colaborador</label>
+                <select name="empleado_id" id="empleado_id" required
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">-- Seleccionar empleado --</option>
+                    @foreach ($empleados as $empleado)
+                        <option value="{{ $empleado->id }}" data-gerencia="{{ $empleado->gerencia }}">
+                            {{ $empleado->codigo }} - {{ $empleado->nombre_completo }}
+                        </option>
+                    @endforeach
+                </select>
+
             </div>
+
 
             {{-- Área --}}
             <div>
                 <label for="area" class="block text-sm font-medium text-gray-700">Área o Departamento</label>
-                <input type="text" name="area" id="area" required
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <input type="text" name="area" id="area" required readonly
+                    class="mt-1 block w-full border-gray-300 bg-gray-100 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+
             </div>
 
             {{-- Observaciones --}}
@@ -82,6 +92,15 @@
     </div>
 
     {{-- Script dinámico --}}
+    <script>
+        document.getElementById('empleado_id').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const gerencia = selectedOption.getAttribute('data-gerencia') || '';
+            document.getElementById('area').value = gerencia;
+        });
+    </script>
+
+
     <script>
         let dataItems = [];
 

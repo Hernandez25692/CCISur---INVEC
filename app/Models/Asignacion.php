@@ -10,12 +10,13 @@ class Asignacion extends Model
     protected $fillable = [
         'tipo',
         'id_referencia',
-        'colaborador',
+        'empleado_id',
         'area',
         'observaciones',
         'fecha_entrega',
         'entregado_por',
     ];
+
 
     protected static function boot()
     {
@@ -39,5 +40,10 @@ class Asignacion extends Model
     public function dispositivo()
     {
         return $this->belongsTo(\App\Models\Dispositivo::class, 'id_referencia');
+    }
+
+    public function empleado()
+    {
+        return $this->belongsTo(\App\Models\Empleado::class);
     }
 }

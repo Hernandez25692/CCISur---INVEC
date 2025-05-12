@@ -13,6 +13,16 @@ return new class extends Migration
     {
         Schema::create('empleados', function (Blueprint $table) {
             $table->id();
+            $table->string('codigo')->unique(); // EM001
+            $table->string('identidad')->unique();
+            $table->string('nombre_completo');
+            $table->enum('gerencia', [
+                'Dirección Ejecutiva',
+                'Gerencia Administrativa y Financiera',
+                'Gerencia de Operaciones Registrales',
+                'Gerencia de Servicios Empresariales y Afiliaciones'
+            ]);
+            $table->enum('ubicacion', ['Choluteca', 'Valle']);
             $table->timestamps();
         });
     }

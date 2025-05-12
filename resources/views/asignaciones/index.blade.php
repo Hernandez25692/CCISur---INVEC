@@ -74,8 +74,8 @@
                             @endphp
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->id }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ $item->colaborador }}</td>
+                                <td class="p-2">{{ $item->empleado->nombre_completo ?? 'N/A' }}</td>
+
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
                                     {{ $item->tipo }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -141,11 +141,11 @@
                         @endforeach
                     </tbody>
                 </table>
-                
+
             </div>
-<div class="p-4">
-    {{ $asignaciones->withQueryString()->links() }}
-</div>
+            <div class="p-4">
+                {{ $asignaciones->withQueryString()->links() }}
+            </div>
 
             @if ($asignaciones->isEmpty())
                 <div class="text-center py-12">

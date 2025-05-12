@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Acta de Entrega - {{ $asignacion->colaborador }}</title>
@@ -83,6 +84,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <header>
@@ -91,14 +93,17 @@
     </header>
 
     <div class="section">
-        <p><span class="label">Colaborador:</span> <span class="value">{{ $asignacion->colaborador }}</span></p>
+        <p><span class="bold">Colaborador:</span> {{ $asignacion->empleado->nombre_completo ?? '---' }}</p>
         <p><span class="label">Área / Departamento:</span> <span class="value">{{ $asignacion->area }}</span></p>
         <p><span class="label">Tipo de Bien:</span> <span class="value">{{ ucfirst($asignacion->tipo) }}</span></p>
         <p><span class="label">Elemento:</span> <span class="value">{{ $item->nombre ?? 'N/A' }}</span></p>
-        <p><span class="label">Correlativo de Inventario:</span> <span class="value">{{ $item->etiqueta ?? 'N/A' }}</span></p>
-        <p><span class="label">Fecha de Entrega:</span> <span class="value">{{ $asignacion->fecha_entrega }}</span></p>
+        <p><span class="label">Correlativo de Inventario:</span> <span
+                class="value">{{ $item->etiqueta ?? 'N/A' }}</span></p>
+        <p><span class="label">Fecha de Entrega:</span> <span class="value">{{ $asignacion->fecha_entrega }}</span>
+        </p>
         <p><span class="label">Entregado por:</span> <span class="value">{{ $asignacion->entregado_por }}</span></p>
-        <p><span class="label">Observaciones:</span> <span class="value">{{ $asignacion->observaciones ?? 'Ninguna' }}</span></p>
+        <p><span class="label">Observaciones:</span> <span
+                class="value">{{ $asignacion->observaciones ?? 'Ninguna' }}</span></p>
     </div>
 
     <div class="firma">
@@ -120,4 +125,5 @@
     </div>
 
 </body>
+
 </html>

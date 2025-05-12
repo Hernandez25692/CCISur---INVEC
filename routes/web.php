@@ -63,6 +63,8 @@ Route::get('/api/obtener-items/{tipo}', function ($tipo) {
 });
 
 Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
+Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
+Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'historial'])->name('asignaciones.historial');
 
 
 

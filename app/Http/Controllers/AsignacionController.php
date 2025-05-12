@@ -42,20 +42,24 @@ class AsignacionController extends Controller
     // Formulario para nueva asignación
     public function create()
     {
-        return view('asignaciones.create');
+        $empleados = \App\Models\Empleado::orderBy('nombre_completo')->get();
+        return view('asignaciones.create', compact('empleados'));
     }
+
 
     // Guardar nueva asignación
     public function store(Request $request)
     {
         $request->validate([
-            'tipo' => 'required|in:mobiliario,dispositivo',
+            'tipo' => 'required|string',
             'id_referencia' => 'required|integer',
-            'colaborador' => 'required|string|max:255',
-            'area' => 'required|string|max:255',
+            'empleado_id' => 'required|exists:empleados,id',
+            'area' => 'required|string',
+            'observaciones' => 'nullable|string',
             'fecha_entrega' => 'required|date',
-            'entregado_por' => 'required|string|max:255',
+            'entregado_por' => 'required|string',
         ]);
+
 
         // Verificar si el bien ya está asignado
         $existeAsignacion = Asignacion::where('id_referencia', $request->id_referencia)
@@ -132,16 +136,11 @@ class AsignacionController extends Controller
         return view('asignaciones.publica', compact('asignacion', 'item'));
     }
 
-    public function historial($colaborador)
+    public function historial($empleado_id)
     {
-        $asignaciones = Asignacion::where('colaborador', $colaborador)->latest()->get();
+        $asignaciones = Asignacion::where('empleado_id', $empleado_id)->latest()->get();
+        $empleado = \App\Models\Empleado::find($empleado_id);
 
-        foreach ($asignaciones as $asignacion) {
-            $asignacion->item = $asignacion->tipo === 'mobiliario'
-                ? \App\Models\Mobiliario::find($asignacion->id_referencia)
-                : \App\Models\Dispositivo::find($asignacion->id_referencia);
-        }
-
-        return view('asignaciones.historial', compact('asignaciones', 'colaborador'));
+        return view('asignaciones.historial', compact('asignaciones', 'empleado'));
     }
 }
