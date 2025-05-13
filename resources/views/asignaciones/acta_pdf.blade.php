@@ -69,6 +69,11 @@
             font-weight: 600;
         }
 
+        header img {
+            max-width: 120px;
+            margin-bottom: 10px;
+        }
+
         .footer {
             position: absolute;
             bottom: 40px;
@@ -88,12 +93,13 @@
 <body>
 
     <header>
+        <img src="{{ public_path('Logo/logo_devo.png') }}" alt="Logo CCISur">
         <h1>Acta de Entrega de Bienes</h1>
         <h2>CCISur - Sistema INVEC</h2>
     </header>
 
     <div class="section">
-        <p><span class="bold">Colaborador:</span> {{ $asignacion->empleado->nombre_completo ?? '---' }}</p>
+        <p><span class="bold">Empleado:</span> {{ $asignacion->empleado->nombre_completo ?? '---' }}</p>
         <p><span class="label">Área / Departamento:</span> <span class="value">{{ $asignacion->area }}</span></p>
         <p><span class="label">Tipo de Bien:</span> <span class="value">{{ ucfirst($asignacion->tipo) }}</span></p>
         <p><span class="label">Elemento:</span> <span class="value">{{ $item->nombre ?? 'N/A' }}</span></p>
@@ -109,16 +115,10 @@
     <div class="firma">
         <p>Firma del Colaborador</p>
         <div class="line"></div>
-        <p>{{ $asignacion->colaborador }}</p>
+        <p>{{ $asignacion->empleado->nombre_completo ?? '---' }}</p>
     </div>
 
-    {{-- QR opcional --}}
-    @isset($qrSvg)
-        <div class="qr">
-            {!! $qrSvg !!}
-            <p style="font-size: 10px; color: #6b7280;">Verificación Digital</p>
-        </div>
-    @endisset
+
 
     <div class="footer">
         Documento generado automáticamente por el Sistema INVEC - {{ now()->format('d/m/Y H:i') }}

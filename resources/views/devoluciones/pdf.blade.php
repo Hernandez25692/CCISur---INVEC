@@ -18,6 +18,11 @@
             margin-bottom: 30px;
         }
 
+        header img {
+            max-width: 120px;
+            margin-bottom: 10px;
+        }
+
         header h1 {
             font-size: 20px;
             font-weight: bold;
@@ -83,6 +88,7 @@
 <body>
 
     <header>
+        <img src="{{ public_path('Logo/logo_devo.png') }}" alt="Logo CCISur">
         <h1>Acta de Devolución de Bienes</h1>
         <h2>CCISur - Sistema INVEC</h2>
     </header>
@@ -109,7 +115,6 @@
         <p>Firma del Colaborador</p>
         <div class="line"></div>
         <p>{{ $devolucion->asignacion->empleado->nombre_completo ?? 'N/A' }}</p>
-
     </div>
 
     <footer>
