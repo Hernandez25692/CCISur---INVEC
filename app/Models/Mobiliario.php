@@ -11,6 +11,7 @@ class Mobiliario extends Model
         'tipo',
         'ubicacion',
         'estado',
+        'disponibilidad',
         'fecha_registro',
         'etiqueta',
     ];

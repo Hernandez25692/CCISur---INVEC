@@ -14,6 +14,7 @@ class Dispositivo extends Model
         'n_serie',
         'ubicacion',
         'estado',
+        'disponibilidad',
         'fecha_registro',
     ];
 }

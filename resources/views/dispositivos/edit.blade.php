@@ -70,6 +70,18 @@
                     <option value="Caducado / No apto para uso">Caducado / No apto para uso</option>
                 </select>
             </div>
+            <div>
+                <label for="disponibilidad" class="block text-sm font-medium text-gray-700">Disponibilidad</label>
+                <select name="disponibilidad" id="disponibilidad" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                    @foreach (['Asignado', 'Sin Asignar', 'No Aplica para asignación'] as $disp)
+                        <option value="{{ $disp }}"
+                            {{ $dispositivo->disponibilidad === $disp ? 'selected' : '' }}>
+                            {{ $disp }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
             <div>
                 <label for="fecha_registro" class="block text-sm font-medium text-gray-700">Fecha de Registro</label>

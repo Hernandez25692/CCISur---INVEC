@@ -58,15 +58,16 @@ class MobiliarioController extends Controller
             'tipo' => 'required|string|max:255',
             'ubicacion' => 'required|string|max:255',
             'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
+            'disponibilidad' => 'required|in:Asignado,Sin Asignar,No Aplica para asignación',
             'fecha_registro' => 'required|date',
         ]);
 
-
         $mobiliario->update($request->except('etiqueta'));
-
 
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario actualizado correctamente.');
     }
+
+
 
     // Eliminar registro
     public function destroy(Mobiliario $mobiliario)
