@@ -169,7 +169,7 @@
         <!-- Formulario de búsqueda -->
         <form method="GET" action="{{ route('devoluciones.index') }}" class="mb-4">
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <input type="text" name="buscar" placeholder="Buscar por colaborador o etiqueta"
+                <input type="text" name="buscar" placeholder="Buscar por empleado o etiqueta"
                     value="{{ request('buscar') }}"
                     class="w-full sm:w-72 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300">
                 <button type="submit"
@@ -188,7 +188,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Colaborador</th>
+                                <th>Empleado</th>
                                 <th>Tipo</th>
                                 <th>Elemento</th>
                                 <th>Etiqueta</th>

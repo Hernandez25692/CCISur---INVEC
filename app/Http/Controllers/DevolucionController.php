@@ -15,16 +15,26 @@ class DevolucionController extends Controller
     {
         $buscar = $request->input('buscar');
 
-        $devoluciones = Devolucion::with(['asignacion' => function ($query) use ($buscar) {
-            $query->when($buscar, function ($q) use ($buscar) {
-                $q->where('colaborador', 'like', "%$buscar%")
-                    ->orWhereHas('mobiliario', fn($sub) => $sub->where('etiqueta', 'like', "%$buscar%"))
-                    ->orWhereHas('dispositivo', fn($sub) => $sub->where('etiqueta', 'like', "%$buscar%"));
-            });
-        }])->paginate(10);
+        $devoluciones = Devolucion::with(['asignacion.empleado', 'asignacion.mobiliario', 'asignacion.dispositivo'])
+            ->whereHas('asignacion', function ($query) use ($buscar) {
+                $query->when($buscar, function ($q) use ($buscar) {
+                    $q->whereHas('empleado', function ($sub) use ($buscar) {
+                        $sub->where('nombre_completo', 'like', "%$buscar%");
+                    })
+                        ->orWhereHas('mobiliario', function ($sub) use ($buscar) {
+                            $sub->where('etiqueta', 'like', "%$buscar%");
+                        })
+                        ->orWhereHas('dispositivo', function ($sub) use ($buscar) {
+                            $sub->where('etiqueta', 'like', "%$buscar%");
+                        });
+                });
+            })
+            ->latest()
+            ->paginate(10);
 
         return view('devoluciones.index', compact('devoluciones'));
     }
+
 
 
     public function create()
@@ -122,9 +132,11 @@ class DevolucionController extends Controller
     {
         $q = $request->get('q');
 
-        $asignaciones = Asignacion::whereDoesntHave('devolucion') // solo no devueltos
+        $asignaciones = Asignacion::whereDoesntHave('devolucion') // solo asignaciones sin devolución
             ->where(function ($query) use ($q) {
-                $query->where('colaborador', 'like', "%$q%")
+                $query->whereHas('empleado', function ($sub) use ($q) {
+                    $sub->where('nombre_completo', 'like', "%$q%");
+                })
                     ->orWhereHas('mobiliario', function ($sub) use ($q) {
                         $sub->where('etiqueta', 'like', "%$q%")
                             ->orWhere('nombre', 'like', "%$q%");
@@ -134,7 +146,7 @@ class DevolucionController extends Controller
                             ->orWhere('nombre', 'like', "%$q%");
                     });
             })
-            ->with(['mobiliario', 'dispositivo'])
+            ->with(['empleado', 'mobiliario', 'dispositivo'])
             ->latest()
             ->get();
 
