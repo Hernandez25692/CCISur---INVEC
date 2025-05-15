@@ -1,23 +1,57 @@
-/.phpunit.cache
+# ─────────────────────────────────────────────────────────
+# Laravel - Ignorar dependencias, compilados y entornos
+# ─────────────────────────────────────────────────────────
+/vendor
 /node_modules
-/public/build
+.env
+.env.*
+/.env.*
+/.env.backup
+.env.production
+
+# Laravel - Ignorar archivos generados automáticamente
 /public/hot
 /public/storage
+/public/build
 /storage/*.key
-/storage/pail
-/vendor
-.env
-.env.backup
-.env.production
-.phpactor.json
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
 .phpunit.result.cache
-Homestead.json
+/.phpunit.cache
+
+# Laravel - Homestead
 Homestead.yaml
+Homestead.json
+
+# ─────────────────────────────────────────────────────────
+# Docker - Volúmenes, configuración local y temporales
+# ─────────────────────────────────────────────────────────
+docker-compose.override.yml
+*.pid
+*.sock
+*.log
+
+# ─────────────────────────────────────────────────────────
+# IDEs y editores
+# ─────────────────────────────────────────────────────────
+.idea/
+.vscode/
+.fleet/
+.nova/
+.zed/
+.phpactor.json
+
+# ─────────────────────────────────────────────────────────
+# NPM/Yarn/Composer logs y config sensibles
+# ─────────────────────────────────────────────────────────
 npm-debug.log
 yarn-error.log
 /auth.json
-/.fleet
-/.idea
-/.nova
-/.vscode
-/.zed
+
+# ─────────────────────────────────────────────────────────
+# Archivos del sistema (macOS, Windows)
+# ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
