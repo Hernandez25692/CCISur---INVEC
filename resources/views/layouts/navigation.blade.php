@@ -7,34 +7,45 @@
     <title>INVEC - Sistema de Inventario</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Reset y estilos base */
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --active-color: #1d4ed8;
+            --text-color: #374151;
+            --light-bg: #f9fafb;
+            --border-color: #e5e7eb;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+                Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
-        /* Barra de navegación */
+        /* Barra de navegación principal */
         .navbar {
             background-color: white;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             position: relative;
             z-index: 50;
         }
 
         .nav-container {
-            max-width: 1280px;
+            max-width: 100%;
             margin: 0 auto;
-            padding: 0 16px;
+            padding: 0 1.5rem;
         }
 
         .nav-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 64px;
+            height: 4.5rem;
         }
 
         /* Logo y marca */
@@ -42,43 +53,59 @@
             display: flex;
             align-items: center;
             text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .brand:hover {
+            transform: translateY(-1px);
         }
 
         .brand-logo {
-            height: 40px;
+            height: 2.5rem;
             width: auto;
         }
 
         .brand-name {
-            margin-left: 8px;
-            font-size: 18px;
+            margin-left: 0.75rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            color: #1d4ed8;
+            color: var(--active-color);
+            letter-spacing: -0.5px;
         }
 
-        /* Enlaces principales */
+        /* Enlaces principales - Desktop */
         .nav-links {
             display: none;
-            margin-left: 24px;
+            margin-left: 2rem;
+            height: 100%;
         }
 
         .nav-link {
-            color: #4b5563;
+            position: relative;
+            color: var(--text-color);
             text-decoration: none;
             font-weight: 500;
-            font-size: 15px;
-            margin: 0 12px;
-            padding: 8px 0;
-            position: relative;
-            transition: color 0.2s;
+            font-size: 0.9375rem;
+            margin: 0 0.75rem;
+            padding: 1.25rem 0;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
         }
 
         .nav-link:hover {
-            color: #1d4ed8;
+            color: var(--primary-hover);
+        }
+
+        .nav-link i {
+            margin-right: 0.5rem;
+            font-size: 0.9rem;
+            width: 1.25rem;
+            text-align: center;
         }
 
         .nav-link.active {
-            color: #1d4ed8;
+            color: var(--active-color);
             font-weight: 600;
         }
 
@@ -88,35 +115,52 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 2px;
-            background-color: #1d4ed8;
+            height: 3px;
+            background-color: var(--active-color);
+            border-radius: 3px 3px 0 0;
         }
 
-        /* Área de usuario */
+        /* Área de usuario - Desktop */
         .user-area {
             display: none;
             align-items: center;
         }
 
+        .user-avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-right: 0.75rem;
+        }
+
         .user-name {
-            font-size: 14px;
-            color: #4b5563;
-            margin-right: 16px;
+            font-size: 0.875rem;
+            color: var(--text-color);
+            margin-right: 1rem;
         }
 
         .logout-btn {
             background: none;
             border: none;
-            color: #dc2626;
-            font-size: 14px;
+            color: var(--danger-color);
+            font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
             transition: color 0.2s;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
         }
 
         .logout-btn:hover {
-            color: #b91c1c;
-            text-decoration: underline;
+            color: var(--danger-hover);
+            background-color: #fef2f2;
         }
 
         /* Botón menú móvil */
@@ -124,17 +168,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
-            color: #4b5563;
+            width: 2.5rem;
+            height: 2.5rem;
+            color: var(--text-color);
             background: none;
             border: none;
+            border-radius: 0.375rem;
             cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .mobile-menu-btn:hover {
+            background-color: var(--light-bg);
         }
 
         .mobile-menu-icon {
-            width: 24px;
-            height: 24px;
+            width: 1.5rem;
+            height: 1.5rem;
         }
 
         /* Menú móvil */
@@ -145,62 +195,97 @@
             left: 0;
             right: 0;
             background-color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             z-index: 40;
+            border-top: 1px solid var(--border-color);
+            max-height: calc(100vh - 4.5rem);
+            overflow-y: auto;
         }
 
         .mobile-menu.open {
             display: block;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .mobile-link {
-            display: block;
-            padding: 12px 16px;
-            color: #4b5563;
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            color: var(--text-color);
             text-decoration: none;
-            font-size: 15px;
-            transition: background-color 0.2s;
+            font-size: 0.9375rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .mobile-link i {
+            margin-right: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            font-size: 0.9rem;
         }
 
         .mobile-link:hover,
         .mobile-link.active {
             background-color: #f0f4ff;
-            color: #1d4ed8;
+            color: var(--primary-hover);
+            border-left-color: var(--primary-color);
         }
 
         .mobile-link.active {
             font-weight: 600;
+            color: var(--active-color);
         }
 
         .mobile-user-info {
-            padding: 12px 16px;
-            border-top: 1px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--light-bg);
         }
 
         .mobile-user-name {
-            font-size: 14px;
-            color: #4b5563;
-            margin-bottom: 4px;
+            font-size: 0.9375rem;
+            color: var(--text-color);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
         }
 
         .mobile-user-email {
-            font-size: 13px;
+            font-size: 0.8125rem;
             color: #6b7280;
         }
 
         .mobile-logout-btn {
-            display: block;
+            display: flex;
+            align-items: center;
             width: 100%;
-            padding: 12px 16px;
-            text-align: left;
-            color: #dc2626;
-            font-size: 14px;
+            padding: 1rem 1.5rem;
+            color: var(--danger-color);
+            font-size: 0.9375rem;
             font-weight: 500;
             background: none;
             border: none;
-            border-top: 1px solid #e5e7eb;
             cursor: pointer;
             transition: background-color 0.2s;
+        }
+
+        .mobile-logout-btn i {
+            margin-right: 1rem;
+            width: 1.25rem;
+            text-align: center;
         }
 
         .mobile-logout-btn:hover {
@@ -220,11 +305,10 @@
             .mobile-menu-btn {
                 display: none;
             }
-        }
 
-        /* Efectos de transición */
-        .mobile-menu {
-            transition: all 0.3s ease;
+            .nav-container {
+                max-width: 1280px;
+            }
         }
     </style>
 </head>
@@ -236,50 +320,61 @@
                 <!-- Logo y marca -->
                 <div class="flex items-center">
                     <a href="{{ route('dashboard') }}" class="brand">
-                        <img src="{{ asset('Logo/logo_menu.png') }}" alt="INVEC" class="brand-logo">
-                        <span class="brand-name">INVEC</span>
+                        <span
+                            class="brand-name text-2xl font-extrabold tracking-wide text-indigo-600 hover:text-indigo-700 transition-all">
+                            INVEC
+                        </span>
                     </a>
+
 
                     <!-- Enlaces principales -->
                     <div class="nav-links">
                         <a href="{{ route('dashboard') }}"
                             class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                            <i class="fas fa-tachometer-alt"></i>
                             Dashboard
                         </a>
                         <a href="{{ route('mobiliario.index') }}"
                             class="nav-link {{ request()->routeIs('mobiliario.*') ? 'active' : '' }}">
+                            <i class="fas fa-couch"></i>
                             Mobiliario
                         </a>
                         <a href="{{ route('dispositivos.index') }}"
                             class="nav-link {{ request()->routeIs('dispositivos.*') ? 'active' : '' }}">
+                            <i class="fas fa-laptop"></i>
                             Dispositivos
                         </a>
                         <a href="{{ route('asignaciones.index') }}"
                             class="nav-link {{ request()->routeIs('asignaciones.*') ? 'active' : '' }}">
+                            <i class="fas fa-handshake"></i>
                             Asignaciones
                         </a>
                         <a href="{{ route('reportes.asignados') }}"
                             class="nav-link {{ request()->routeIs('reportes.asignados') ? 'active' : '' }}">
+                            <i class="fas fa-file-alt"></i>
                             R/Asignados
                         </a>
                         <a href="{{ route('reportes.disponibles') }}"
                             class="nav-link {{ request()->routeIs('reportes.disponibles') ? 'active' : '' }}">
+                            <i class="fas fa-file-export"></i>
                             R/Disponibles
                         </a>
                         <a href="{{ route('devoluciones.index') }}"
                             class="nav-link {{ request()->routeIs('devoluciones.*') ? 'active' : '' }}">
+                            <i class="fas fa-undo"></i>
                             Devoluciones
                         </a>
                         <a href="{{ route('empleados.index') }}"
                             class="nav-link {{ request()->routeIs('empleados.*') ? 'active' : '' }}">
+                            <i class="fas fa-users"></i>
                             Empleados
                         </a>
-
                     </div>
                 </div>
 
                 <!-- Área de usuario -->
                 <div class="user-area">
+                    <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</div>
                     <span class="user-name">{{ Auth::user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
@@ -306,33 +401,44 @@
             <div class="mobile-links">
                 <a href="{{ route('dashboard') }}"
                     class="mobile-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <i class="fas fa-tachometer-alt"></i>
                     Dashboard
                 </a>
                 <a href="{{ route('mobiliario.index') }}"
                     class="mobile-link {{ request()->routeIs('mobiliario.*') ? 'active' : '' }}">
+                    <i class="fas fa-couch"></i>
                     Mobiliario
                 </a>
                 <a href="{{ route('dispositivos.index') }}"
                     class="mobile-link {{ request()->routeIs('dispositivos.*') ? 'active' : '' }}">
+                    <i class="fas fa-laptop"></i>
                     Dispositivos
                 </a>
                 <a href="{{ route('asignaciones.index') }}"
                     class="mobile-link {{ request()->routeIs('asignaciones.*') ? 'active' : '' }}">
+                    <i class="fas fa-handshake"></i>
                     Asignaciones
                 </a>
                 <a href="{{ route('reportes.asignados') }}"
                     class="mobile-link {{ request()->routeIs('reportes.asignados') ? 'active' : '' }}">
+                    <i class="fas fa-file-alt"></i>
                     Reporte Asignados
                 </a>
                 <a href="{{ route('reportes.disponibles') }}"
                     class="mobile-link {{ request()->routeIs('reportes.disponibles') ? 'active' : '' }}">
+                    <i class="fas fa-file-export"></i>
                     Reporte Disponibles
                 </a>
                 <a href="{{ route('devoluciones.index') }}"
                     class="mobile-link {{ request()->routeIs('devoluciones.*') ? 'active' : '' }}">
+                    <i class="fas fa-undo"></i>
                     Devoluciones
                 </a>
-
+                <a href="{{ route('empleados.index') }}"
+                    class="mobile-link {{ request()->routeIs('empleados.*') ? 'active' : '' }}">
+                    <i class="fas fa-users"></i>
+                    Empleados
+                </a>
             </div>
 
             <div class="mobile-user-info">
@@ -343,6 +449,7 @@
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="mobile-logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
                     Cerrar Sesión
                 </button>
             </form>
@@ -368,7 +475,7 @@
                 }
             });
 
-            // Cerrar menú al hacer clic en un enlace (útil para SPA)
+            // Cerrar menú al hacer clic en un enlace
             const mobileLinks = document.querySelectorAll('.mobile-link');
             mobileLinks.forEach(link => {
                 link.addEventListener('click', function() {
