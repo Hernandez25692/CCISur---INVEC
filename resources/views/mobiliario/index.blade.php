@@ -6,6 +6,15 @@
                 <h1 class="text-2xl font-bold text-gray-800">Gestión de Mobiliario</h1>
                 <p class="text-sm text-gray-500 mt-1">Inventario completo de muebles y equipamiento</p>
             </div>
+            <a href="{{ route('exportar.mobiliario') }}"
+   class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-medium text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 4v16m8-8H4" />
+    </svg>
+    Exportar Excel
+</a>
+
             <a href="{{ route('mobiliario.create') }}"
                 class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-medium text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
@@ -14,6 +23,7 @@
                 </svg>
                 Nuevo Mueble
             </a>
+            
         </div>
 <!-- Filtro de búsqueda -->
 <form method="GET" action="{{ route('mobiliario.index') }}" class="mb-4">

@@ -7,6 +7,9 @@ use App\Http\Controllers\DispositivoController;
 use App\Http\Controllers\AsignacionController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ReporteExportController;
+use App\Exports\ReporteMobiliarioExport;
+use App\Exports\ReporteDispositivosExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 // Página de inicio pública
 Route::get('/', function () {
@@ -69,6 +72,17 @@ Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'h
 Route::get('/reportes/asignados/excel', [ReporteExportController::class, 'asignados'])->name('reportes.asignados.excel');
 Route::get('/reportes/disponibles/excel', [ReporteExportController::class, 'disponibles'])->name('reportes.disponibles.excel');
 
+// Exportar Mobiliario
+Route::get('/exportar-mobiliario', function () {
+    $nombre = 'reporte_mobiliario_' . now()->format('d-m-Y') . '.xlsx';
+    return Excel::download(new ReporteMobiliarioExport, $nombre);
+})->name('exportar.mobiliario');
+
+// Exportar Dispositivos
+Route::get('/exportar-dispositivos', function () {
+    $nombre = 'reporte_dispositivos_' . now()->format('d-m-Y') . '.xlsx';
+    return Excel::download(new ReporteDispositivosExport, $nombre);
+})->name('exportar.dispositivos');
 
 // Rutas de autenticación generadas por Breeze
 require __DIR__ . '/auth.php';
