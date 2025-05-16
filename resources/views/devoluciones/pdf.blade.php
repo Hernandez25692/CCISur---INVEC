@@ -7,10 +7,10 @@
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
-            font-size: 13px;
-            color: #2c3e50;
+            font-size: 12px;
+            color: #1f2937;
             line-height: 1.6;
-            padding: 40px;
+            margin: 40px;
         }
 
         header {
@@ -19,41 +19,46 @@
         }
 
         header img {
-            max-width: 120px;
+            max-width: 100px;
             margin-bottom: 10px;
         }
 
         header h1 {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 5px;
+            font-size: 18px;
+            color: #1e3a8a;
+            margin-bottom: 4px;
         }
 
         header h2 {
-            font-size: 16px;
+            font-size: 13px;
             color: #6b7280;
         }
 
-        .section {
-            margin-bottom: 25px;
-            background: #f9fafb;
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .info-table th, .info-table td {
             border: 1px solid #d1d5db;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
         }
 
-        .section p {
-            margin: 6px 0;
-        }
-
-        .label {
+        .info-table th {
+            background-color: #f3f4f6;
             font-weight: 600;
             color: #1f2937;
+            width: 30%;
         }
 
-        .value {
-            color: #374151;
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1e40af;
         }
 
         .firma {
@@ -72,6 +77,7 @@
         .firma p {
             margin-top: 8px;
             font-weight: 600;
+            font-size: 13px;
         }
 
         footer {
@@ -93,23 +99,41 @@
         <h2>CCISur - Sistema INVEC</h2>
     </header>
 
-    <div class="section">
-        <p><span class="label">Empleado:</span> <span
-                class="value">{{ $devolucion->asignacion->empleado->nombre_completo ?? 'N/A' }}</span></p>
-
-        <p><span class="label">Área / Departamento:</span> <span
-                class="value">{{ $devolucion->asignacion->area }}</span></p>
-        <p><span class="label">Tipo de Bien:</span> <span
-                class="value">{{ ucfirst($devolucion->asignacion->tipo) }}</span></p>
-        <p><span class="label">Elemento:</span> <span class="value">{{ $item->nombre ?? 'N/A' }}</span></p>
-        <p><span class="label">Correlativo de Inventario:</span> <span
-                class="value">{{ $item->etiqueta ?? 'N/A' }}</span></p>
-        <p><span class="label">Fecha de Devolución:</span> <span
-                class="value">{{ $devolucion->fecha_devolucion }}</span></p>
-        <p><span class="label">Recibido por:</span> <span class="value">{{ $devolucion->recibido_por }}</span></p>
-        <p><span class="label">Observaciones:</span> <span
-                class="value">{{ $devolucion->observaciones ?? 'Ninguna' }}</span></p>
-    </div>
+    <div class="section-title">Detalles de Devolución</div>
+    <table class="info-table">
+        <tr>
+            <th>Empleado</th>
+            <td>{{ $devolucion->asignacion->empleado->nombre_completo ?? 'N/A' }}</td>
+        </tr>
+        <tr>
+            <th>Área / Departamento</th>
+            <td>{{ $devolucion->asignacion->area }}</td>
+        </tr>
+        <tr>
+            <th>Tipo de Bien</th>
+            <td>{{ ucfirst($devolucion->asignacion->tipo) }}</td>
+        </tr>
+        <tr>
+            <th>Elemento</th>
+            <td>{{ $item->nombre ?? 'N/A' }}</td>
+        </tr>
+        <tr>
+            <th>Correlativo de Inventario</th>
+            <td>{{ $item->etiqueta ?? 'N/A' }}</td>
+        </tr>
+        <tr>
+            <th>Fecha de Devolución</th>
+            <td>{{ $devolucion->fecha_devolucion }}</td>
+        </tr>
+        <tr>
+            <th>Recibido por</th>
+            <td>{{ $devolucion->recibido_por }}</td>
+        </tr>
+        <tr>
+            <th>Observaciones</th>
+            <td>{{ $devolucion->observaciones ?? 'Ninguna' }}</td>
+        </tr>
+    </table>
 
     <div class="firma">
         <p>Firma del Colaborador</p>
@@ -118,7 +142,7 @@
     </div>
 
     <footer>
-        Documento generado automáticamente por el Sistema INVEC - {{ now()->format('d/m/Y H:i') }}
+        Documento generado automáticamente por el Sistema INVEC — {{ now()->format('d/m/Y H:i') }}
     </footer>
 
 </body>

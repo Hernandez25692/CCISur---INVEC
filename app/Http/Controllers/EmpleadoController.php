@@ -7,9 +7,28 @@ use Illuminate\Http\Request;
 
 class EmpleadoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $empleados = Empleado::latest()->paginate(10);
+        $query = Empleado::query();
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('nombre_completo', 'like', '%' . $request->search . '%')
+                    ->orWhere('identidad', 'like', '%' . $request->search . '%')
+                    ->orWhere('codigo', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('gerencia') && $request->gerencia !== 'Todas') {
+            $query->where('gerencia', $request->gerencia);
+        }
+
+        if ($request->filled('ubicacion') && $request->ubicacion !== 'Todas las Ubicaciones') {
+            $query->where('ubicacion', $request->ubicacion);
+        }
+
+        $empleados = $query->latest()->paginate(10)->appends($request->except('page'));
+
         return view('empleados.index', compact('empleados'));
     }
 

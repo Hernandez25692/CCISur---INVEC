@@ -3,14 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Acta de Entrega - {{ $asignacion->colaborador }}</title>
+    <title>Acta de Entrega - {{ $asignacion->empleado->nombre_completo ?? '---' }}</title>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
-            font-size: 13px;
-            color: #1f2937;
+            font-size: 12px;
+            color: #111827;
             line-height: 1.6;
-            padding: 40px;
+            margin: 40px;
         }
 
         header {
@@ -18,37 +18,48 @@
             margin-bottom: 30px;
         }
 
+        header img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+
         header h1 {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 5px;
+            font-size: 18px;
+            color: #1e3a8a;
+            margin-bottom: 4px;
         }
 
         header h2 {
-            font-size: 16px;
+            font-size: 13px;
             color: #6b7280;
         }
 
-        .section {
-            margin-bottom: 25px;
-            background: #f9fafb;
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .info-table th,
+        .info-table td {
             border: 1px solid #d1d5db;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
         }
 
-        .section p {
-            margin: 6px 0;
-        }
-
-        .label {
+        .info-table th {
+            background-color: #f3f4f6;
             font-weight: 600;
-            color: #111827;
+            color: #1f2937;
+            width: 30%;
         }
 
-        .value {
-            color: #374151;
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1e40af;
         }
 
         .firma {
@@ -67,11 +78,7 @@
         .firma p {
             margin-top: 8px;
             font-weight: 600;
-        }
-
-        header img {
-            max-width: 120px;
-            margin-bottom: 10px;
+            font-size: 13px;
         }
 
         .footer {
@@ -87,6 +94,10 @@
             margin-top: 40px;
             text-align: center;
         }
+
+        .qr img {
+            max-width: 120px;
+        }
     </style>
 </head>
 
@@ -99,17 +110,41 @@
     </header>
 
     <div class="section">
-        <p><span class="bold">Empleado:</span> {{ $asignacion->empleado->nombre_completo ?? '---' }}</p>
-        <p><span class="label">Área / Departamento:</span> <span class="value">{{ $asignacion->area }}</span></p>
-        <p><span class="label">Tipo de Bien:</span> <span class="value">{{ ucfirst($asignacion->tipo) }}</span></p>
-        <p><span class="label">Elemento:</span> <span class="value">{{ $item->nombre ?? 'N/A' }}</span></p>
-        <p><span class="label">Correlativo de Inventario:</span> <span
-                class="value">{{ $item->etiqueta ?? 'N/A' }}</span></p>
-        <p><span class="label">Fecha de Entrega:</span> <span class="value">{{ $asignacion->fecha_entrega }}</span>
-        </p>
-        <p><span class="label">Entregado por:</span> <span class="value">{{ $asignacion->entregado_por }}</span></p>
-        <p><span class="label">Observaciones:</span> <span
-                class="value">{{ $asignacion->observaciones ?? 'Ninguna' }}</span></p>
+        <div class="section-title">Información del Bien Asignado</div>
+        <table class="info-table">
+            <tr>
+                <th>Empleado</th>
+                <td>{{ $asignacion->empleado->nombre_completo ?? '---' }}</td>
+            </tr>
+            <tr>
+                <th>Área / Departamento</th>
+                <td>{{ $asignacion->area }}</td>
+            </tr>
+            <tr>
+                <th>Tipo de Bien</th>
+                <td>{{ ucfirst($asignacion->tipo) }}</td>
+            </tr>
+            <tr>
+                <th>Elemento</th>
+                <td>{{ $item->nombre ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <th>Correlativo de Inventario</th>
+                <td>{{ $item->etiqueta ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <th>Fecha de Entrega</th>
+                <td>{{ $asignacion->fecha_entrega }}</td>
+            </tr>
+            <tr>
+                <th>Entregado por</th>
+                <td>{{ $asignacion->entregado_por }}</td>
+            </tr>
+            <tr>
+                <th>Observaciones</th>
+                <td>{{ $asignacion->observaciones ?? 'Ninguna' }}</td>
+            </tr>
+        </table>
     </div>
 
     <div class="firma">
@@ -118,10 +153,27 @@
         <p>{{ $asignacion->empleado->nombre_completo ?? '---' }}</p>
     </div>
 
-
-
+    @isset($qrSvg)
+        <div class="qr">
+            <p style="margin-top: 20px; font-size: 12px; color: #4b5563;">Verificación en línea:</p>
+            {!! $qrSvg !!}
+        </div>
+    @endisset
+    <div class="section">
+        <div class="section-title">TERMINOS Y CONDICIONES</div>
+        <ol style="padding-left: 20px; margin-top: 10px;">
+            <li style="margin-bottom: 8px;">El colaborador es responsable del buen uso y conservación del bien asignado.
+            </li>
+            <li style="margin-bottom: 8px;">Cualquier daño o pérdida deberá ser reportado inmediatamente al departamento
+                de recursos.</li>
+            <li style="margin-bottom: 8px;">Al término de la relación laboral o cambio de área, el bien deberá ser
+                devuelto en las mismas condiciones.</li>
+            <li style="margin-bottom: 8px;">El incumplimiento de estas condiciones puede generar responsabilidades
+                administrativas.</li>
+        </ol>
+    </div>
     <div class="footer">
-        Documento generado automáticamente por el Sistema INVEC - {{ now()->format('d/m/Y H:i') }}
+        Documento generado automáticamente por el Sistema INVEC — {{ now()->format('d/m/Y H:i') }}
     </div>
 
 </body>
