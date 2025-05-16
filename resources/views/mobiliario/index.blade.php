@@ -15,6 +15,23 @@
                 Nuevo Mueble
             </a>
         </div>
+<!-- Filtro de búsqueda -->
+<form method="GET" action="{{ route('mobiliario.index') }}" class="mb-4">
+    <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <input type="text" name="buscar" value="{{ request('buscar') }}"
+            class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            placeholder="Buscar por nombre, tipo, ubicación o etiqueta">
+
+        <button type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+            Buscar
+        </button>
+
+        @if(request('buscar'))
+            <a href="{{ route('mobiliario.index') }}" class="text-sm text-gray-500 hover:underline">Limpiar</a>
+        @endif
+    </div>
+</form>
 
         <!-- Table Section -->
         <div class="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -137,6 +154,18 @@
                         @endif
                     </tbody>
                 </table>
+                <div class="px-6 py-4">
+                    <div class="flex justify-between items-center text-sm text-gray-600">
+                        <div>
+                            Mostrando {{ $mobiliarios->firstItem() }} a {{ $mobiliarios->lastItem() }} de
+                            {{ $mobiliarios->total() }} resultados
+                        </div>
+                        <div>
+                            {{ $mobiliarios->links() }}
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

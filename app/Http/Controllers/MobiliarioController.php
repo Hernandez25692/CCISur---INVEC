@@ -8,11 +8,26 @@ use Illuminate\Http\Request;
 class MobiliarioController extends Controller
 {
     // Mostrar listado
-    public function index()
+    public function index(Request $request)
     {
-        $mobiliarios = Mobiliario::latest()->get();
+        $query = Mobiliario::query();
+
+        if ($request->filled('buscar')) {
+            $buscar = $request->buscar;
+
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombre', 'like', "%$buscar%")
+                    ->orWhere('tipo', 'like', "%$buscar%")
+                    ->orWhere('ubicacion', 'like', "%$buscar%")
+                    ->orWhere('etiqueta', 'like', "%$buscar%");
+            });
+        }
+
+        $mobiliarios = $query->latest()->paginate(10)->withQueryString();
+
         return view('mobiliario.index', compact('mobiliarios'));
     }
+
 
     // Mostrar formulario de creación
     public function create()

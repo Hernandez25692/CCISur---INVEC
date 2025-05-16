@@ -253,10 +253,16 @@
                         <div class="metric-value">{{ \App\Models\Dispositivo::count() }}</div>
                     </div>
 
-                    <div class="metric-card amber">
-                        <div class="metric-label">Total Asignaciones</div>
-                        <div class="metric-value">{{ \App\Models\Asignacion::count() }}</div>
-                    </div>
+                   <div class="metric-card amber">
+    <div class="metric-label">Total Asignaciones</div>
+    <div class="metric-value">
+        {{
+            \App\Models\Asignacion::whereDoesntHave('devolucion')  // No tiene devolución
+                ->count()
+        }}
+    </div>
+</div>
+
                 </div>
 
                 <!-- Últimas asignaciones -->

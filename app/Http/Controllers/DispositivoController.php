@@ -10,11 +10,26 @@ use Illuminate\Support\Str;
 class DispositivoController extends Controller
 {
     // Mostrar todos los dispositivos
-    public function index()
+    public function index(Request $request)
     {
-        $dispositivos = Dispositivo::latest()->get();
+        $query = Dispositivo::query();
+
+        if ($request->filled('buscar')) {
+            $buscar = $request->buscar;
+
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombre', 'like', "%$buscar%")
+                    ->orWhere('marca', 'like', "%$buscar%")
+                    ->orWhere('modelo', 'like', "%$buscar%")
+                    ->orWhere('etiqueta', 'like', "%$buscar%");
+            });
+        }
+
+        $dispositivos = $query->latest()->paginate(10)->withQueryString();
+
         return view('dispositivos.index', compact('dispositivos'));
     }
+
 
     // Formulario para crear
     public function create()
