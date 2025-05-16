@@ -19,6 +19,7 @@
                 <div class="lg:w-1/4 w-full">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-4 space-y-4">
                         <h3 class="font-semibold text-lg text-gray-800 mb-2">Resumen General</h3>
+                        
                         <div class="bg-green-50 p-4 rounded-lg shadow-sm flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-gray-600">Mobiliario Disponible</p>
@@ -32,7 +33,13 @@
                                 <p class="text-xl font-bold text-blue-700">{{ $dispositivos->total() }}</p>
                             </div>
                             <i class="fa-solid fa-desktop text-blue-500 text-2xl"></i>
+                            
                         </div>
+                        <a href="{{ route('reportes.disponibles.excel') }}"
+   class="mb-4 inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+    📥 Exportar a Excel
+</a>
+
                     </div>
                 </div>
 

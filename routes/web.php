@@ -6,6 +6,7 @@ use App\Http\Controllers\MobiliarioController;
 use App\Http\Controllers\DispositivoController;
 use App\Http\Controllers\AsignacionController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Controllers\ReporteExportController;
 
 // Página de inicio pública
 Route::get('/', function () {
@@ -65,7 +66,8 @@ Route::get('/api/obtener-items/{tipo}', function ($tipo) {
 Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
 Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
 Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'historial'])->name('asignaciones.historial');
-
+Route::get('/reportes/asignados/excel', [ReporteExportController::class, 'asignados'])->name('reportes.asignados.excel');
+Route::get('/reportes/disponibles/excel', [ReporteExportController::class, 'disponibles'])->name('reportes.disponibles.excel');
 
 
 // Rutas de autenticación generadas por Breeze
