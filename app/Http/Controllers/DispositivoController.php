@@ -6,10 +6,8 @@ use App\Models\Dispositivo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-
 class DispositivoController extends Controller
 {
-    // Mostrar todos los dispositivos
     public function index(Request $request)
     {
         $query = Dispositivo::query();
@@ -25,19 +23,24 @@ class DispositivoController extends Controller
             });
         }
 
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        if ($request->filled('disponibilidad')) {
+            $query->where('disponibilidad', $request->disponibilidad);
+        }
+
         $dispositivos = $query->latest()->paginate(10)->withQueryString();
 
         return view('dispositivos.index', compact('dispositivos'));
     }
 
-
-    // Formulario para crear
     public function create()
     {
         return view('dispositivos.create');
     }
 
-    // Guardar nuevo
     public function store(Request $request)
     {
         $request->validate([
@@ -45,10 +48,13 @@ class DispositivoController extends Controller
             'marca' => 'required|string|max:255',
             'modelo' => 'required|string|max:255',
             'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
+            'estado' => 'required|string',
             'fecha_registro' => 'required|date',
         ]);
 
+        if ($request->estado === 'Caducado / No apto para uso') {
+            $request->merge(['disponibilidad' => 'No Aplica para asignación']);
+        }
 
         $dispositivo = new Dispositivo($request->all());
         $dispositivo->save();
@@ -59,13 +65,11 @@ class DispositivoController extends Controller
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo registrado correctamente.');
     }
 
-    // Formulario para editar
     public function edit(Dispositivo $dispositivo)
     {
         return view('dispositivos.edit', compact('dispositivo'));
     }
 
-    // Actualizar registro
     public function update(Request $request, Dispositivo $dispositivo)
     {
         $request->validate([
@@ -73,18 +77,20 @@ class DispositivoController extends Controller
             'marca' => 'required|string|max:255',
             'modelo' => 'required|string|max:255',
             'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
-            'disponibilidad' => 'required|in:Asignado,Sin Asignar,No Aplica para asignación',
+            'estado' => 'required|string',
+            'disponibilidad' => 'required|string',
             'fecha_registro' => 'required|date',
         ]);
+
+        if ($request->estado === 'Caducado / No apto para uso') {
+            $request->merge(['disponibilidad' => 'No Aplica para asignación']);
+        }
 
         $dispositivo->update($request->except('etiqueta'));
 
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo actualizado correctamente.');
     }
 
-
-    // Eliminar
     public function destroy(Dispositivo $dispositivo)
     {
         $dispositivo->delete();

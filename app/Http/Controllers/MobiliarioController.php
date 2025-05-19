@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class MobiliarioController extends Controller
 {
-    // Mostrar listado
     public function index(Request $request)
     {
         $query = Mobiliario::query();
@@ -23,34 +22,40 @@ class MobiliarioController extends Controller
             });
         }
 
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        if ($request->filled('disponibilidad')) {
+            $query->where('disponibilidad', $request->disponibilidad);
+        }
+
         $mobiliarios = $query->latest()->paginate(10)->withQueryString();
 
         return view('mobiliario.index', compact('mobiliarios'));
     }
 
-
-    // Mostrar formulario de creación
     public function create()
     {
         return view('mobiliario.create');
     }
 
-    // Guardar nuevo mobiliario
     public function store(Request $request)
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
             'tipo' => 'required|string|max:255',
             'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
+            'estado' => 'required|string',
             'fecha_registro' => 'required|date',
         ]);
 
+        if ($request->estado === 'Caducado / No apto para uso') {
+            $request->merge(['disponibilidad' => 'No Aplica para asignación']);
+        }
 
-        // Creamos primero el registro sin la etiqueta
         $mobiliario = Mobiliario::create($request->all());
 
-        // Generamos la etiqueta y actualizamos
         $etiqueta = 'INV-MOB-' . date('Y') . '-' . str_pad($mobiliario->id, 4, '0', STR_PAD_LEFT);
         $mobiliario->etiqueta = $etiqueta;
         $mobiliario->save();
@@ -58,33 +63,31 @@ class MobiliarioController extends Controller
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario registrado correctamente.');
     }
 
-
-    // Mostrar formulario de edición
     public function edit(Mobiliario $mobiliario)
     {
         return view('mobiliario.edit', compact('mobiliario'));
     }
 
-    // Actualizar registro
     public function update(Request $request, Mobiliario $mobiliario)
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
             'tipo' => 'required|string|max:255',
             'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
-            'disponibilidad' => 'required|in:Asignado,Sin Asignar,No Aplica para asignación',
+            'estado' => 'required|string',
+            'disponibilidad' => 'required|string',
             'fecha_registro' => 'required|date',
         ]);
+
+        if ($request->estado === 'Caducado / No apto para uso') {
+            $request->merge(['disponibilidad' => 'No Aplica para asignación']);
+        }
 
         $mobiliario->update($request->except('etiqueta'));
 
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario actualizado correctamente.');
     }
 
-
-
-    // Eliminar registro
     public function destroy(Mobiliario $mobiliario)
     {
         $mobiliario->delete();

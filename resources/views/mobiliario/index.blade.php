@@ -25,21 +25,57 @@
             </a>
             
         </div>
-<!-- Filtro de búsqueda -->
+<!-- Filtro de búsqueda y filtros avanzados -->
 <form method="GET" action="{{ route('mobiliario.index') }}" class="mb-4">
-    <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <input type="text" name="buscar" value="{{ request('buscar') }}"
-            class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-            placeholder="Buscar por nombre, tipo, ubicación o etiqueta">
+    <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-end flex-wrap">
+        <!-- Campo de búsqueda -->
+        <div class="flex flex-col">
+            <label class="text-sm text-gray-600 mb-1" for="buscar">Buscar</label>
+            <input type="text" name="buscar" id="buscar" value="{{ request('buscar') }}"
+                class="w-full sm:w-72 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                placeholder="Nombre, tipo, ubicación o etiqueta">
+        </div>
 
-        <button type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
-            Buscar
-        </button>
+        <!-- Filtro por Estado -->
+        <div class="flex flex-col">
+            <label class="text-sm text-gray-600 mb-1" for="estado">Estado</label>
+            <select name="estado" id="estado"
+                class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option value="">Todos</option>
+                <option value="Nuevo / En perfectas condiciones" {{ request('estado') == 'Nuevo / En perfectas condiciones' ? 'selected' : '' }}>Nuevo / En perfectas condiciones</option>
+                <option value="Con pequeños detalles / Imperfecciones leves" {{ request('estado') == 'Con pequeños detalles / Imperfecciones leves' ? 'selected' : '' }}>Con pequeños detalles</option>
+                <option value="Usado / Segunda mano" {{ request('estado') == 'Usado / Segunda mano' ? 'selected' : '' }}>Usado / Segunda mano</option>
+                <option value="Dañado / Defectuoso" {{ request('estado') == 'Dañado / Defectuoso' ? 'selected' : '' }}>Dañado / Defectuoso</option>
+                <option value="En reparación / En revisión" {{ request('estado') == 'En reparación / En revisión' ? 'selected' : '' }}>En reparación / En revisión</option>
+                <option value="Producto incompleto" {{ request('estado') == 'Producto incompleto' ? 'selected' : '' }}>Producto incompleto</option>
+                <option value="Caducado / No apto para uso" {{ request('estado') == 'Caducado / No apto para uso' ? 'selected' : '' }}>Caducado / No apto para uso</option>
+            </select>
+        </div>
 
-        @if(request('buscar'))
-            <a href="{{ route('mobiliario.index') }}" class="text-sm text-gray-500 hover:underline">Limpiar</a>
-        @endif
+        <!-- Filtro por Disponibilidad -->
+        <div class="flex flex-col">
+            <label class="text-sm text-gray-600 mb-1" for="disponibilidad">Disponibilidad</label>
+            <select name="disponibilidad" id="disponibilidad"
+                class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option value="">Todas</option>
+                <option value="Asignado" {{ request('disponibilidad') == 'Asignado' ? 'selected' : '' }}>Asignado</option>
+                <option value="Sin Asignar" {{ request('disponibilidad') == 'Sin Asignar' ? 'selected' : '' }}>Sin Asignar</option>
+                <option value="No Aplica para asignación" {{ request('disponibilidad') == 'No Aplica para asignación' ? 'selected' : '' }}>No Aplica para asignación</option>
+            </select>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex items-center gap-2 mt-5 sm:mt-0">
+            <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition">
+                Aplicar Filtros
+            </button>
+
+            @if(request('buscar') || request('estado') || request('disponibilidad'))
+                <a href="{{ route('mobiliario.index') }}"
+                    class="text-sm text-gray-500 hover:text-gray-700 hover:underline">Limpiar</a>
+            @endif
+        </div>
     </div>
 </form>
 
