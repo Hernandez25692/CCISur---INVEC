@@ -17,30 +17,39 @@ class AsignacionController extends Controller
 {
     // Listar asignaciones
     public function index(Request $request)
-    {
-        $query = Asignacion::with('devolucion');
+{
+    $ordenar = $request->input('ordenar', 'created_at');
+    $direccion = $request->input('direccion', 'desc');
+    $buscar = $request->input('buscar');
 
-        if ($request->filled('buscar')) {
-            $buscar = $request->buscar;
+    $query = Asignacion::with('devolucion');
 
-            $query->whereHas('empleado', function ($q) use ($buscar) {
-                $q->where('nombre_completo', 'like', "%$buscar%");
-            });
-
-            $query->orWhereHas('mobiliario', function ($q) use ($buscar) {
-                $q->where('etiqueta', 'like', "%$buscar%");
-            });
-
-            $query->orWhereHas('dispositivo', function ($q) use ($buscar) {
-                $q->where('etiqueta', 'like', "%$buscar%");
-            });
-        }
-
-
-        $asignaciones = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        return view('asignaciones.index', compact('asignaciones'));
+    if ($buscar) {
+        $query->whereHas('empleado', function ($q) use ($buscar) {
+            $q->where('nombre_completo', 'like', "%$buscar%");
+        })
+        ->orWhereHas('mobiliario', function ($q) use ($buscar) {
+            $q->where('etiqueta', 'like', "%$buscar%");
+        })
+        ->orWhereHas('dispositivo', function ($q) use ($buscar) {
+            $q->where('etiqueta', 'like', "%$buscar%");
+        });
     }
+
+    // Ordenamiento personalizado para columnas relacionadas
+    if ($ordenar === 'empleado') {
+        $query->join('empleados', 'empleados.id', '=', 'asignacions.empleado_id')
+              ->orderBy('empleados.nombre_completo', $direccion)
+              ->select('asignacions.*');
+    } else {
+        $query->orderBy($ordenar, $direccion);
+    }
+
+    $asignaciones = $query->paginate(10)->appends($request->all());
+
+    return view('asignaciones.index', compact('asignaciones'));
+}
+
 
 
     // Formulario para nueva asignación
