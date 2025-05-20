@@ -99,7 +99,10 @@
                                 Ubicación</th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Estado</th>
+                                Estado Asignación</th>   
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Condición</th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Etiqueta</th>
@@ -122,17 +125,33 @@
                                     {{ $item->tipo }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->ubicacion }}
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                                    <span class="
+                                        px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                        @switch($item->disponibilidad)
+                                            @case('Asignado') bg-blue-100 text-blue-800 @break
+                                            @case('Sin Asignar') bg-yellow-100 text-yellow-800 @break
+                                            @case('No Aplica para asignación') bg-gray-200 text-gray-700 @break
+                                            @default bg-gray-100 text-gray-800
+                                        @endswitch
+                                    ">
+                                        {{ $item->disponibilidad }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
-                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    @switch($item->estado)
-                                        @case('nuevo') bg-green-100 text-green-800 @break
-                                        @case('usado') bg-blue-100 text-blue-800 @break
-                                        @case('dañado') bg-yellow-100 text-yellow-800 @break
-                                        @case('reparación') bg-orange-100 text-orange-800 @break
-                                        @default bg-gray-100 text-gray-800
-                                    @endswitch">
-                                        {{ ucfirst($item->estado) }}
+                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                        @switch($item->estado)
+                                            @case('Nuevo / En perfectas condiciones') bg-green-100 text-green-800 @break
+                                            @case('Con pequeños detalles / Imperfecciones leves') bg-yellow-100 text-yellow-800 @break
+                                            @case('Usado / Segunda mano') bg-blue-100 text-blue-800 @break
+                                            @case('Dañado / Defectuoso') bg-red-100 text-red-800 @break
+                                            @case('En reparación / En revisión') bg-orange-100 text-orange-800 @break
+                                            @case('Producto incompleto') bg-purple-100 text-purple-800 @break
+                                            @case('Caducado / No apto para uso') bg-gray-400 text-gray-900 @break
+                                            @default bg-gray-100 text-gray-800
+                                        @endswitch">
+                                        {{ $item->estado }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -145,29 +164,63 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-3">
-                                        <a href="{{ route('mobiliario.edit', $item->id) }}"
-                                            class="text-blue-600 hover:text-blue-900" title="Editar">
+                                        <!-- Editar Modal Trigger -->
+                                        <button
+                                            class="text-blue-600 hover:text-blue-900"
+                                            title="Editar"
+                                            onclick="openEditModal({{ $item->id }}, '{{ addslashes($item->nombre) }}')"
+                                            type="button"
+                                        >
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
-                                        </a>
-                                        <form action="{{ route('mobiliario.destroy', $item->id) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                onclick="return confirm('¿Estás seguro de eliminar este registro de mobiliario?')"
-                                                class="text-red-600 hover:text-red-900" title="Eliminar">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </form>
+                                        </button>
+                                        <!-- Modal Editar -->
+                                        <div id="edit-modal-{{ $item->id }}" class="fixed z-50 inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden">
+                                            <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-t-8 border-blue-600 animate-fade-in">
+                                                <button onclick="closeEditModal({{ $item->id }})"
+                                                    class="absolute top-3 right-3 text-gray-400 hover:text-blue-600 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                <div class="flex items-center mb-4">
+                                                    <div class="bg-blue-100 text-blue-600 rounded-full p-2 mr-3">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </div>
+                                                    <h3 class="text-xl font-bold text-blue-700">Editar Mobiliario</h3>
+                                                </div>
+                                                <p class="mb-6 text-gray-600">¿Deseas editar el mobiliario <span class="font-bold text-blue-700">{{ $item->nombre }}</span>?</p>
+                                                <div class="flex justify-end gap-2">
+                                                    <button onclick="closeEditModal({{ $item->id }})"
+                                                        class="px-5 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition">Cancelar</button>
+                                                    <a href="{{ route('mobiliario.edit', $item->id) }}"
+                                                        class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">Editar</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Eliminar Modal Trigger -->
+                                        <button
+                                            class="text-red-600 hover:text-red-900"
+                                            title="Eliminar"
+                                            onclick="showDeleteModal({{ $item->id }}, '{{ addslashes($item->nombre) }}')"
+                                            type="button"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -175,7 +228,7 @@
 
                         @if ($mobiliarios->isEmpty())
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center">
+                                <td colspan="9" class="px-6 py-12 text-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400"
                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -199,6 +252,58 @@
                             </tr>
                         @endif
                     </tbody>
+                </table>
+
+                <!-- Delete Modal -->
+                <div id="deleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 transition-opacity duration-200 hidden">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 relative">
+                        <div class="flex justify-between items-center border-b px-6 py-4">
+                            <h2 class="text-lg font-semibold text-gray-800">Eliminar Mobiliario</h2>
+                            <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <p class="mb-6 text-gray-700" id="deleteModalText">
+                                ¿Estás seguro de eliminar este registro de mobiliario?
+                            </p>
+                            <form id="deleteModalForm" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <div class="flex justify-end gap-2">
+                                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancelar</button>
+                                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Eliminar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                @push('scripts')
+                <script>
+                    // Modal Editar
+                    function openEditModal(id, nombre) {
+                        document.getElementById('edit-modal-' + id).classList.remove('hidden');
+                    }
+                    function closeEditModal(id) {
+                        document.getElementById('edit-modal-' + id).classList.add('hidden');
+                    }
+
+                    // Delete Modal
+                    function showDeleteModal(id, nombre) {
+                        document.getElementById('deleteModal').classList.remove('hidden');
+                        document.getElementById('deleteModalText').innerText = `¿Estás seguro de eliminar "${nombre}"? Esta acción no se puede deshacer.`;
+                        document.getElementById('deleteModalForm').action = "{{ url('mobiliario') }}/" + id;
+                    }
+                    function closeDeleteModal() {
+                        document.getElementById('deleteModal').classList.add('hidden');
+                    }
+                </script>
+                @endpush
                 </table>
                 <div class="px-6 py-4">
                     <div class="flex justify-between items-center text-sm text-gray-600">

@@ -123,8 +123,12 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex items-center justify-end space-x-3">
-                                            <a href="{{ route('empleados.edit', $e) }}"
-                                                class="text-blue-600 hover:text-blue-900 flex items-center">
+                                            <!-- Botón Editar -->
+                                            <button 
+                                                type="button"
+                                                onclick="openModal('edit-modal-{{ $e->id }}')"
+                                                class="text-blue-600 hover:text-blue-900 flex items-center"
+                                            >
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1"
                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -132,23 +136,82 @@
                                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                 </svg>
                                                 Editar
-                                            </a>
-                                            <form method="POST" action="{{ route('empleados.destroy', $e) }}"
-                                                class="inline">
-                                                @csrf @method('DELETE')
-                                                <button
-                                                    onclick="return confirm('¿Está seguro de eliminar este empleado?')"
-                                                    class="text-red-600 hover:text-red-900 flex items-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                    Eliminar
-                                                </button>
-                                            </form>
+                                            </button>
+                                            <!-- Botón Eliminar -->
+                                            <button 
+                                                type="button"
+                                                onclick="openModal('delete-modal-{{ $e->id }}')"
+                                                class="text-red-600 hover:text-red-900 flex items-center"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                                Eliminar
+                                            </button>
                                         </div>
+
+                                        <!-- Modal Confirmar Editar -->
+                                        <div id="edit-modal-{{ $e->id }}" class="fixed inset-0 z-50 hidden bg-black bg-opacity-40 flex items-center justify-center">
+                                            <div class="bg-white rounded-xl shadow-lg max-w-xs w-full mx-4 p-6 text-center relative overflow-auto" style="max-height:90vh;">
+                                                <button onclick="closeModal('edit-modal-{{ $e->id }}')" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+                                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                                <h3 class="text-lg font-semibold text-blue-700 mb-2 break-words">¿Editar empleado?</h3>
+                                                <p class="text-gray-600 mb-4 break-words overflow-hidden text-ellipsis" style="word-break:break-word;">
+                                                    ¿Desea editar la información de <span class="font-bold break-words">{{ $e->nombre_completo }}</span>?
+                                                </p>
+                                                <div class="flex flex-wrap justify-center gap-3">
+                                                    <a href="{{ route('empleados.edit', $e) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition">Sí, Editar</a>
+                                                    <button onclick="closeModal('edit-modal-{{ $e->id }}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium transition">Cancelar</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Modal Confirmar Eliminar -->
+                                        <div id="delete-modal-{{ $e->id }}" class="fixed inset-0 z-50 hidden bg-black bg-opacity-40 flex items-center justify-center">
+                                            <div class="bg-white rounded-xl shadow-lg max-w-xs w-full mx-4 p-6 text-center relative overflow-auto" style="max-height:90vh;">
+                                                <button onclick="closeModal('delete-modal-{{ $e->id }}')" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+                                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                                <h3 class="text-lg font-semibold text-red-600 mb-2 break-words">¿Eliminar empleado?</h3>
+                                                <p class="text-gray-600 mb-4 break-words overflow-hidden text-ellipsis" style="word-break:break-word;">
+                                                    ¿Está seguro de eliminar a <span class="font-bold break-words">{{ $e->nombre_completo }}</span>? Esta acción no se puede deshacer.
+                                                </p>
+                                                <div class="flex flex-wrap justify-center gap-3">
+                                                    <form method="POST" action="{{ route('empleados.destroy', $e) }}">
+                                                        @csrf @method('DELETE')
+                                                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition">Sí, Eliminar</button>
+                                                    </form>
+                                                    <button onclick="closeModal('delete-modal-{{ $e->id }}')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium transition">Cancelar</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        @push('scripts')
+                                        <script>
+                                        function openModal(id) {
+                                            document.getElementById(id).classList.remove('hidden');
+                                        }
+                                        function closeModal(id) {
+                                            document.getElementById(id).classList.add('hidden');
+                                        }
+                                        // Cerrar modal al presionar Escape
+                                        document.addEventListener('keydown', function(e) {
+                                            if (e.key === "Escape") {
+                                                document.querySelectorAll('.fixed.inset-0.z-50').forEach(function(modal) {
+                                                    modal.classList.add('hidden');
+                                                });
+                                            }
+                                        });
+                                        </script>
+                                        @endpush
                                     </td>
                                 </tr>
                             @empty

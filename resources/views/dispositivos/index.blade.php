@@ -116,7 +116,10 @@
                                 Marca/Modelo</th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Estado</th>
+                                Estado Asignación</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Condición</th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Etiqueta</th>
@@ -136,11 +139,36 @@
                                     <div class="font-medium">{{ $dispositivo->marca }}</div>
                                     <div class="text-xs text-gray-400">{{ $dispositivo->modelo }}</div>
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    @php
+                                        $disponibilidad = $dispositivo->disponibilidad ?? 'N/A';
+                                        $coloresDisponibilidad = [
+                                            'Asignado' => 'bg-blue-100 text-blue-800',
+                                            'Sin Asignar' => 'bg-green-100 text-green-800',
+                                            'No Aplica para asignación' => 'bg-gray-200 text-gray-700',
+                                        ];
+                                        $colorDisponibilidad = $coloresDisponibilidad[$disponibilidad] ?? 'bg-gray-100 text-gray-800';
+                                    @endphp
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $colorDisponibilidad }}">
+                                        {{ $disponibilidad }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    {{ $dispositivo->estado === 'asignado' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' }}">
-                                        {{ ucfirst($dispositivo->estado ?? 'disponible') }}
+                                    @php
+                                        $estado = $dispositivo->estado ?? 'N/A';
+                                        $colores = [
+                                            'Nuevo / En perfectas condiciones' => 'bg-green-100 text-green-800',
+                                            'Con pequeños detalles / Imperfecciones leves' => 'bg-yellow-100 text-yellow-800',
+                                            'Usado / Segunda mano' => 'bg-blue-100 text-blue-800',
+                                            'Dañado / Defectuoso' => 'bg-red-100 text-red-800',
+                                            'En reparación / En revisión' => 'bg-orange-100 text-orange-800',
+                                            'Producto incompleto' => 'bg-purple-100 text-purple-800',
+                                            'Caducado / No apto para uso' => 'bg-gray-300 text-gray-700',
+                                        ];
+                                        $color = $colores[$estado] ?? 'bg-gray-100 text-gray-800';
+                                    @endphp
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $color }}">
+                                        {{ $estado }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -150,30 +178,129 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-3">
-                                        <a href="{{ route('dispositivos.edit', $dispositivo->id) }}"
-                                            class="text-blue-600 hover:text-blue-900" title="Editar">
+                                        <!-- Botón Editar con Modal -->
+                                        <button type="button"
+                                            class="text-blue-600 hover:text-blue-900"
+                                            title="Editar"
+                                            onclick="openEditModal({{ $dispositivo->id }})">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
-                                        </a>
-                                        <form action="{{ route('dispositivos.destroy', $dispositivo->id) }}"
-                                            method="POST" class="inline">
-                                            @csrf @method('DELETE')
-                                            <button type="submit"
-                                                onclick="return confirm('¿Estás seguro de eliminar este dispositivo?')"
-                                                class="text-red-600 hover:text-red-900" title="Eliminar">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </form>
+                                        </button>
+                                        <!-- Modal Editar -->
+                                        <div id="edit-modal-{{ $dispositivo->id }}" class="fixed z-50 inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden">
+                                            <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-t-8 border-blue-600 animate-fade-in">
+                                                <button onclick="closeEditModal({{ $dispositivo->id }})"
+                                                    class="absolute top-3 right-3 text-gray-400 hover:text-blue-600 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                <div class="flex items-center mb-4">
+                                                    <div class="bg-blue-100 text-blue-600 rounded-full p-2 mr-3">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </div>
+                                                    <h3 class="text-xl font-bold text-blue-700">Editar Dispositivo</h3>
+                                                </div>
+                                                <p class="mb-6 text-gray-600">¿Deseas editar el dispositivo <span class="font-bold text-blue-700">{{ $dispositivo->nombre }}</span>?</p>
+                                                <div class="flex justify-end gap-2">
+                                                    <button onclick="closeEditModal({{ $dispositivo->id }})"
+                                                        class="px-5 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition">Cancelar</button>
+                                                    <a href="{{ route('dispositivos.edit', $dispositivo->id) }}"
+                                                        class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">Editar</a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botón Eliminar con Modal -->
+                                        <button type="button"
+                                            class="text-red-600 hover:text-red-900"
+                                            title="Eliminar"
+                                            onclick="openDeleteModal({{ $dispositivo->id }})">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                        <!-- Modal Eliminar -->
+                                        <div id="delete-modal-{{ $dispositivo->id }}" class="fixed z-50 inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden">
+                                            <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-t-8 border-red-600 animate-fade-in">
+                                                <button onclick="closeDeleteModal({{ $dispositivo->id }})"
+                                                    class="absolute top-3 right-3 text-gray-400 hover:text-red-600 transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                                <div class="flex items-center mb-4">
+                                                    <div class="bg-red-100 text-red-600 rounded-full p-2 mr-3">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </div>
+                                                    <h3 class="text-xl font-bold text-red-700">Eliminar Dispositivo</h3>
+                                                </div>
+                                                <p class="mb-6 text-gray-600 break-words text-pretty max-w-full">
+                                                    ¿Estás seguro de eliminar el dispositivo
+                                                    <span class="font-bold text-red-700">{{ $dispositivo->nombre }}</span>?<br>
+                                                    Esta acción no se puede deshacer.
+                                                </p>
+                                                <div class="flex justify-end gap-2">
+                                                    <button onclick="closeDeleteModal({{ $dispositivo->id }})"
+                                                        class="px-5 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition">Cancelar</button>
+                                                    <form action="{{ route('dispositivos.destroy', $dispositivo->id) }}" method="POST" class="inline">
+                                                        @csrf @method('DELETE')
+                                                        <button type="submit"
+                                                            class="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition">Eliminar</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
+
+                                @push('styles')
+                                <style>
+                                    @keyframes fade-in {
+                                        from { opacity: 0; transform: translateY(40px);}
+                                        to { opacity: 1; transform: translateY(0);}
+                                    }
+                                    .animate-fade-in {
+                                        animation: fade-in 0.25s ease;
+                                    }
+                                </style>
+                                @endpush
+
+                                @push('scripts')
+                                <script>
+                                    function openEditModal(id) {
+                                        document.getElementById('edit-modal-' + id).classList.remove('hidden');
+                                    }
+                                    function closeEditModal(id) {
+                                        document.getElementById('edit-modal-' + id).classList.add('hidden');
+                                    }
+                                    function openDeleteModal(id) {
+                                        document.getElementById('delete-modal-' + id).classList.remove('hidden');
+                                    }
+                                    function closeDeleteModal(id) {
+                                        document.getElementById('delete-modal-' + id).classList.add('hidden');
+                                    }
+                                </script>
+                                @endpush
                             </tr>
                         @endforeach
 
