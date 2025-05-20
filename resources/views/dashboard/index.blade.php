@@ -1,20 +1,37 @@
 <x-app-layout>
     <div class="py-6 px-4 max-w-7xl mx-auto space-y-6">
-        <div class="flex items-center justify-center bg-blue-100 p-4 rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold text-blue-800">
-            <i class="fas fa-clock mr-2"></i>
-            <span id="fechaHora"></span>
-            </h2>
+        <div class="flex items-center justify-center py-4">
+            <div class="relative flex items-center gap-6 bg-white shadow-2xl rounded-3xl px-10 py-6 border border-blue-100 overflow-hidden">
+                <!-- Fondo decorativo animado -->
+                <span class="absolute -top-8 -left-8 w-32 h-32 bg-gradient-to-tr from-blue-500 via-blue-400 to-cyan-300 opacity-30 rounded-full animate-pulse"></span>
+                <span class="absolute -bottom-10 -right-10 w-40 h-40 bg-gradient-to-br from-cyan-400 via-blue-400 to-blue-700 opacity-20 rounded-full animate-pulse"></span>
+                <!-- Icono -->
+                <div class="flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-400 shadow-lg z-10">
+                    <i class="fas fa-clock text-3xl text-white drop-shadow-lg"></i>
+                </div>
+                <!-- Texto -->
+                <div class="flex flex-col z-10">
+                    <span class="text-xs text-blue-500 font-semibold tracking-widest uppercase mb-1">Fecha y Hora Actual</span>
+                    <span id="fechaHora" class="text-3xl font-extrabold text-gray-900 tracking-tight"></span>
+                </div>
+            </div>
         </div>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-            function actualizarFechaHora() {
-                const ahora = new Date();
-                const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-                document.getElementById('fechaHora').textContent = ahora.toLocaleDateString('es-ES', opciones);
-            }
-            actualizarFechaHora();
-            setInterval(actualizarFechaHora, 1000);
+                function actualizarFechaHora() {
+                    const ahora = new Date();
+                    const opciones = {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    };
+                    document.getElementById('fechaHora').textContent = ahora.toLocaleDateString('es-ES', opciones);
+                }
+                actualizarFechaHora();
+                setInterval(actualizarFechaHora, 1000);
             });
         </script>
         <!DOCTYPE html>
