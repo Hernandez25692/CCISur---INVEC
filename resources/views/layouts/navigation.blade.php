@@ -56,6 +56,12 @@
             transition: transform 0.2s ease;
         }
 
+        .nav-content>.flex.items-center {
+            gap: 1rem;
+            min-width: 1px;
+            flex-shrink: 0;
+        }
+
         .brand:hover {
             transform: translateY(-1px);
         }
@@ -63,6 +69,11 @@
         .brand-logo {
             height: 2.5rem;
             width: auto;
+        }
+
+        .brand img {
+            display: block;
+            max-height: 40px;
         }
 
         .brand-name {
@@ -292,6 +303,8 @@
             background-color: #fef2f2;
         }
 
+
+
         /* Versión desktop */
         @media (min-width: 768px) {
             .nav-links {
@@ -316,14 +329,12 @@
 <body>
     <nav class="navbar">
         <div class="nav-container">
+
             <div class="nav-content">
                 <!-- Logo y marca -->
                 <div class="flex items-center">
                     <a href="{{ route('dashboard') }}" class="brand">
-                        <span
-                            class="brand-name text-2xl font-extrabold tracking-wide text-indigo-600 hover:text-indigo-700 transition-all">
-                            INVEC
-                        </span>
+                        <img src="{{ asset('menu/logo1.png') }}" alt="Logo INVEC" class="h-10 w-auto block">
                     </a>
 
 
@@ -399,6 +410,7 @@
         <!-- Menú móvil -->
         <div class="mobile-menu" id="mobileMenu">
             <div class="mobile-links">
+
                 <a href="{{ route('dashboard') }}"
                     class="mobile-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="fas fa-tachometer-alt"></i>

@@ -292,7 +292,8 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $asig->id }}</td>
-                                    <td>{{ $asig->colaborador }}</td>
+                                   <td>{{ $asig->empleado->nombre_completo ?? 'Sin asignar' }}</td>
+
                                     <td class="capitalize">{{ $asig->tipo }}</td>
                                     <td>{{ $ref->nombre ?? 'N/A' }}</td>
                                     <td>{{ $asig->fecha_entrega }}</td>

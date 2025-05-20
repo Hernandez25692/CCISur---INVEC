@@ -313,7 +313,7 @@
     <div class="login-container">
         <!-- Panel izquierdo - Información -->
         <div class="info-panel">
-            <img src="{{ asset('Logo/logo_menu.png') }}" alt="Logo INVEC">
+            <img src="{{ asset('Logo/logo_menu1.png') }}" alt="Logo INVEC">
             <h1>Bienvenido a INVEC</h1>
             <p>Sistema de Inventario y Asignación de Equipos</p>
 
@@ -332,7 +332,7 @@
         <div class="form-panel">
             <div class="form-container">
                 <div class="form-header">
-                    <img src="{{ asset('Logo/logo_menu.png') }}" alt="INVEC">
+                    <img src="{{ asset('menu/logo1.png') }}" alt="INVEC">
                     <h2>Iniciar Sesión</h2>
                     <p>Ingresa tus credenciales para continuar</p>
                 </div>
