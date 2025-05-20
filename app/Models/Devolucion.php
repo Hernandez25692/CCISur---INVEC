@@ -11,6 +11,7 @@ class Devolucion extends Model
         'asignacion_id',
         'fecha_devolucion',
         'recibido_por',
+        'evidencia',
         'observaciones',
     ];
 

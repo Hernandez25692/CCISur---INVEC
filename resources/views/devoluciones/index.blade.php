@@ -194,6 +194,7 @@
                                 <th>Etiqueta</th>
                                 <th>Fecha de Devolución</th>
                                 <th class="text-right">Acciones</th>
+                                <th>Evidencia</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -224,7 +225,28 @@
                                                 <a href="{{ route('devoluciones.pdf', $devolucion->id) }}"
                                                     target="_blank" class="action-link pdf">PDF</a>
                                             </div>
+
                                         </td>
+                                        <td>
+                                            @if ($devolucion->adjunto)
+                                                <a href="{{ asset('storage/' . $devolucion->adjunto) }}"
+                                                    target="_blank"
+                                                    class="action-link text-green-600 hover:underline">Ver</a>
+                                            @else
+                                                <!-- Formulario inline para subir -->
+                                                <form action="{{ route('devoluciones.adjuntar', $devolucion->id) }}"
+                                                    method="POST" enctype="multipart/form-data"
+                                                    class="flex items-center gap-2">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <input type="file" name="adjunto" accept=".pdf,.jpg,.png"
+                                                        required class="text-sm">
+                                                    <button type="submit"
+                                                        class="text-blue-600 hover:underline text-sm">Subir</button>
+                                                </form>
+                                            @endif
+                                        </td>
+
                                     </tr>
                                 @endif
                             @endforeach

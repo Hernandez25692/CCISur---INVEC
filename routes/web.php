@@ -71,6 +71,8 @@ Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
 Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'historial'])->name('asignaciones.historial');
 Route::get('/reportes/asignados/excel', [ReporteExportController::class, 'asignados'])->name('reportes.asignados.excel');
 Route::get('/reportes/disponibles/excel', [ReporteExportController::class, 'disponibles'])->name('reportes.disponibles.excel');
+Route::put('devoluciones/{devolucion}/adjuntar', [\App\Http\Controllers\DevolucionController::class, 'adjuntar'])->name('devoluciones.adjuntar');
+Route::put('/asignaciones/{asignacion}/adjuntar', [AsignacionController::class, 'adjuntar'])->name('asignaciones.adjuntar');
 
 // Exportar Mobiliario
 Route::get('/exportar-mobiliario', function () {

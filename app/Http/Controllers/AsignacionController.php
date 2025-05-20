@@ -147,4 +147,22 @@ class AsignacionController extends Controller
 
         return view('asignaciones.historial', compact('asignaciones', 'empleado'));
     }
+
+    public function adjuntar(Request $request, Asignacion $asignacion)
+    {
+        $request->validate([
+            'adjunto' => 'required|mimes:pdf,jpg,png|max:2048',
+        ]);
+
+        if ($request->hasFile('adjunto')) {
+            $file = $request->file('adjunto');
+            $nombre = 'asignacion_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('adjuntos_asignaciones', $nombre, 'public');
+
+            $asignacion->adjunto = $path;
+            $asignacion->save();
+        }
+
+        return redirect()->route('asignaciones.index')->with('success', 'Evidencia de asignación cargada correctamente.');
+    }
 }

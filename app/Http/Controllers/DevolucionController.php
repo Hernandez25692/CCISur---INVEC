@@ -152,4 +152,22 @@ class DevolucionController extends Controller
 
         return response()->json($asignaciones);
     }
+
+    public function adjuntar(Request $request, Devolucion $devolucion)
+    {
+        $request->validate([
+            'adjunto' => 'required|mimes:pdf,jpg,png|max:2048',
+        ]);
+
+        if ($request->hasFile('adjunto')) {
+            $file = $request->file('adjunto');
+            $nombre = 'evidencia_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('adjuntos_devoluciones', $nombre, 'public');
+
+            $devolucion->adjunto = $path;
+            $devolucion->save();
+        }
+
+        return redirect()->route('devoluciones.index')->with('success', 'Evidencia cargada correctamente.');
+    }
 }
