@@ -6,6 +6,8 @@ use App\Http\Controllers\MobiliarioController;
 use App\Http\Controllers\DispositivoController;
 use App\Http\Controllers\AsignacionController;
 use App\Http\Controllers\ReporteController;
+use App\Exports\AsignacionesExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 // Página de inicio pública
 Route::get('/', function () {
@@ -66,7 +68,16 @@ Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::
 Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
 Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'historial'])->name('asignaciones.historial');
 
+// Exportar reporte de asignaciones a Excel
+Route::get('/reportes/asignados/exportar', function () {
+    $filtros = [
+        'tipo' => request('tipo'),
+        'empleado' => request('empleado'),
+        'elemento' => request('elemento'),
+    ];
 
+    return Excel::download(new AsignacionesExport($filtros), 'reporte_asignaciones.xlsx');
+})->name('reportes.asignados.exportar');
 
 // Rutas de autenticación generadas por Breeze
 require __DIR__ . '/auth.php';

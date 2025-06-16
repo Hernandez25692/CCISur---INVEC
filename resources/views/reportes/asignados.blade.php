@@ -264,7 +264,7 @@
                 <p class="report-subtitle">Control de activos y recursos institucionales</p>
                 <div class="report-meta">
                     <span>Generado: {{ now()->format('d/m/Y H:i') }}</span>
-                    <span>Total registros: {{ $asignaciones->count() }}</span>
+                    <span>Total activos: {{ $asignaciones->where('devolucion', null)->count() }}</span>
                 </div>
             </header>
             <!-- Filtros de búsqueda -->
@@ -310,6 +310,11 @@
                 <div class="report-card">
                     <div class="card-header">
                         <span>Listado detallado de asignaciones</span>
+                        <a href="{{ route('reportes.asignados.exportar', request()->query()) }}"
+                            class="no-print inline-block mb-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                            Exportar a Excel
+                        </a>
+
                         <button onclick="window.print()" class="no-print"
                             style="background: white; color: var(--primary-color); border: none; padding: 0.25rem 0.75rem; border-radius: var(--rounded-sm); font-weight: 500; cursor: pointer;">
                             Imprimir Reporte
