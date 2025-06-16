@@ -18,29 +18,31 @@ class AsignacionController extends Controller
     // Listar asignaciones
     public function index(Request $request)
     {
-        $query = Asignacion::with('devolucion');
+        $query = Asignacion::query();
 
         if ($request->filled('buscar')) {
-            $buscar = $request->buscar;
-
-            $query->whereHas('empleado', function ($q) use ($buscar) {
-                $q->where('nombre_completo', 'like', "%$buscar%");
-            });
-
-            $query->orWhereHas('mobiliario', function ($q) use ($buscar) {
-                $q->where('etiqueta', 'like', "%$buscar%");
-            });
-
-            $query->orWhereHas('dispositivo', function ($q) use ($buscar) {
-                $q->where('etiqueta', 'like', "%$buscar%");
+            $query->whereHas('empleado', function ($q) use ($request) {
+                $q->where('nombre_completo', 'like', '%' . $request->buscar . '%');
+            })->orWhereHas('mobiliario', function ($q) use ($request) {
+                $q->where('etiqueta', 'like', '%' . $request->buscar . '%');
+            })->orWhereHas('dispositivo', function ($q) use ($request) {
+                $q->where('etiqueta', 'like', '%' . $request->buscar . '%');
             });
         }
 
+        if ($request->filled('fecha_inicio')) {
+            $query->whereDate('fecha_entrega', '>=', $request->fecha_inicio);
+        }
 
-        $asignaciones = $query->orderBy('created_at', 'desc')->paginate(10);
+        if ($request->filled('fecha_fin')) {
+            $query->whereDate('fecha_entrega', '<=', $request->fecha_fin);
+        }
+
+        $asignaciones = $query->latest()->paginate(15);
 
         return view('asignaciones.index', compact('asignaciones'));
     }
+
 
 
     // Formulario para nueva asignación

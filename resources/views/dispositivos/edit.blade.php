@@ -20,12 +20,70 @@
                     readonly>
             </div>
 
+            <!-- Tipo -->
             <div>
                 <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo</label>
-                <input type="text" name="tipo" id="tipo" value="{{ old('tipo', $dispositivo->tipo) }}"
-                    required
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <select name="tipo" id="tipo" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                    <option value="">-- Seleccionar tipo de dispositivo --</option>
+                    <option value="Laptop" {{ old('tipo', $dispositivo->tipo) == 'Laptop' ? 'selected' : '' }}>Laptop
+                    </option>
+                    <option value="Computadora de escritorio"
+                        {{ old('tipo', $dispositivo->tipo) == 'Computadora de escritorio' ? 'selected' : '' }}>
+                        Computadora de escritorio</option>
+                    <option value="Proyector" {{ old('tipo', $dispositivo->tipo) == 'Proyector' ? 'selected' : '' }}>
+                        Proyector</option>
+                    <option value="Impresora" {{ old('tipo', $dispositivo->tipo) == 'Impresora' ? 'selected' : '' }}>
+                        Impresora</option>
+                    <option value="Escáner" {{ old('tipo', $dispositivo->tipo) == 'Escáner' ? 'selected' : '' }}>Escáner
+                    </option>
+                    <option value="Monitor" {{ old('tipo', $dispositivo->tipo) == 'Monitor' ? 'selected' : '' }}>Monitor
+                    </option>
+                    <option value="Teclado" {{ old('tipo', $dispositivo->tipo) == 'Teclado' ? 'selected' : '' }}>Teclado
+                    </option>
+                    <option value="Mouse" {{ old('tipo', $dispositivo->tipo) == 'Mouse' ? 'selected' : '' }}>Mouse
+                    </option>
+                    <option value="Tablet" {{ old('tipo', $dispositivo->tipo) == 'Tablet' ? 'selected' : '' }}>Tablet
+                    </option>
+                    <option value="Switch de red"
+                        {{ old('tipo', $dispositivo->tipo) == 'Switch de red' ? 'selected' : '' }}>Switch de red
+                    </option>
+                    <option value="Router" {{ old('tipo', $dispositivo->tipo) == 'Router' ? 'selected' : '' }}>Router
+                    </option>
+                    <option value="Access Point (AP)"
+                        {{ old('tipo', $dispositivo->tipo) == 'Access Point (AP)' ? 'selected' : '' }}>Access Point
+                        (AP)</option>
+                    <option value="Servidor" {{ old('tipo', $dispositivo->tipo) == 'Servidor' ? 'selected' : '' }}>
+                        Servidor</option>
+                    <option value="Disco duro externo"
+                        {{ old('tipo', $dispositivo->tipo) == 'Disco duro externo' ? 'selected' : '' }}>Disco duro
+                        externo</option>
+                    <option value="No-break / UPS"
+                        {{ old('tipo', $dispositivo->tipo) == 'No-break / UPS' ? 'selected' : '' }}>No-break / UPS
+                    </option>
+                    <option value="Cámara Web" {{ old('tipo', $dispositivo->tipo) == 'Cámara Web' ? 'selected' : '' }}>
+                        Cámara Web</option>
+                    <option value="Micrófono" {{ old('tipo', $dispositivo->tipo) == 'Micrófono' ? 'selected' : '' }}>
+                        Micrófono</option>
+                    <option value="Sistema de sonido"
+                        {{ old('tipo', $dispositivo->tipo) == 'Sistema de sonido' ? 'selected' : '' }}>Sistema de
+                        sonido</option>
+                    <option value="Pantalla interactiva"
+                        {{ old('tipo', $dispositivo->tipo) == 'Pantalla interactiva' ? 'selected' : '' }}>Pantalla
+                        interactiva</option>
+                    <option value="Control remoto"
+                        {{ old('tipo', $dispositivo->tipo) == 'Control remoto' ? 'selected' : '' }}>Control remoto
+                    </option>
+                    <option value="Cargador de laptop"
+                        {{ old('tipo', $dispositivo->tipo) == 'Cargador de laptop' ? 'selected' : '' }}>Cargador de
+                        laptop</option>
+                    <option value="Cable HDMI" {{ old('tipo', $dispositivo->tipo) == 'Cable HDMI' ? 'selected' : '' }}>
+                        Cable HDMI</option>
+                    <option value="Otro" {{ old('tipo', $dispositivo->tipo) == 'Otro' ? 'selected' : '' }}>Otro
+                    </option>
+                </select>
             </div>
+
 
             <div>
                 <label for="marca" class="block text-sm font-medium text-gray-700">Marca</label>

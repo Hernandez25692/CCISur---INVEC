@@ -260,11 +260,11 @@
                         </a>
                         <a href="{{ route('reportes.asignados') }}"
                             class="nav-link {{ request()->routeIs('reportes.asignados') ? 'active' : '' }}">
-                            R/Asignados
+                            Reporte Asignados
                         </a>
                         <a href="{{ route('reportes.disponibles') }}"
                             class="nav-link {{ request()->routeIs('reportes.disponibles') ? 'active' : '' }}">
-                            R/Disponibles
+                            Reporte Disponibles
                         </a>
                         <a href="{{ route('devoluciones.index') }}"
                             class="nav-link {{ request()->routeIs('devoluciones.*') ? 'active' : '' }}">

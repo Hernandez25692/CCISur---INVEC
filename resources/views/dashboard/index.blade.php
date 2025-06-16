@@ -257,6 +257,15 @@
                         <div class="metric-label">Total Asignaciones</div>
                         <div class="metric-value">{{ \App\Models\Asignacion::count() }}</div>
                     </div>
+
+                    <div class="metric-card" style="background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%); border-left: 6px solid #a21caf; box-shadow: 0 8px 24px rgba(99,102,241,0.15); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="metric-label" style="color: #f3f4f6; font-weight: bold; text-align: center;">
+                            <i class="fas fa-layer-group mr-2"></i> Total General
+                        </div>
+                        <div class="metric-value" style="color: #fff; font-size: 40px; text-shadow: 1px 2px 8px #6366f1; text-align: center;">
+                            {{ \App\Models\Mobiliario::count() + \App\Models\Dispositivo::count() }}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Últimas asignaciones -->

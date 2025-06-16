@@ -21,12 +21,31 @@
                     readonly>
             </div>
 
+            <!-- Tipo -->
             <div>
                 <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo</label>
-                <input type="text" name="tipo" id="tipo" value="{{ old('tipo', $mobiliario->tipo) }}"
-                    required
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <select name="tipo" id="tipo" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                    <option value="">-- Seleccionar tipo --</option>
+                    <option value="Escritorio" {{ old('tipo', $mobiliario->tipo) == 'Escritorio' ? 'selected' : '' }}>
+                        Escritorio</option>
+                    <option value="Silla" {{ old('tipo', $mobiliario->tipo) == 'Silla' ? 'selected' : '' }}>Silla
+                    </option>
+                    <option value="Archivador" {{ old('tipo', $mobiliario->tipo) == 'Archivador' ? 'selected' : '' }}>
+                        Archivador</option>
+                    <option value="Mesa" {{ old('tipo', $mobiliario->tipo) == 'Mesa' ? 'selected' : '' }}>Mesa
+                    </option>
+                    <option value="Estantería" {{ old('tipo', $mobiliario->tipo) == 'Estantería' ? 'selected' : '' }}>
+                        Estantería</option>
+                    <option value="Gabinete" {{ old('tipo', $mobiliario->tipo) == 'Gabinete' ? 'selected' : '' }}>
+                        Gabinete</option>
+                    <option value="Banco" {{ old('tipo', $mobiliario->tipo) == 'Banco' ? 'selected' : '' }}>Banco
+                    </option>
+                    <option value="Otro" {{ old('tipo', $mobiliario->tipo) == 'Otro' ? 'selected' : '' }}>Otro
+                    </option>
+                </select>
             </div>
+
 
             <div>
                 <label for="ubicacion" class="block text-sm font-medium text-gray-700">Ubicación</label>

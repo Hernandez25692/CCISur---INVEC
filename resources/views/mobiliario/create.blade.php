@@ -15,10 +15,20 @@
             <!-- Tipo -->
             <div>
                 <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo</label>
-                <input type="text" name="tipo" id="tipo" required
-                    placeholder="Ej: Escritorio, silla, archivador..."
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <select name="tipo" id="tipo" required
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                    <option value="">-- Seleccionar tipo --</option>
+                    <option value="Escritorio">Escritorio</option>
+                    <option value="Silla">Silla</option>
+                    <option value="Archivador">Archivador</option>
+                    <option value="Mesa">Mesa</option>
+                    <option value="Estantería">Estantería</option>
+                    <option value="Gabinete">Gabinete</option>
+                    <option value="Banco">Banco</option>
+                    <option value="Otro">Otro</option>
+                </select>
             </div>
+
 
             <!-- Ubicación -->
             <div>

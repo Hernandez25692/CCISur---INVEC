@@ -14,17 +14,32 @@
                 Nueva Asignación
             </a>
         </div>
-        <!-- Formulario de búsqueda -->
+        <!-- Formulario de búsqueda con rango de fechas -->
         <form method="GET" action="{{ route('asignaciones.index') }}" class="mb-4">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <input type="text" name="buscar" placeholder="Buscar por empleado  o etiqueta"
+            <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-end gap-3">
+                <input type="text" name="buscar" placeholder="Buscar por empleado o etiqueta"
                     value="{{ request('buscar') }}"
                     class="w-full sm:w-72 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300">
+
+                <div>
+                    <label for="fecha_inicio" class="block text-xs text-gray-500">Desde</label>
+                    <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
+                        class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label for="fecha_fin" class="block text-xs text-gray-500">Hasta</label>
+                    <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
+                        class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
                 <button type="submit"
-                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buscar</button>
-                <a href="{{ route('asignaciones.index') }}" class="text-sm text-gray-500 hover:underline">Limpiar</a>
+                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition mt-1">Buscar</button>
+                <a href="{{ route('asignaciones.index') }}"
+                    class="text-sm text-gray-500 hover:underline mt-2">Limpiar</a>
             </div>
         </form>
+
 
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="overflow-x-auto">
@@ -84,7 +99,7 @@
                                     {{ $referencia->etiqueta ?? '---' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->area }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $item->fecha_entrega }}
+                                    {{ \Carbon\Carbon::parse($item->fecha_entrega)->format('d/m/Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span

@@ -11,12 +11,38 @@
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
             </div>
 
+            <!-- Tipo -->
             <div>
                 <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo</label>
-                <input type="text" name="tipo" id="tipo" required
-                    placeholder="Laptop, Proyector, Impresora..."
+                <select name="tipo" id="tipo" required
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200">
+                    <option value="">-- Seleccionar tipo de dispositivo --</option>
+                    <option value="Laptop">Laptop</option>
+                    <option value="Computadora de escritorio">Computadora de escritorio</option>
+                    <option value="Proyector">Proyector</option>
+                    <option value="Impresora">Impresora</option>
+                    <option value="Escáner">Escáner</option>
+                    <option value="Monitor">Monitor</option>
+                    <option value="Teclado">Teclado</option>
+                    <option value="Mouse">Mouse</option>
+                    <option value="Tablet">Tablet</option>
+                    <option value="Switch de red">Switch de red</option>
+                    <option value="Router">Router</option>
+                    <option value="Access Point (AP)">Access Point (AP)</option>
+                    <option value="Servidor">Servidor</option>
+                    <option value="Disco duro externo">Disco duro externo</option>
+                    <option value="No-break / UPS">No-break / UPS</option>
+                    <option value="Cámara Web">Cámara Web</option>
+                    <option value="Micrófono">Micrófono</option>
+                    <option value="Sistema de sonido">Sistema de sonido</option>
+                    <option value="Pantalla interactiva">Pantalla interactiva</option>
+                    <option value="Control remoto">Control remoto</option>
+                    <option value="Cargador de laptop">Cargador de laptop</option>
+                    <option value="Cable HDMI">Cable HDMI</option>
+                    <option value="Otro">Otro</option>
+                </select>
             </div>
+
 
             <div>
                 <label for="marca" class="block text-sm font-medium text-gray-700">Marca</label>
