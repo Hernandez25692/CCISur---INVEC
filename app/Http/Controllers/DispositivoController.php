@@ -10,11 +10,35 @@ use Illuminate\Support\Str;
 class DispositivoController extends Controller
 {
     // Mostrar todos los dispositivos
-    public function index()
+    public function index(Request $request)
     {
-        $dispositivos = Dispositivo::latest()->get();
+        $query = Dispositivo::query();
+
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        if ($request->filled('marca')) {
+            $query->where('marca', 'like', '%' . $request->marca . '%');
+        }
+
+        if ($request->filled('modelo')) {
+            $query->where('modelo', 'like', '%' . $request->modelo . '%');
+        }
+
+        if ($request->filled('ubicacion')) {
+            $query->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        $dispositivos = $query->latest()->get();
+
         return view('dispositivos.index', compact('dispositivos'));
     }
+
 
     // Formulario para crear
     public function create()

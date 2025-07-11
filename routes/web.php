@@ -78,6 +78,7 @@ Route::get('/reportes/asignados/exportar', function () {
 
     return Excel::download(new AsignacionesExport($filtros), 'reporte_asignaciones.xlsx');
 })->name('reportes.asignados.exportar');
+Route::get('/reportes/disponibles/exportar', [ReporteController::class, 'exportarDisponibles'])->name('reportes.disponibles.exportar');
 
 // Rutas de autenticación generadas por Breeze
 require __DIR__ . '/auth.php';

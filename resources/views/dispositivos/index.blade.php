@@ -17,6 +17,59 @@
                 </a>
             </div>
         </div>
+        <form method="GET" action="{{ route('dispositivos.index') }}" class="mb-6">
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block text-sm text-gray-600">Nombre</label>
+                    <input type="text" name="nombre" value="{{ request('nombre') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48" placeholder="Nombre del equipo">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Marca</label>
+                    <input type="text" name="marca" value="{{ request('marca') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48" placeholder="Ej. Dell, HP">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Modelo</label>
+                    <input type="text" name="modelo" value="{{ request('modelo') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48" placeholder="Ej. G5, Inspiron">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Ubicación</label>
+                    <input type="text" name="ubicacion" value="{{ request('ubicacion') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48" placeholder="Ej. Oficina, Almacén">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600">Estado</label>
+                    <select name="estado" class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48">
+                        <option value="">Todos</option>
+                        @php
+                            $estados = [
+                                'Nuevo / En perfectas condiciones',
+                                'Con pequeños detalles / Imperfecciones leves',
+                                'Usado / Segunda mano',
+                                'Dañado / Defectuoso',
+                                'En reparación / En revisión',
+                                'Producto incompleto',
+                                'Caducado / No apto para uso',
+                            ];
+                        @endphp
+                        @foreach ($estados as $estado)
+                            <option value="{{ $estado }}" {{ request('estado') == $estado ? 'selected' : '' }}>
+                                {{ $estado }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Filtrar</button>
+                    <a href="{{ route('dispositivos.index') }}"
+                        class="ml-2 text-sm text-gray-500 hover:underline">Limpiar</a>
+                </div>
+            </div>
+        </form>
 
         <!-- Table Section -->
         <div class="bg-white shadow-sm rounded-lg overflow-hidden">

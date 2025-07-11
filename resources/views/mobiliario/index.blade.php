@@ -15,6 +15,57 @@
                 Nuevo Mueble
             </a>
         </div>
+        {{-- Filtros --}}
+        <form method="GET" action="{{ route('mobiliario.index') }}" class="mb-6">
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block text-sm text-gray-600">Nombre</label>
+                    <input type="text" name="nombre" value="{{ request('nombre') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48" placeholder="Buscar nombre">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-600">Tipo</label>
+                    <input type="text" name="tipo" value="{{ request('tipo') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48" placeholder="Ej: Silla, Escritorio">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-600">Ubicación</label>
+                    <input type="text" name="ubicacion" value="{{ request('ubicacion') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48" placeholder="Ej: Oficina 1">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-600">Estado</label>
+                    <select name="estado" class="border-gray-300 rounded-md shadow-sm px-3 py-1 w-48">
+                        <option value="">Todos</option>
+                        @php
+                            $estados = [
+                                'Nuevo / En perfectas condiciones',
+                                'Con pequeños detalles / Imperfecciones leves',
+                                'Usado / Segunda mano',
+                                'Dañado / Defectuoso',
+                                'En reparación / En revisión',
+                                'Producto incompleto',
+                                'Caducado / No apto para uso',
+                            ];
+                        @endphp
+                        @foreach ($estados as $estado)
+                            <option value="{{ $estado }}" {{ request('estado') == $estado ? 'selected' : '' }}>
+                                {{ $estado }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Filtrar</button>
+                    <a href="{{ route('mobiliario.index') }}"
+                        class="ml-2 text-sm text-gray-500 hover:underline">Limpiar</a>
+                </div>
+            </div>
+        </form>
 
         <!-- Table Section -->
         <div class="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -118,7 +169,8 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                     </svg>
-                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No hay mobiliario registrado</h3>
+                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No hay mobiliario registrado
+                                    </h3>
                                     <p class="mt-1 text-sm text-gray-500">Comienza agregando un nuevo elemento de
                                         mobiliario.</p>
                                     <div class="mt-6">

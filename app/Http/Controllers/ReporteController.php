@@ -6,6 +6,8 @@ use App\Models\Asignacion;
 use App\Models\Dispositivo;
 use App\Models\Mobiliario;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\DisponiblesExport;
 
 class ReporteController extends Controller
 {
@@ -41,16 +43,45 @@ class ReporteController extends Controller
         return view('reportes.asignados', compact('asignaciones'));
     }
 
-
+    public function exportarDisponibles(Request $request)
+    {
+        return Excel::download(new DisponiblesExport($request), 'bienes_disponibles.xlsx');
+    }
 
     // Reporte de bienes disponibles (no asignados)
-    public function disponibles()
+    public function disponibles(Request $request)
     {
         $asignadosIdsDispositivos = Asignacion::where('tipo', 'dispositivo')->pluck('id_referencia')->toArray();
         $asignadosIdsMobiliario = Asignacion::where('tipo', 'mobiliario')->pluck('id_referencia')->toArray();
 
-        $dispositivos = Dispositivo::whereNotIn('id', $asignadosIdsDispositivos)->get();
-        $mobiliarios = Mobiliario::whereNotIn('id', $asignadosIdsMobiliario)->get();
+        $dispositivosQuery = Dispositivo::whereNotIn('id', $asignadosIdsDispositivos);
+        $mobiliariosQuery = Mobiliario::whereNotIn('id', $asignadosIdsMobiliario);
+
+        if ($request->filled('nombre')) {
+            $dispositivosQuery->where('nombre', 'like', '%' . $request->nombre . '%');
+            $mobiliariosQuery->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        if ($request->filled('ubicacion')) {
+            $dispositivosQuery->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
+            $mobiliariosQuery->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
+        }
+
+        if ($request->filled('tipo_elemento')) {
+            if ($request->tipo_elemento == 'dispositivo') {
+                $mobiliarios = collect(); // vacío
+                $dispositivos = $dispositivosQuery->get();
+            } elseif ($request->tipo_elemento == 'mobiliario') {
+                $dispositivos = collect(); // vacío
+                $mobiliarios = $mobiliariosQuery->get();
+            } else {
+                $dispositivos = $dispositivosQuery->get();
+                $mobiliarios = $mobiliariosQuery->get();
+            }
+        } else {
+            $dispositivos = $dispositivosQuery->get();
+            $mobiliarios = $mobiliariosQuery->get();
+        }
 
         return view('reportes.disponibles', compact('dispositivos', 'mobiliarios'));
     }

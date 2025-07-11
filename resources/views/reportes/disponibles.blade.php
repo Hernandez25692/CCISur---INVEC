@@ -1,97 +1,130 @@
 <x-app-layout>
-    <div class="py-10 max-w-7xl mx-auto">
-        <h2 class="text-2xl font-bold text-green-700 mb-6">Reporte de Bienes Disponibles</h2>
-        <!-- Métricas rápidas -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-            <div class="bg-blue-100 border-l-4 border-blue-500 shadow p-5 rounded flex flex-col items-center">
-                <div class="text-blue-700 font-semibold text-sm mb-2">Total Mobiliario</div>
-                <div class="text-3xl font-bold text-blue-800">{{ \App\Models\Mobiliario::count() }}</div>
-            </div>
-            <div class="bg-green-100 border-l-4 border-green-500 shadow p-5 rounded flex flex-col items-center">
-                <div class="text-green-700 font-semibold text-sm mb-2">Total Dispositivos</div>
-                <div class="text-3xl font-bold text-green-800">{{ \App\Models\Dispositivo::count() }}</div>
-            </div>
-            <div class="bg-amber-100 border-l-4 border-amber-500 shadow p-5 rounded flex flex-col items-center">
-                <div class="text-amber-700 font-semibold text-sm mb-2">Total Asignaciones</div>
-                <div class="text-3xl font-bold text-amber-800">{{ \App\Models\Asignacion::count() }}</div>
-            </div>
-            <div class="bg-gradient-to-r from-indigo-500 to-blue-400 border-l-4 border-purple-700 shadow p-5 rounded flex flex-col items-center">
-                <div class="text-gray-100 font-bold text-sm mb-2 flex items-center justify-center">
-                    <i class="fas fa-layer-group mr-2"></i> Total General
+    <div class="report-container max-w-7xl mx-auto py-10 px-4">
+        <header class="report-header text-center mb-8">
+            <h1 class="text-3xl font-bold text-green-700">Reporte de Bienes Disponibles</h1>
+            <p class="text-sm text-gray-500 mt-2">Elementos no asignados en inventario</p>
+        </header>
+
+        <!-- Filtros -->
+        <form method="GET" action="{{ route('reportes.disponibles') }}" class="mb-6">
+            <div class="flex flex-wrap gap-4 justify-start items-end">
+                <div>
+                    <label class="text-sm text-gray-600 block mb-1">Tipo</label>
+                    <select name="tipo_elemento" class="border-gray-300 rounded-md shadow-sm">
+                        <option value="">Todos</option>
+                        <option value="mobiliario" {{ request('tipo_elemento') == 'mobiliario' ? 'selected' : '' }}>
+                            Mobiliario</option>
+                        <option value="dispositivo" {{ request('tipo_elemento') == 'dispositivo' ? 'selected' : '' }}>
+                            Dispositivo</option>
+                    </select>
                 </div>
-                <div class="text-4xl font-extrabold text-white drop-shadow text-center">
-                    {{ \App\Models\Mobiliario::count() + \App\Models\Dispositivo::count() }}
+                <div>
+                    <label class="text-sm text-gray-600 block mb-1">Nombre</label>
+                    <input type="text" name="nombre" value="{{ request('nombre') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-2 py-1" placeholder="Nombre del bien">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-600 block mb-1">Ubicación</label>
+                    <input type="text" name="ubicacion" value="{{ request('ubicacion') }}"
+                        class="border-gray-300 rounded-md shadow-sm px-2 py-1" placeholder="Ej. Bodega, Oficina">
+                </div>
+                <div>
+                    <button type="submit"
+                        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Filtrar</button>
+                    <a href="{{ route('reportes.disponibles') }}"
+                        class="ml-2 text-sm text-gray-500 hover:underline">Limpiar</a>
                 </div>
             </div>
+        </form>
+
+        <!-- Botones de acciones -->
+        <div class="flex justify-between items-center mb-6">
+        <div class="text-lg font-semibold text-gray-700">
+            Total disponible: {{ $mobiliarios->count() + $dispositivos->count() }}
         </div>
-        <!-- Mobiliario disponible -->
-        <div class="mb-10">
-            <h3 class="text-xl font-semibold text-gray-800 mb-3">Mobiliario</h3>
-            <div class="bg-white shadow rounded p-4">
-                <table class="w-full table-auto text-sm border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 text-left text-gray-700">
-                            <th class="p-2">#</th>
-                            <th class="p-2">Nombre</th>
-                            <th class="p-2">Tipo</th>
-                            <th class="p-2">Ubicación</th>
-                            <th class="p-2">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($mobiliarios as $m)
-                            <tr class="border-b">
-                                <td class="p-2">{{ $m->id }}</td>
-                                <td class="p-2">{{ $m->nombre }}</td>
-                                <td class="p-2">{{ $m->tipo }}</td>
-                                <td class="p-2">{{ $m->ubicacion }}</td>
-                                <td class="p-2">{{ ucfirst($m->estado) }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="p-4 text-center text-gray-500">Todo el mobiliario está
-                                    asignado.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+            <a href="{{ route('reportes.disponibles.exportar', request()->query()) }}"
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition no-print">
+                Exportar a Excel
+            </a>
+            <button onclick="window.print()"
+                class="no-print bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded hover:bg-blue-50">
+                Imprimir Reporte
+            </button>
         </div>
 
-        <!-- Dispositivos disponibles -->
-        <div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-3">Dispositivos Electrónicos</h3>
-            <div class="bg-white shadow rounded p-4">
-                <table class="w-full table-auto text-sm border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 text-left text-gray-700">
-                            <th class="p-2">#</th>
-                            <th class="p-2">Nombre</th>
-                            <th class="p-2">Tipo</th>
-                            <th class="p-2">Marca</th>
-                            <th class="p-2">Ubicación</th>
-                            <th class="p-2">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($dispositivos as $d)
-                            <tr class="border-b">
-                                <td class="p-2">{{ $d->id }}</td>
-                                <td class="p-2">{{ $d->nombre }}</td>
-                                <td class="p-2">{{ $d->tipo }}</td>
-                                <td class="p-2">{{ $d->marca }}</td>
-                                <td class="p-2">{{ $d->ubicacion }}</td>
-                                <td class="p-2">{{ ucfirst($d->estado) }}</td>
-                            </tr>
-                        @empty
+        <!-- Mobiliario disponible -->
+        @if ($mobiliarios->isNotEmpty())
+            <section class="mb-10">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Mobiliario Disponible</h2>
+                <div class="overflow-x-auto bg-white shadow rounded">
+                    <table class="min-w-full table-auto text-sm border-collapse">
+                        <thead class="bg-gray-100 text-gray-700">
                             <tr>
-                                <td colspan="6" class="p-4 text-center text-gray-500">Todos los dispositivos están
-                                    asignados.</td>
+                                <th class="px-4 py-2 text-left">#</th>
+                                <th class="px-4 py-2 text-left">Nombre</th>
+                                <th class="px-4 py-2 text-left">Tipo</th>
+                                <th class="px-4 py-2 text-left">Ubicación</th>
+                                <th class="px-4 py-2 text-left">Estado</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach ($mobiliarios as $m)
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">{{ $m->id }}</td>
+                                    <td class="px-4 py-2">{{ $m->nombre }}</td>
+                                    <td class="px-4 py-2">{{ $m->tipo }}</td>
+                                    <td class="px-4 py-2">{{ $m->ubicacion }}</td>
+                                    <td class="px-4 py-2 capitalize">{{ $m->estado }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
+
+        <!-- Dispositivos disponibles -->
+        @if ($dispositivos->isNotEmpty())
+            <section class="mb-10">
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Dispositivos Electrónicos Disponibles</h2>
+                <div class="overflow-x-auto bg-white shadow rounded">
+                    <table class="min-w-full table-auto text-sm border-collapse">
+                        <thead class="bg-gray-100 text-gray-700">
+                            <tr>
+                                <th class="px-4 py-2 text-left">#</th>
+                                <th class="px-4 py-2 text-left">Nombre</th>
+                                <th class="px-4 py-2 text-left">Tipo</th>
+                                <th class="px-4 py-2 text-left">Marca</th>
+                                <th class="px-4 py-2 text-left">Ubicación</th>
+                                <th class="px-4 py-2 text-left">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($dispositivos as $d)
+                                <tr class="border-b">
+                                    <td class="px-4 py-2">{{ $d->id }}</td>
+                                    <td class="px-4 py-2">{{ $d->nombre }}</td>
+                                    <td class="px-4 py-2">{{ $d->tipo }}</td>
+                                    <td class="px-4 py-2">{{ $d->marca }}</td>
+                                    <td class="px-4 py-2">{{ $d->ubicacion }}</td>
+                                    <td class="px-4 py-2 capitalize">{{ $d->estado }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
+
+        @if ($mobiliarios->isEmpty() && $dispositivos->isEmpty())
+            <div class="text-center py-10 text-gray-500">
+                <p class="text-xl mb-2">No hay bienes disponibles actualmente</p>
+                <p>Todos los elementos están asignados o no registrados aún.</p>
             </div>
-        </div>
+        @endif
+
+        <footer class="text-center mt-10 text-sm text-gray-400">
+            &copy; {{ date('Y') }} Cámara de Comercio e Industrias del Sur &mdash; Sistema INVEC
+        </footer>
     </div>
 </x-app-layout>
