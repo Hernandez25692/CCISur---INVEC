@@ -241,29 +241,51 @@
                     <h1 class="dashboard-title">Panel de Control</h1>
                 </div>
 
-                <!-- Métricas rápidas -->
-                <div class="metrics-grid">
-                    <div class="metric-card blue">
-                        <div class="metric-label">Total Mobiliario</div>
-                        <div class="metric-value">{{ \App\Models\Mobiliario::count() }}</div>
-                    </div>
-
-                    <div class="metric-card green">
-                        <div class="metric-label">Total Dispositivos</div>
-                        <div class="metric-value">{{ \App\Models\Dispositivo::count() }}</div>
-                    </div>
-
-                    <div class="metric-card amber">
-                        <div class="metric-label">Total Asignaciones</div>
-                        <div class="metric-value">{{ \App\Models\Asignacion::count() }}</div>
-                    </div>
-
-                    <div class="metric-card" style="background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%); border-left: 6px solid #a21caf; box-shadow: 0 8px 24px rgba(99,102,241,0.15); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <div class="metric-label" style="color: #f3f4f6; font-weight: bold; text-align: center;">
-                            <i class="fas fa-layer-group mr-2"></i> Total General
+                <!-- Métricas rápidas estilo KPI mejorado -->
+                <div class="metrics-grid" style="gap: 28px; margin-bottom: 40px;">
+                    <!-- Total Mobiliario -->
+                    <div class="metric-card blue kpi-card" style="display: flex; align-items: center; gap: 18px; box-shadow: 0 6px 24px rgba(59,130,246,0.08); border-left-width: 6px;">
+                        <div class="kpi-icon" style="background: #dbeafe; border-radius: 50%; padding: 16px;">
+                            <i class="fas fa-couch" style="color: #2563eb; font-size: 2rem;"></i>
                         </div>
-                        <div class="metric-value" style="color: #fff; font-size: 40px; text-shadow: 1px 2px 8px #6366f1; text-align: center;">
-                            {{ \App\Models\Mobiliario::count() + \App\Models\Dispositivo::count() }}
+                        <div>
+                            <div class="metric-label" style="font-size: 15px; color: #2563eb; font-weight: 600;">Total Mobiliario</div>
+                            <div class="metric-value" style="font-size: 2.2rem; color: #1d4ed8;">{{ \App\Models\Mobiliario::count() }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Dispositivos -->
+                    <div class="metric-card green kpi-card" style="display: flex; align-items: center; gap: 18px; box-shadow: 0 6px 24px rgba(16,185,129,0.08); border-left-width: 6px;">
+                        <div class="kpi-icon" style="background: #d1fae5; border-radius: 50%; padding: 16px;">
+                            <i class="fas fa-laptop" style="color: #059669; font-size: 2rem;"></i>
+                        </div>
+                        <div>
+                            <div class="metric-label" style="font-size: 15px; color: #059669; font-weight: 600;">Total Dispositivos</div>
+                            <div class="metric-value" style="font-size: 2.2rem; color: #059669;">{{ \App\Models\Dispositivo::count() }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Total Asignaciones -->
+                    <div class="metric-card amber kpi-card" style="display: flex; align-items: center; gap: 18px; box-shadow: 0 6px 24px rgba(245,158,11,0.08); border-left-width: 6px;">
+                        <div class="kpi-icon" style="background: #fef3c7; border-radius: 50%; padding: 16px;">
+                            <i class="fas fa-user-check" style="color: #b45309; font-size: 2rem;"></i>
+                        </div>
+                        <div>
+                            <div class="metric-label" style="font-size: 15px; color: #b45309; font-weight: 600;">Total Asignaciones</div>
+                            <div class="metric-value" style="font-size: 2.2rem; color: #b45309;">{{ \App\Models\Asignacion::count() }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Total General -->
+                    <div class="metric-card kpi-card" style="background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 100%); border-left: 6px solid #64748b; box-shadow: 0 4px 16px rgba(100,116,139,0.10); display: flex; align-items: center; justify-content: center; gap: 18px;">
+                        <div class="kpi-icon" style="background: #f1f5f9; border-radius: 50%; padding: 16px;">
+                            <i class="fas fa-layer-group" style="color: #64748b; font-size: 2rem;"></i>
+                        </div>
+                        <div style="text-align: center;">
+                            <div class="metric-label" style="color: #334155; font-weight: 600; font-size: 15px;">Total General</div>
+                            <div class="metric-value" style="color: #334155; font-size: 2.2rem;">
+                                {{ \App\Models\Mobiliario::count() + \App\Models\Dispositivo::count() }}
+                            </div>
                         </div>
                     </div>
                 </div>

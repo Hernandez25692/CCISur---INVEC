@@ -18,9 +18,12 @@
                 <select name="tipo" id="tipo" required onchange="cargarOpciones()"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="">-- Seleccionar --</option>
-                    <option value="mobiliario">Mobiliario</option>
-                    <option value="dispositivo">Dispositivo</option>
+                    <option value="mobiliario" {{ isset($tipo) && $tipo == 'mobiliario' ? 'selected' : '' }}>Mobiliario
+                    </option>
+                    <option value="dispositivo" {{ isset($tipo) && $tipo == 'dispositivo' ? 'selected' : '' }}>
+                        Dispositivo</option>
                 </select>
+
             </div>
 
             {{-- Elemento --}}
@@ -30,6 +33,33 @@
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="">Seleccione un tipo primero</option>
                 </select>
+
+                @if (isset($tipo) && isset($id_referencia))
+                    <script>
+                        window.addEventListener('DOMContentLoaded', () => {
+                            const tipo = '{{ $tipo }}';
+                            const idRef = '{{ $id_referencia }}';
+                            document.getElementById('tipo').value = tipo;
+
+                            fetch(`/api/obtener-items/${tipo}?id={{ $id_referencia ?? '' }}`)
+
+                                .then(res => res.json())
+                                .then(data => {
+                                    const select = document.getElementById('id_referencia');
+                                    select.innerHTML = '<option value="">-- Seleccione --</option>';
+                                    data.forEach(item => {
+                                        const selected = item.id == idRef ? 'selected' : '';
+                                        select.innerHTML +=
+                                            `<option value="${item.id}" ${selected}>${item.nombre}</option>`;
+                                    });
+
+                                    const item = data.find(i => i.id == idRef);
+                                    document.getElementById('etiquetaMostrar').innerText = item?.etiqueta || 'Sin etiqueta';
+                                });
+                        });
+                    </script>
+                @endif
+
             </div>
 
             {{-- Etiqueta --}}
@@ -84,7 +114,8 @@
             </div>
 
             <div class="flex justify-between items-center pt-4">
-                <a href="{{ route('asignaciones.index') }}" class="text-sm text-gray-500 hover:underline">← Cancelar</a>
+                <a href="{{ route('asignaciones.index') }}" class="text-sm text-gray-500 hover:underline">←
+                    Cancelar</a>
                 <button type="submit"
                     class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Guardar</button>
             </div>
@@ -104,29 +135,51 @@
     <script>
         let dataItems = [];
 
-        document.getElementById('tipo').addEventListener('change', function() {
+        const tipoInput = document.getElementById('tipo');
+        const selectElemento = document.getElementById('id_referencia');
+        const etiqueta = document.getElementById('etiquetaMostrar');
+
+        tipoInput.addEventListener('change', function() {
             const tipo = this.value;
-            const select = document.getElementById('id_referencia');
-            const etiqueta = document.getElementById('etiquetaMostrar');
+            etiqueta.innerText = 'Seleccione un elemento...';
+            selectElemento.innerHTML = '<option value="">-- Cargando --</option>';
 
             fetch(`/api/obtener-items/${tipo}`)
                 .then(res => res.json())
                 .then(data => {
                     dataItems = data;
-                    select.innerHTML = '<option value="">-- Seleccione --</option>';
+                    selectElemento.innerHTML = '<option value="">-- Seleccione --</option>';
                     data.forEach(item => {
-                        select.innerHTML += `<option value="${item.id}">${item.nombre}</option>`;
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.text = item.nombre;
+                        selectElemento.appendChild(option);
                     });
-                    etiqueta.innerText = 'Seleccione un elemento...';
+
+                    // Preseleccionar si venía en la URL
+                    const idRef = "{{ $id_referencia ?? '' }}";
+                    if (tipo === "{{ $tipo ?? '' }}" && idRef !== '') {
+                        selectElemento.value = idRef;
+
+                        const preItem = data.find(i => i.id == idRef);
+                        etiqueta.innerText = preItem?.etiqueta || 'Sin etiqueta';
+                    }
                 });
         });
 
-        document.getElementById('id_referencia').addEventListener('change', function() {
-            const id = parseInt(this.value);
-            const item = dataItems.find(el => el.id === id);
-            const etiqueta = document.getElementById('etiquetaMostrar');
-
+        selectElemento.addEventListener('change', function() {
+            const item = dataItems.find(el => el.id == this.value);
             etiqueta.innerText = item && item.etiqueta ? item.etiqueta : 'Sin etiqueta';
         });
+
+        // Si ya venían valores cargados, disparar evento automáticamente
+        window.addEventListener('DOMContentLoaded', function() {
+            const tipo = "{{ $tipo ?? '' }}";
+            if (tipo) {
+                tipoInput.value = tipo;
+                tipoInput.dispatchEvent(new Event('change'));
+            }
+        });
     </script>
+
 </x-app-layout>

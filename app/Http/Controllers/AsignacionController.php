@@ -46,10 +46,13 @@ class AsignacionController extends Controller
 
 
     // Formulario para nueva asignación
-    public function create()
+    public function create(Request $request)
     {
         $empleados = \App\Models\Empleado::orderBy('nombre_completo')->get();
-        return view('asignaciones.create', compact('empleados'));
+        $tipo = $request->tipo ?? null;
+        $id_referencia = $request->id ?? null;
+
+        return view('asignaciones.create', compact('empleados', 'tipo', 'id_referencia'));
     }
 
 

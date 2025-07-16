@@ -54,19 +54,29 @@ Route::middleware(['auth'])->group(function () {
 
 // API para obtener ítems por tipo (uso en formularios dinámicos)
 Route::get('/api/obtener-items/{tipo}', function ($tipo) {
-    if ($tipo === 'mobiliario') {
-        return \App\Models\Mobiliario::where('disponibilidad', 'Sin Asignar')
-            ->select('id', 'nombre', 'etiqueta')->get();
-    } elseif ($tipo === 'dispositivo') {
-        return \App\Models\Dispositivo::where('disponibilidad', 'Sin Asignar')
-            ->select('id', 'nombre', 'etiqueta')->get();
-    }
-    return response()->json([]);
+    $forzarId = request('id');
+
+    $baseQuery = $tipo === 'mobiliario'
+        ? \App\Models\Mobiliario::query()
+        : ($tipo === 'dispositivo' ? \App\Models\Dispositivo::query() : null);
+
+    if (!$baseQuery) return [];
+
+    $query = $baseQuery->where(function ($q) use ($forzarId) {
+        $q->where('disponibilidad', 'Sin Asignar');
+        if ($forzarId) {
+            $q->orWhere('id', $forzarId); // Incluir el solicitado aunque esté asignado
+        }
+    });
+
+    return $query->select('id', 'nombre', 'etiqueta')->get();
 });
+
 
 Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
 Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
 Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'historial'])->name('asignaciones.historial');
+Route::get('/asignaciones/create', [AsignacionController::class, 'create'])->name('asignaciones.create');
 
 // Exportar reporte de asignaciones a Excel
 Route::get('/reportes/asignados/exportar', function () {
