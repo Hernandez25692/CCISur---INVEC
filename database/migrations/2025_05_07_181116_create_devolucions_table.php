@@ -4,21 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up()
+return new class extends Migration {
+    public function up(): void
     {
         Schema::create('devoluciones', function (Blueprint $table) {
             $table->id();
 
-            // Primero definimos la columna
-            $table->unsignedBigInteger('asignacion_id');
-
-            // Luego la clave foránea
-            $table->foreign('asignacion_id')->references('id')->on('asignacions')->onDelete('cascade');
+            // Clave foránea a asignacions (mismo tipo: unsignedBigInteger)
+            $table->foreignId('asignacion_id')
+                ->constrained('asignacions')
+                ->cascadeOnDelete();
 
             $table->date('fecha_devolucion');
             $table->string('recibido_por');
@@ -27,9 +22,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('devoluciones');
