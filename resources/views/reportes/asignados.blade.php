@@ -263,7 +263,7 @@
                 <h1 class="report-title">Reporte de Bienes Asignados</h1>
                 <p class="report-subtitle">Control de activos y recursos institucionales</p>
                 <div class="report-meta">
-                    <span>Generado: {{ now()->format('d/m/Y H:i') }}</span>
+                    <span>Generado: {{ now('America/Tegucigalpa')->format('d/m/Y H:i') }}</span>
                     <span>Total activos: {{ $asignaciones->where('devolucion', null)->count() }}</span>
                 </div>
             </header>

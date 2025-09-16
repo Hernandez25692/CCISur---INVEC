@@ -121,7 +121,7 @@
 
 
     <div class="footer">
-        Documento generado automáticamente por el Sistema INVEC - {{ now()->format('d/m/Y H:i') }}
+        Documento generado automáticamente por el Sistema INVEC - {{ now()->setTimezone('America/Tegucigalpa')->format('d/m/Y H:i') }}
     </div>
 
 </body>
