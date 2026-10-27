@@ -14,11 +14,6 @@ Route::get('/', function () {
     return view('inicio');
 });
 
-// Verificación pública del acta (destino del QR)
-Route::get('/verificacion-asignacion/{uuid}', [App\Http\Controllers\AsignacionController::class, 'verPublica'])
-    ->name('verificar.asignacion');
-
-
 // Dashboard (requiere login)
 Route::get('/dashboard', function () {
     return view('dashboard.index');
