@@ -2,12 +2,10 @@
   INVEC - Cómo instalar y correr el proyecto
 ==========================================================
 
-Es un proyecto en Laravel 12 con MySQL. Yo lo corro con XAMPP,
-así que lo más fácil es que lo montes igual.
-
+Es un proyecto en Laravel 12 con MySQL. 
 
 ----------------------------------------------------------
-1. PROGRAMAS QUE NECESITAS
+1. PROGRAMAS QUE SE NECESITA
 ----------------------------------------------------------
 
 - XAMPP (que traiga PHP 8.2 o más nuevo)
@@ -16,7 +14,7 @@ así que lo más fácil es que lo montes igual.
 - Git
 - VS Code
 
-Extensiones de VS Code que te recomiendo:
+Extensiones de VS Code:
 - PHP Intelephense
 - Laravel (la oficial)
 - Tailwind CSS IntelliSense
@@ -25,8 +23,7 @@ Extensiones de VS Code que te recomiendo:
 ----------------------------------------------------------
 2. ACTIVAR EXTENSIONES DE PHP
 ----------------------------------------------------------
-
-Abre C:\xampp\php\php.ini y quítale el ; del inicio a estas líneas:
+Se abre C:\xampp\php\php.ini y se quita el ; del inicio a estas líneas:
 
     extension=gd
     extension=zip
@@ -58,8 +55,7 @@ En la terminal de VS Code:
 4. CONFIGURAR EL .env
 ----------------------------------------------------------
 
-El .env.example viene con SQLite y en inglés. Abre el .env y deja
-estas líneas así (a las de DB_ quítales el # del inicio):
+El .env.example viene con SQLite y en inglés.
 
     APP_NAME=INVEC
     APP_URL=http://127.0.0.1:8000
@@ -79,7 +75,7 @@ estas líneas así (a las de DB_ quítales el # del inicio):
     QUEUE_CONNECTION=sync
 
 Yo tengo MySQL en el puerto 3307, pero el XAMPP viene en 3306 por
-defecto. Si no te conecta, revisa en qué puerto está el tuyo.
+defecto. Si no le conecta, revise en qué puerto está el tuyo.
 
 
 ----------------------------------------------------------
@@ -91,8 +87,8 @@ Enciende MySQL en el panel de XAMPP y corre:
     php artisan migrate --seed
     php artisan storage:link
 
-Si te pregunta que la base "invec" no existe y si la quiere crear,
-dale que sí (yes).
+Si le pregunta que la base "invec" no existe y si la quiere crear,
+dele que sí (yes).
 
 El seed crea el usuario para entrar:
     Correo:     admin@ccisur.hn
@@ -103,7 +99,7 @@ El seed crea el usuario para entrar:
 6. CORRER EL PROYECTO (CADA VEZ QUE LO VAYAS A USAR)
 ----------------------------------------------------------
 
-Con MySQL encendido en XAMPP, abre dos terminales en VS Code.
+Con MySQL encendido en XAMPP, se abre dos terminales en VS Code.
 
 Terminal 1:
     php artisan serve
@@ -111,15 +107,6 @@ Terminal 1:
 Terminal 2:
     npm run dev
 
-Y entras a: http://127.0.0.1:8000
-
-Si no vas a tocar estilos ni JavaScript, en vez de npm run dev puedes
-correr una sola vez npm run build y ya solo usas php artisan serve.
+Y entra a: http://127.0.0.1:8000
 
 
-----------------------------------------------------------
-COSAS A TOMAR EN CUENTA
-----------------------------------------------------------
-
-- No uses "composer run dev". Trae un comando (pail) que no funciona
-  en Windows y te va a tirar error. Mejor las dos terminales.
