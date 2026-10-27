@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
                 'name' => 'Administrador',
                 'email' => 'admin@ccisur.hn',
                 'password' => Hash::make('admin1234'),
-                
+
             ]);
         }
     }

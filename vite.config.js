@@ -6,7 +6,6 @@ export default defineConfig({
         host: 'localhost', // solo accesible localmente
         port: 5173,
         strictPort: true,
-        // hmr: eliminado para local
     },
     plugins: [
         laravel([
