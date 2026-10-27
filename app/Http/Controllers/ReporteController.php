@@ -51,11 +51,23 @@ class ReporteController extends Controller
     // Reporte de bienes disponibles (no asignados)
     public function disponibles(Request $request)
     {
-        $asignadosIdsDispositivos = Asignacion::where('tipo', 'dispositivo')->pluck('id_referencia')->toArray();
-        $asignadosIdsMobiliario = Asignacion::where('tipo', 'mobiliario')->pluck('id_referencia')->toArray();
+        // Solo excluir bienes con una asignación activa (es decir, que NO tengan devolución registrada)
+        $asignadosIdsDispositivos = Asignacion::where('tipo', 'dispositivo')
+            ->whereDoesntHave('devolucion')
+            ->pluck('id_referencia')
+            ->toArray();
 
-        $dispositivosQuery = Dispositivo::whereNotIn('id', $asignadosIdsDispositivos);
-        $mobiliariosQuery = Mobiliario::whereNotIn('id', $asignadosIdsMobiliario);
+        $asignadosIdsMobiliario = Asignacion::where('tipo', 'mobiliario')
+            ->whereDoesntHave('devolucion')
+            ->pluck('id_referencia')
+            ->toArray();
+
+        // Bienes que no están asignados activamente y que no estén dados de baja
+        $dispositivosQuery = Dispositivo::whereNotIn('id', $asignadosIdsDispositivos)
+            ->where('disponibilidad', '!=', 'No Aplica para asignación');
+
+        $mobiliariosQuery = Mobiliario::whereNotIn('id', $asignadosIdsMobiliario)
+            ->where('disponibilidad', '!=', 'No Aplica para asignación');
 
         if ($request->filled('nombre')) {
             $dispositivosQuery->where('nombre', 'like', '%' . $request->nombre . '%');
@@ -67,20 +79,25 @@ class ReporteController extends Controller
             $mobiliariosQuery->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
         }
 
+        if ($request->filled('estado')) {
+            $dispositivosQuery->where('estado', $request->estado);
+            $mobiliariosQuery->where('estado', $request->estado);
+        }
+
         if ($request->filled('tipo_elemento')) {
-            if ($request->tipo_elemento == 'dispositivo') {
-                $mobiliarios = collect(); // vacío
-                $dispositivos = $dispositivosQuery->get();
-            } elseif ($request->tipo_elemento == 'mobiliario') {
-                $dispositivos = collect(); // vacío
-                $mobiliarios = $mobiliariosQuery->get();
+            if ($request->tipo_elemento === 'dispositivo') {
+                $mobiliarios = collect();
+                $dispositivos = $dispositivosQuery->latest()->get();
+            } elseif ($request->tipo_elemento === 'mobiliario') {
+                $dispositivos = collect();
+                $mobiliarios = $mobiliariosQuery->latest()->get();
             } else {
-                $dispositivos = $dispositivosQuery->get();
-                $mobiliarios = $mobiliariosQuery->get();
+                $dispositivos = $dispositivosQuery->latest()->get();
+                $mobiliarios = $mobiliariosQuery->latest()->get();
             }
         } else {
-            $dispositivos = $dispositivosQuery->get();
-            $mobiliarios = $mobiliariosQuery->get();
+            $dispositivos = $dispositivosQuery->latest()->get();
+            $mobiliarios = $mobiliariosQuery->latest()->get();
         }
 
         return view('reportes.disponibles', compact('dispositivos', 'mobiliarios'));

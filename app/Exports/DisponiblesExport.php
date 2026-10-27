@@ -5,8 +5,6 @@ namespace App\Exports;
 use App\Models\Asignacion;
 use App\Models\Dispositivo;
 use App\Models\Mobiliario;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -23,11 +21,22 @@ class DisponiblesExport implements FromCollection, WithHeadings
 
     public function collection(): Collection
     {
-        $asignadosIdsDispositivos = Asignacion::where('tipo', 'dispositivo')->pluck('id_referencia')->toArray();
-        $asignadosIdsMobiliario = Asignacion::where('tipo', 'mobiliario')->pluck('id_referencia')->toArray();
+        // Solo excluir asignaciones activas (sin devolución registrada)
+        $asignadosIdsDispositivos = Asignacion::where('tipo', 'dispositivo')
+            ->whereDoesntHave('devolucion')
+            ->pluck('id_referencia')
+            ->toArray();
 
-        $dispositivos = Dispositivo::whereNotIn('id', $asignadosIdsDispositivos);
-        $mobiliarios = Mobiliario::whereNotIn('id', $asignadosIdsMobiliario);
+        $asignadosIdsMobiliario = Asignacion::where('tipo', 'mobiliario')
+            ->whereDoesntHave('devolucion')
+            ->pluck('id_referencia')
+            ->toArray();
+
+        $dispositivos = Dispositivo::whereNotIn('id', $asignadosIdsDispositivos)
+            ->where('disponibilidad', '!=', 'No Aplica para asignación');
+
+        $mobiliarios = Mobiliario::whereNotIn('id', $asignadosIdsMobiliario)
+            ->where('disponibilidad', '!=', 'No Aplica para asignación');
 
         if ($this->request->filled('nombre')) {
             $dispositivos->where('nombre', 'like', '%' . $this->request->nombre . '%');
@@ -39,46 +48,63 @@ class DisponiblesExport implements FromCollection, WithHeadings
             $mobiliarios->where('ubicacion', 'like', '%' . $this->request->ubicacion . '%');
         }
 
-        if ($this->request->tipo_elemento == 'dispositivo') {
-            $data = $dispositivos->get()->map(function ($item) {
+        if ($this->request->filled('estado')) {
+            $dispositivos->where('estado', $this->request->estado);
+            $mobiliarios->where('estado', $this->request->estado);
+        }
+
+        if ($this->request->tipo_elemento === 'dispositivo') {
+            $data = $dispositivos->latest()->get()->map(function ($item) {
                 return [
-                    'Tipo' => 'Dispositivo',
+                    'Tipo' => 'Dispositivo Electrónico',
+                    'Código / Placa' => $item->etiqueta ?? 'S/E',
                     'Nombre' => $item->nombre,
-                    'Marca' => $item->marca,
+                    'Marca / Tipo' => ($item->marca ?? '---') . ' ' . ($item->modelo ?? ''),
+                    'N° Serie' => $item->n_serie ?? '---',
                     'Ubicación' => $item->ubicacion,
-                    'Estado' => ucfirst($item->estado),
+                    'Estado Físico' => ucfirst($item->estado),
+                    'Disponibilidad' => $item->disponibilidad ?? 'Sin Asignar',
                 ];
             });
-        } elseif ($this->request->tipo_elemento == 'mobiliario') {
-            $data = $mobiliarios->get()->map(function ($item) {
+        } elseif ($this->request->tipo_elemento === 'mobiliario') {
+            $data = $mobiliarios->latest()->get()->map(function ($item) {
                 return [
                     'Tipo' => 'Mobiliario',
+                    'Código / Placa' => $item->etiqueta ?? 'S/E',
                     'Nombre' => $item->nombre,
-                    'Tipo Elemento' => $item->tipo,
+                    'Marca / Tipo' => $item->tipo ?? 'Mobiliario',
+                    'N° Serie' => 'N/A',
                     'Ubicación' => $item->ubicacion,
-                    'Estado' => ucfirst($item->estado),
+                    'Estado Físico' => ucfirst($item->estado),
+                    'Disponibilidad' => $item->disponibilidad ?? 'Sin Asignar',
                 ];
             });
         } else {
             $data = collect();
 
-            $data = $data->merge($mobiliarios->get()->map(function ($item) {
+            $data = $data->merge($mobiliarios->latest()->get()->map(function ($item) {
                 return [
                     'Tipo' => 'Mobiliario',
+                    'Código / Placa' => $item->etiqueta ?? 'S/E',
                     'Nombre' => $item->nombre,
-                    'Tipo Elemento' => $item->tipo,
+                    'Marca / Tipo' => $item->tipo ?? 'Mobiliario',
+                    'N° Serie' => 'N/A',
                     'Ubicación' => $item->ubicacion,
-                    'Estado' => ucfirst($item->estado),
+                    'Estado Físico' => ucfirst($item->estado),
+                    'Disponibilidad' => $item->disponibilidad ?? 'Sin Asignar',
                 ];
             }));
 
-            $data = $data->merge($dispositivos->get()->map(function ($item) {
+            $data = $data->merge($dispositivos->latest()->get()->map(function ($item) {
                 return [
-                    'Tipo' => 'Dispositivo',
+                    'Tipo' => 'Dispositivo Electrónico',
+                    'Código / Placa' => $item->etiqueta ?? 'S/E',
                     'Nombre' => $item->nombre,
-                    'Marca' => $item->marca,
+                    'Marca / Tipo' => ($item->marca ?? '---') . ' ' . ($item->modelo ?? ''),
+                    'N° Serie' => $item->n_serie ?? '---',
                     'Ubicación' => $item->ubicacion,
-                    'Estado' => ucfirst($item->estado),
+                    'Estado Físico' => ucfirst($item->estado),
+                    'Disponibilidad' => $item->disponibilidad ?? 'Sin Asignar',
                 ];
             }));
         }
@@ -88,6 +114,15 @@ class DisponiblesExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ['Tipo', 'Nombre', 'Marca o Tipo', 'Ubicación', 'Estado'];
+        return [
+            'Tipo de Activo',
+            'Código / Placa',
+            'Nombre / Descripción',
+            'Marca / Categoría',
+            'N° de Serie',
+            'Ubicación',
+            'Estado Físico',
+            'Disponibilidad',
+        ];
     }
 }
