@@ -14,6 +14,7 @@ Route::get('/', function () {
     return view('inicio');
 });
 
+// Verificación pública del acta (destino del QR)
 Route::get('/verificacion-asignacion/{uuid}', [App\Http\Controllers\AsignacionController::class, 'verPublica'])
     ->name('verificar.asignacion');
 
@@ -35,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
     // CRUD de recursos
     Route::resource('mobiliario', MobiliarioController::class);
     Route::resource('dispositivos', DispositivoController::class);
+    Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
     Route::resource('asignaciones', AsignacionController::class)->parameters([
         'asignaciones' => 'asignacion'
     ]);
@@ -46,49 +48,45 @@ Route::middleware(['auth'])->group(function () {
     // Reportes
     Route::get('/reportes/asignados', [ReporteController::class, 'asignados'])->name('reportes.asignados');
     Route::get('/reportes/disponibles', [ReporteController::class, 'disponibles'])->name('reportes.disponibles');
+
+    // Exportar reportes a Excel
+    Route::get('/reportes/asignados/exportar', function () {
+        $filtros = [
+            'tipo' => request('tipo'),
+            'empleado' => request('empleado'),
+            'elemento' => request('elemento'),
+        ];
+
+        return Excel::download(new AsignacionesExport($filtros), 'reporte_asignaciones.xlsx');
+    })->name('reportes.asignados.exportar');
+    Route::get('/reportes/disponibles/exportar', [ReporteController::class, 'exportarDisponibles'])->name('reportes.disponibles.exportar');
+
     Route::get('/asignaciones/colaborador/{colaborador}', [App\Http\Controllers\AsignacionController::class, 'historial'])->name('asignaciones.historial');
+    Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'historial'])->name('asignaciones.historial');
     Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class);
     Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->name('devoluciones.pdf');
     Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
-});
 
-// API para obtener ítems por tipo (uso en formularios dinámicos)
-Route::get('/api/obtener-items/{tipo}', function ($tipo) {
-    $forzarId = request('id');
+    // API para obtener ítems por tipo (uso en formularios dinámicos)
+    Route::get('/api/obtener-items/{tipo}', function ($tipo) {
+        $forzarId = request('id');
 
-    $baseQuery = $tipo === 'mobiliario'
-        ? \App\Models\Mobiliario::query()
-        : ($tipo === 'dispositivo' ? \App\Models\Dispositivo::query() : null);
+        $baseQuery = $tipo === 'mobiliario'
+            ? \App\Models\Mobiliario::query()
+            : ($tipo === 'dispositivo' ? \App\Models\Dispositivo::query() : null);
 
-    if (!$baseQuery) return [];
+        if (!$baseQuery) return [];
 
-    $query = $baseQuery->where(function ($q) use ($forzarId) {
-        $q->where('disponibilidad', 'Sin Asignar');
-        if ($forzarId) {
-            $q->orWhere('id', $forzarId); // Incluir el solicitado aunque esté asignado
-        }
+        $query = $baseQuery->where(function ($q) use ($forzarId) {
+            $q->where('disponibilidad', 'Sin Asignar');
+            if ($forzarId) {
+                $q->orWhere('id', $forzarId); // Incluir el solicitado aunque esté asignado
+            }
+        });
+
+        return $query->select('id', 'nombre', 'etiqueta')->get();
     });
-
-    return $query->select('id', 'nombre', 'etiqueta')->get();
 });
-
-
-Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
-Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
-Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'historial'])->name('asignaciones.historial');
-Route::get('/asignaciones/create', [AsignacionController::class, 'create'])->name('asignaciones.create');
-
-// Exportar reporte de asignaciones a Excel
-Route::get('/reportes/asignados/exportar', function () {
-    $filtros = [
-        'tipo' => request('tipo'),
-        'empleado' => request('empleado'),
-        'elemento' => request('elemento'),
-    ];
-
-    return Excel::download(new AsignacionesExport($filtros), 'reporte_asignaciones.xlsx');
-})->name('reportes.asignados.exportar');
-Route::get('/reportes/disponibles/exportar', [ReporteController::class, 'exportarDisponibles'])->name('reportes.disponibles.exportar');
 
 // Rutas de autenticación generadas por Breeze
 require __DIR__ . '/auth.php';
