@@ -51,13 +51,18 @@ class DispositivoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
+            'tipo' => 'required|string|max:255',
             'marca' => 'required|string|max:255',
             'modelo' => 'required|string|max:255',
+            'n_serie' => 'required|string|max:255|unique:dispositivos,n_serie',
             'ubicacion' => 'required|string|max:255',
             'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
             'fecha_registro' => 'required|date',
+        ], [
+            'n_serie.required' => 'El número de serie es obligatorio.',
+            'n_serie.unique' => 'El número de serie ingresado ya está registrado en otro dispositivo.',
+            'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
-
 
         $dispositivo = new Dispositivo($request->all());
         $dispositivo->save();
@@ -79,12 +84,18 @@ class DispositivoController extends Controller
     {
         $request->validate([
             'nombre' => 'required|string|max:255',
+            'tipo' => 'required|string|max:255',
             'marca' => 'required|string|max:255',
             'modelo' => 'required|string|max:255',
+            'n_serie' => 'required|string|max:255|unique:dispositivos,n_serie,' . $dispositivo->id,
             'ubicacion' => 'required|string|max:255',
             'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
             'disponibilidad' => 'required|in:Asignado,Sin Asignar,No Aplica para asignación',
             'fecha_registro' => 'required|date',
+        ], [
+            'n_serie.required' => 'El número de serie es obligatorio.',
+            'n_serie.unique' => 'El número de serie ingresado ya pertenece a otro dispositivo registrado.',
+            'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
 
         $dispositivo->update($request->except('etiqueta'));

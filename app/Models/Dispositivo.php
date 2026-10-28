@@ -12,6 +12,7 @@ class Dispositivo extends Model
         'marca',
         'modelo',
         'n_serie',
+        'etiqueta',
         'ubicacion',
         'estado',
         'disponibilidad',

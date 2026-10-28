@@ -103,7 +103,10 @@
                 <label for="n_serie" class="block text-sm font-medium text-gray-700">Número de Serie</label>
                 <input type="text" name="n_serie" id="n_serie" value="{{ old('n_serie', $dispositivo->n_serie) }}"
                     required
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('n_serie') border-red-500 @enderror">
+                @error('n_serie')
+                    <p class="text-red-600 text-xs mt-1 font-semibold">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
