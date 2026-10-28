@@ -15,30 +15,36 @@
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Estilos del Sidebar -->
+    <link rel="stylesheet" href="{{ asset('css/sidebar.css') }}">
+
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body class="font-sans antialiased bg-gray-50 text-gray-800">
-    <div class="min-h-screen flex flex-col">
-        <!-- Menú de navegación -->
+    <div class="min-h-screen">
+        <!-- Menú de navegación (sidebar) -->
         @include('layouts.navigation')
 
-        <!-- Cabecera de página si existe -->
-        @isset($header)
-            <header class="bg-white shadow-sm">
-                <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8">
-                    {{ $header }}
-                </div>
-            </header>
-        @endisset
+        <!-- Área de contenido (en escritorio se corre a la derecha del sidebar) -->
+        <div class="inv-main">
+            <!-- Cabecera de página si existe -->
+            @isset($header)
+                <header class="bg-white shadow-sm">
+                    <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
+                </header>
+            @endisset
 
-        <!-- Contenido de la página -->
-        <main class="py-8 px-4 sm:px-6 lg:px-8 w-full">
-            <div class="max-w-screen-xl mx-auto">
-                {{ $slot }}
-            </div>
-        </main>
+            <!-- Contenido de la página -->
+            <main class="py-8 px-4 sm:px-6 lg:px-8 w-full">
+                <div class="max-w-screen-xl mx-auto">
+                    {{ $slot }}
+                </div>
+            </main>
+        </div>
 
     </div>
 
