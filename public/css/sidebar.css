@@ -17,18 +17,24 @@
     left: 0;
     bottom: 0;
     width: var(--sidebar-width);
+    max-width: calc(100vw - 3rem);
     background-color: var(--ccisur-navy);
     color: var(--sidebar-text);
     display: flex;
     flex-direction: column;
     z-index: 50;
+    visibility: hidden;
     transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Al cerrar, ocultar solo cuando termine la animación */
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.25s;
 }
 
 .inv-sidebar.is-open {
+    visibility: visible;
     transform: translateX(0);
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+    /* Al abrir, visible de inmediato para que el foco pueda entrar al menú */
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Logo y marca */
@@ -41,12 +47,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.5rem;
     margin-bottom: 0.65rem;
 }
 
 .inv-brand-sub {
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
+    min-width: 0;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
     text-transform: uppercase;
     color: var(--sidebar-muted);
 }
@@ -71,6 +80,7 @@
     display: block;
     width: 100%;
     height: auto;
+    aspect-ratio: 1654 / 571;
 }
 
 /* Enlaces */
@@ -306,6 +316,7 @@
 /* Botón estilo IA (icono de panel) dentro del sidebar y flotante al colapsar */
 .inv-panel-btn {
     display: none;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
     width: 32px;
@@ -359,14 +370,40 @@
     height: 18px;
 }
 
+/* Botón de cierre dentro del sidebar (solo móvil) */
+.inv-mobile-close {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--sidebar-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.inv-mobile-close:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
 /* Versión desktop: sidebar siempre visible */
 @media (min-width: 1024px) {
     .inv-sidebar {
+        max-width: none;
+        visibility: visible;
         transform: none;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .inv-topbar,
-    .inv-overlay {
+    .inv-overlay,
+    .inv-mobile-close {
         display: none;
     }
 
@@ -380,7 +417,9 @@
 
     /* Sidebar escondido */
     html.sidebar-collapsed .inv-sidebar {
+        visibility: hidden;
         transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.25s;
     }
 
     html.sidebar-collapsed .inv-main {
