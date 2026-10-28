@@ -27,8 +27,15 @@ class EmpleadoController extends Controller
             'ubicacion' => 'required',
         ]);
 
-        $count = Empleado::count() + 1;
-        $codigo = 'EM' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $ultimoId = Empleado::max('id') ?? 0;
+        $proximoNumero = $ultimoId + 1;
+        $codigo = 'EM' . str_pad($proximoNumero, 3, '0', STR_PAD_LEFT);
+
+        // Garantizar unicidad absoluta incluso si hubo eliminaciones intermedias
+        while (Empleado::where('codigo', $codigo)->exists()) {
+            $proximoNumero++;
+            $codigo = 'EM' . str_pad($proximoNumero, 3, '0', STR_PAD_LEFT);
+        }
 
         Empleado::create([
             'codigo' => $codigo,

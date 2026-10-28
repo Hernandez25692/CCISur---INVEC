@@ -308,7 +308,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (\App\Models\Asignacion::latest()->take(5)->get() as $asig)
+                            @foreach (\App\Models\Asignacion::with('empleado')->latest()->take(5)->get() as $asig)
                                 @php
                                     $ref =
                                         $asig->tipo === 'mobiliario'
@@ -317,7 +317,7 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $asig->id }}</td>
-                                    <td>{{ $asig->colaborador }}</td>
+                                    <td>{{ $asig->empleado->nombre_completo ?? 'N/A' }}</td>
                                     <td class="capitalize">{{ $asig->tipo }}</td>
                                     <td>{{ $ref->nombre ?? 'N/A' }}</td>
                                     <td>{{ $asig->fecha_entrega }}</td>
@@ -342,13 +342,13 @@
 
             <script>
                 @php
-                    $totalMobiliario = \App\Models\Mobiliario::count();
-                    $asignadoMobiliario = \App\Models\Asignacion::where('tipo', 'mobiliario')->count();
-                    $totalDispositivos = \App\Models\Dispositivo::count();
-                    $asignadoDispositivos = \App\Models\Asignacion::where('tipo', 'dispositivo')->count();
+                    $totalMobiliario = \App\Models\Mobiliario::where('disponibilidad', '!=', 'No Aplica para asignación')->count();
+                    $asignadoMobiliario = \App\Models\Asignacion::where('tipo', 'mobiliario')->whereDoesntHave('devolucion')->count();
+                    $totalDispositivos = \App\Models\Dispositivo::where('disponibilidad', '!=', 'No Aplica para asignación')->count();
+                    $asignadoDispositivos = \App\Models\Asignacion::where('tipo', 'dispositivo')->whereDoesntHave('devolucion')->count();
 
                     $totalAsignado = $asignadoMobiliario + $asignadoDispositivos;
-                    $totalDisponible = $totalMobiliario - $asignadoMobiliario + ($totalDispositivos - $asignadoDispositivos);
+                    $totalDisponible = max(0, ($totalMobiliario - $asignadoMobiliario) + ($totalDispositivos - $asignadoDispositivos));
                 @endphp
 
                 document.addEventListener('DOMContentLoaded', function() {
