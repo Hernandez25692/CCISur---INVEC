@@ -1,12 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\MobiliarioController;
-use App\Http\Controllers\DispositivoController;
-use App\Http\Controllers\AsignacionController;
-use App\Http\Controllers\ReporteController;
 use App\Exports\AsignacionesExport;
+use App\Http\Controllers\AsignacionController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DispositivoController;
+use App\Http\Controllers\MobiliarioController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReporteController;
+use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
 
 // Página de inicio pública
@@ -15,9 +16,7 @@ Route::get('/', function () {
 });
 
 // Dashboard (requiere login)
-Route::get('/dashboard', function () {
-    return view('dashboard.index');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', DashboardController::class)->middleware(['auth'])->name('dashboard');
 
 // Perfil de usuario (editar, actualizar, eliminar)
 Route::middleware(['auth'])->group(function () {
@@ -33,9 +32,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('dispositivos', DispositivoController::class);
     Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
     Route::resource('asignaciones', AsignacionController::class)->parameters([
-        'asignaciones' => 'asignacion'
+        'asignaciones' => 'asignacion',
     ]);
-
 
     // PDF de acta de asignación
     Route::get('asignaciones/{asignacion}/pdf', [AsignacionController::class, 'pdf'])->name('asignaciones.pdf');
@@ -70,7 +68,9 @@ Route::middleware(['auth'])->group(function () {
             ? \App\Models\Mobiliario::query()
             : ($tipo === 'dispositivo' ? \App\Models\Dispositivo::query() : null);
 
-        if (!$baseQuery) return [];
+        if (! $baseQuery) {
+            return [];
+        }
 
         $query = $baseQuery->where(function ($q) use ($forzarId) {
             $q->where('disponibilidad', 'Sin Asignar');
@@ -84,4 +84,4 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Rutas de autenticación generadas por Breeze
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

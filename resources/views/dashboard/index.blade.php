@@ -1,399 +1,295 @@
 <x-app-layout>
-    <div class="py-6 px-4 max-w-7xl mx-auto space-y-6">
-        <div class="flex items-center justify-center bg-blue-100 p-4 rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold text-blue-800">
-            <i class="fas fa-clock mr-2"></i>
-            <span id="fechaHora"></span>
-            </h2>
-        </div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-            function actualizarFechaHora() {
-                const ahora = new Date();
-                const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-                document.getElementById('fechaHora').textContent = ahora.toLocaleDateString('es-ES', opciones);
-            }
-            actualizarFechaHora();
-            setInterval(actualizarFechaHora, 1000);
-            });
-        </script>
-        <!DOCTYPE html>
-        <html lang="es">
-
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Panel de Controll - INVEC</title>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <style>
-                /* Reset y estilos base */
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                    font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-                }
-
-                body {
-                    background-color: #f3f4f6;
-                    color: #1f2937;
-                    line-height: 1.6;
-                }
-
-                .container {
-                    max-width: 1400px;
-                    margin: 0 auto;
-                    padding: 24px 16px;
-                }
-
-                /* Header */
-                .dashboard-header {
-                    margin-bottom: 32px;
-                }
-
-                .dashboard-title {
-                    font-size: 28px;
-                    font-weight: 700;
-                    color: #1e40af;
-                    margin-bottom: 8px;
-                }
-
-                /* Cards de métricas */
-                .metrics-grid {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: 20px;
-                    margin-bottom: 32px;
-                }
-
-                @media (min-width: 768px) {
-                    .metrics-grid {
-                        grid-template-columns: repeat(3, 1fr);
-                    }
-                }
-
-                .metric-card {
-                    background-color: white;
-                    border-radius: 10px;
-                    padding: 24px;
-                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-                    transition: transform 0.3s ease, box-shadow 0.3s ease;
-                    border-left: 4px solid;
-                }
-
-                .metric-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-                }
-
-                .metric-card.blue {
-                    border-left-color: #3b82f6;
-                }
-
-                .metric-card.green {
-                    border-left-color: #10b981;
-                }
-
-                .metric-card.amber {
-                    border-left-color: #f59e0b;
-                }
-
-                .metric-label {
-                    font-size: 14px;
-                    color: #6b7280;
-                    margin-bottom: 8px;
-                    font-weight: 500;
-                }
-
-                .metric-value {
-                    font-size: 32px;
-                    font-weight: 700;
-                }
-
-                .metric-card.blue .metric-value {
-                    color: #1d4ed8;
-                }
-
-                .metric-card.green .metric-value {
-                    color: #059669;
-                }
-
-                .metric-card.amber .metric-value {
-                    color: #b45309;
-                }
-
-                /* Secciones */
-                .dashboard-section {
-                    background-color: white;
-                    border-radius: 10px;
-                    padding: 24px;
-                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-                    margin-bottom: 32px;
-                }
-
-                .section-header {
-                    display: flex;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
-
-                .section-title {
-                    font-size: 20px;
-                    font-weight: 600;
-                    color: #374151;
-                    margin-left: 12px;
-                }
-
-                /* Tabla */
-                .data-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    font-size: 14px;
-                }
-
-                .data-table thead {
-                    background-color: #f9fafb;
-                    color: #4b5563;
-                    text-align: left;
-                }
-
-                .data-table th {
-                    padding: 12px 16px;
-                    font-weight: 600;
-                    border-bottom: 2px solid #e5e7eb;
-                }
-
-                .data-table td {
-                    padding: 12px 16px;
-                    border-bottom: 1px solid #e5e7eb;
-                }
-
-                .data-table tr:last-child td {
-                    border-bottom: none;
-                }
-
-                .data-table tr:hover {
-                    background-color: #f9fafb;
-                }
-
-                .capitalize {
-                    text-transform: capitalize;
-                }
-
-                /* Gráfico */
-                .chart-container {
-                    position: relative;
-                    height: 300px;
-                    margin-top: 20px;
-                }
-
-                /* Responsive */
-                @media (max-width: 768px) {
-                    .container {
-                        padding: 16px 12px;
-                    }
-
-                    .dashboard-title {
-                        font-size: 24px;
-                    }
-
-                    .metric-card {
-                        padding: 20px;
-                    }
-
-                    .metric-value {
-                        font-size: 28px;
-                    }
-
-                    .data-table th,
-                    .data-table td {
-                        padding: 10px 12px;
-                    }
-                }
-
-                /* Animaciones */
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .dashboard-section {
-                    animation: fadeIn 0.4s ease-out;
-                }
-
-                .metrics-grid {
-                    animation: fadeIn 0.6s ease-out;
-                }
-            </style>
-        </head>
-
-        <body>
-            <div class="container">
-                <div class="dashboard-header">
-                    <h1 class="dashboard-title">Panel de Control</h1>
-                </div>
-
-                <!-- Métricas rápidas estilo KPI mejorado -->
-                <div class="metrics-grid" style="gap: 28px; margin-bottom: 40px;">
-                    <!-- Total Mobiliario -->
-                    <div class="metric-card blue kpi-card" style="display: flex; align-items: center; gap: 18px; box-shadow: 0 6px 24px rgba(59,130,246,0.08); border-left-width: 6px;">
-                        <div class="kpi-icon" style="background: #dbeafe; border-radius: 50%; padding: 16px;">
-                            <i class="fas fa-couch" style="color: #2563eb; font-size: 2rem;"></i>
-                        </div>
-                        <div>
-                            <div class="metric-label" style="font-size: 15px; color: #2563eb; font-weight: 600;">Total Mobiliario</div>
-                            <div class="metric-value" style="font-size: 2.2rem; color: #1d4ed8;">{{ \App\Models\Mobiliario::count() }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Total Dispositivos -->
-                    <div class="metric-card green kpi-card" style="display: flex; align-items: center; gap: 18px; box-shadow: 0 6px 24px rgba(16,185,129,0.08); border-left-width: 6px;">
-                        <div class="kpi-icon" style="background: #d1fae5; border-radius: 50%; padding: 16px;">
-                            <i class="fas fa-laptop" style="color: #059669; font-size: 2rem;"></i>
-                        </div>
-                        <div>
-                            <div class="metric-label" style="font-size: 15px; color: #059669; font-weight: 600;">Total Dispositivos</div>
-                            <div class="metric-value" style="font-size: 2.2rem; color: #059669;">{{ \App\Models\Dispositivo::count() }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Total Asignaciones -->
-                    <div class="metric-card amber kpi-card" style="display: flex; align-items: center; gap: 18px; box-shadow: 0 6px 24px rgba(245,158,11,0.08); border-left-width: 6px;">
-                        <div class="kpi-icon" style="background: #fef3c7; border-radius: 50%; padding: 16px;">
-                            <i class="fas fa-user-check" style="color: #b45309; font-size: 2rem;"></i>
-                        </div>
-                        <div>
-                            <div class="metric-label" style="font-size: 15px; color: #b45309; font-weight: 600;">Total Asignaciones</div>
-                            <div class="metric-value" style="font-size: 2.2rem; color: #b45309;">{{ \App\Models\Asignacion::count() }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Total General -->
-                    <div class="metric-card kpi-card" style="background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 100%); border-left: 6px solid #64748b; box-shadow: 0 4px 16px rgba(100,116,139,0.10); display: flex; align-items: center; justify-content: center; gap: 18px;">
-                        <div class="kpi-icon" style="background: #f1f5f9; border-radius: 50%; padding: 16px;">
-                            <i class="fas fa-layer-group" style="color: #64748b; font-size: 2rem;"></i>
-                        </div>
-                        <div style="text-align: center;">
-                            <div class="metric-label" style="color: #334155; font-weight: 600; font-size: 15px;">Total General</div>
-                            <div class="metric-value" style="color: #334155; font-size: 2.2rem;">
-                                {{ \App\Models\Mobiliario::count() + \App\Models\Dispositivo::count() }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Últimas asignaciones -->
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <i class="fas fa-clock"></i>
-                        <h2 class="section-title">Últimas 5 Asignaciones</h2>
-                    </div>
-
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Colaborador</th>
-                                <th>Tipo</th>
-                                <th>Elemento</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (\App\Models\Asignacion::with('empleado')->latest()->take(5)->get() as $asig)
-                                @php
-                                    $ref =
-                                        $asig->tipo === 'mobiliario'
-                                            ? \App\Models\Mobiliario::find($asig->id_referencia)
-                                            : \App\Models\Dispositivo::find($asig->id_referencia);
-                                @endphp
-                                <tr>
-                                    <td>{{ $asig->id }}</td>
-                                    <td>{{ $asig->empleado->nombre_completo ?? 'N/A' }}</td>
-                                    <td class="capitalize">{{ $asig->tipo }}</td>
-                                    <td>{{ $ref->nombre ?? 'N/A' }}</td>
-                                    <td>{{ $asig->fecha_entrega }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Gráfico de asignaciones -->
-                <div class="dashboard-section">
-                    <div class="section-header">
-                        <i class="fas fa-chart-pie"></i>
-                        <h2 class="section-title">Estado General de Equipos</h2>
-                    </div>
-
-                    <div class="chart-container">
-                        <canvas id="estadoEquiposChart"></canvas>
-                    </div>
-                </div>
+    <div class="py-4 space-y-8">
+        <!-- Encabezado con saludo y accesos rápidos -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Panel de Control</h1>
+                <p class="mt-1 text-sm text-gray-500">
+                    Hola, <span class="font-medium text-gray-700">{{ auth()->user()->name }}</span> · Resumen operativo del inventario CCISur
+                </p>
             </div>
 
+            <div class="flex flex-wrap items-center gap-2.5">
+                <a href="{{ route('asignaciones.create') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                    <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                    Nueva Asignación
+                </a>
+                <a href="{{ route('devoluciones.create') }}"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-brand-navy text-sm font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                    <i class="fas fa-undo text-xs text-brand-gold-600" aria-hidden="true"></i>
+                    Devolución
+                </a>
+                <a href="{{ route('reportes.disponibles') }}"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-brand-navy text-sm font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                    <i class="fas fa-clipboard-check text-xs text-emerald-600" aria-hidden="true"></i>
+                    Ver Reportes
+                </a>
+            </div>
+        </div>
+
+        <!-- Tarjetas de métricas (KPIs interactivos) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            <!-- Total Mobiliario -->
+            <a href="{{ route('mobiliario.index') }}"
+                class="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 border-l-4 border-l-brand-navy flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-gold">
+                <div class="w-14 h-14 rounded-full bg-brand-navy-50 text-brand-navy flex items-center justify-center shrink-0 group-hover:bg-brand-navy group-hover:text-white transition">
+                    <i class="fas fa-couch text-2xl" aria-hidden="true"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-brand-navy">Total Mobiliario</p>
+                    <p class="text-3xl font-bold text-brand-navy">{{ $countMobiliario }}</p>
+                </div>
+            </a>
+
+            <!-- Total Dispositivos -->
+            <a href="{{ route('dispositivos.index') }}"
+                class="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 border-l-4 border-l-brand-navy-700 flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-gold">
+                <div class="w-14 h-14 rounded-full bg-brand-navy-50 text-brand-navy-700 flex items-center justify-center shrink-0 group-hover:bg-brand-navy-700 group-hover:text-white transition">
+                    <i class="fas fa-laptop text-2xl" aria-hidden="true"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-brand-navy-700">Total Dispositivos</p>
+                    <p class="text-3xl font-bold text-brand-navy">{{ $countDispositivos }}</p>
+                </div>
+            </a>
+
+            <!-- Asignaciones Activas (Dorado = Asignado) -->
+            <a href="{{ route('asignaciones.index') }}"
+                class="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 border-l-4 border-l-brand-gold flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-gold">
+                <div class="w-14 h-14 rounded-full bg-brand-gold-50 text-brand-gold-600 flex items-center justify-center shrink-0 group-hover:bg-brand-gold group-hover:text-brand-navy transition">
+                    <i class="fas fa-handshake text-2xl" aria-hidden="true"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-brand-gold-700">Asignaciones Activas</p>
+                    <p class="text-3xl font-bold text-brand-gold-700">{{ $totalAsignado }}</p>
+                </div>
+            </a>
+
+            <!-- Bienes Disponibles (Verde = Disponible) -->
+            <a href="{{ route('reportes.disponibles') }}"
+                class="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 border-l-4 border-l-emerald-500 flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-gold">
+                <div class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition">
+                    <i class="fas fa-check-circle text-2xl" aria-hidden="true"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-emerald-700">Bienes Disponibles</p>
+                    <p class="text-3xl font-bold text-emerald-600">{{ $totalDisponible }}</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Últimas 5 Asignaciones -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-clock text-brand-gold text-lg" aria-hidden="true"></i>
+                    <h2 class="text-lg font-semibold text-brand-navy">Últimas 5 Asignaciones</h2>
+                </div>
+                <a href="{{ route('asignaciones.index') }}" class="text-xs font-semibold text-brand-navy hover:text-brand-gold-700 transition">
+                    Ver todas →
+                </a>
+            </div>
+
+            <!-- Vista compacta en tarjetas para pantallas muy pequeñas (< sm) -->
+            <div class="sm:hidden space-y-3">
+                @forelse ($ultimasAsignaciones as $asig)
+                    <div class="p-3.5 rounded-lg border border-gray-100 bg-gray-50/60 space-y-1">
+                        <div class="flex items-center justify-between text-xs text-gray-500">
+                            <span class="font-semibold text-brand-navy">#{{ $asig->id }} · <span class="capitalize">{{ $asig->tipo }}</span></span>
+                            <span>{{ $asig->fecha_entrega->format('d/m/Y') }}</span>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-900">{{ $asig->nombre_bien }}</p>
+                        <p class="text-xs text-gray-600">{{ $asig->empleado->nombre_completo ?? 'N/A' }}</p>
+                    </div>
+                @empty
+                    <p class="py-6 text-center text-sm text-gray-400">No hay asignaciones registradas aún.</p>
+                @endforelse
+            </div>
+
+            <!-- Tabla en pantallas sm y superiores -->
+            <div class="hidden sm:block overflow-x-auto">
+                <table class="w-full text-sm text-left border-collapse">
+                    <caption class="sr-only">Listado de las últimas 5 asignaciones registradas</caption>
+                    <thead class="bg-gray-50 text-gray-600 border-b-2 border-gray-200">
+                        <tr>
+                            <th scope="col" class="py-3 px-4 font-semibold">#</th>
+                            <th scope="col" class="py-3 px-4 font-semibold">Colaborador</th>
+                            <th scope="col" class="py-3 px-4 font-semibold">Tipo</th>
+                            <th scope="col" class="py-3 px-4 font-semibold">Elemento</th>
+                            <th scope="col" class="py-3 px-4 font-semibold">Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 text-gray-700">
+                        @forelse ($ultimasAsignaciones as $asig)
+                            <tr class="hover:bg-brand-gold-50/50 transition">
+                                <td class="py-3 px-4 font-medium text-gray-900">{{ $asig->id }}</td>
+                                <td class="py-3 px-4">{{ $asig->empleado->nombre_completo ?? 'N/A' }}</td>
+                                <td class="py-3 px-4 capitalize">{{ $asig->tipo }}</td>
+                                <td class="py-3 px-4">{{ $asig->nombre_bien }}</td>
+                                <td class="py-3 px-4 whitespace-nowrap">{{ $asig->fecha_entrega->format('d/m/Y') }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="py-6 px-4 text-center text-gray-400">
+                                    No hay asignaciones registradas aún.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 2 Gráficos Circulares: Mobiliario y Dispositivos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Gráfico 1: Disponibilidad de Mobiliario -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="mb-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-couch text-brand-gold text-lg" aria-hidden="true"></i>
+                        <h2 class="text-lg font-semibold text-brand-navy">Disponibilidad de Mobiliario</h2>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Muebles aptos para asignación (excluye «No aplica»)
+                    </p>
+                </div>
+
+                @if ($asignadoMobiliario + $disponibleMobiliario > 0)
+                    <div class="relative h-56">
+                        <canvas id="mobiliarioChart"
+                            data-asignado="{{ $asignadoMobiliario }}"
+                            data-disponible="{{ $disponibleMobiliario }}"
+                            role="img"
+                            aria-label="Disponibilidad de mobiliario — Asignados: {{ $asignadoMobiliario }} · Disponibles: {{ $disponibleMobiliario }}"></canvas>
+                    </div>
+                @else
+                    <div class="h-56 flex items-center justify-center text-sm text-gray-400 text-center">
+                        Sin mobiliario asignable registrado para graficar.
+                    </div>
+                @endif
+
+                <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3 text-center">
+                    <div class="p-2.5 rounded-lg bg-brand-gold-50/70">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-gold-700">
+                            <span class="w-2.5 h-2.5 rounded-full bg-brand-gold" aria-hidden="true"></span>
+                            Asignados
+                        </span>
+                        <p class="text-lg font-bold text-brand-navy mt-0.5">{{ $asignadoMobiliario }}</p>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-emerald-50/70">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+                            Disponibles
+                        </span>
+                        <p class="text-lg font-bold text-emerald-700 mt-0.5">{{ $disponibleMobiliario }}</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gráfico 2: Disponibilidad de Dispositivos -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="mb-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-laptop text-brand-gold text-lg" aria-hidden="true"></i>
+                        <h2 class="text-lg font-semibold text-brand-navy">Disponibilidad de Dispositivos</h2>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Equipos aptos para asignación (excluye «No aplica»)
+                    </p>
+                </div>
+
+                @if ($asignadoDispositivos + $disponibleDispositivos > 0)
+                    <div class="relative h-56">
+                        <canvas id="dispositivosChart"
+                            data-asignado="{{ $asignadoDispositivos }}"
+                            data-disponible="{{ $disponibleDispositivos }}"
+                            role="img"
+                            aria-label="Disponibilidad de dispositivos — Asignados: {{ $asignadoDispositivos }} · Disponibles: {{ $disponibleDispositivos }}"></canvas>
+                    </div>
+                @else
+                    <div class="h-56 flex items-center justify-center text-sm text-gray-400 text-center">
+                        Sin dispositivos asignables registrados para graficar.
+                    </div>
+                @endif
+
+                <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3 text-center">
+                    <div class="p-2.5 rounded-lg bg-brand-gold-50/70">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-gold-700">
+                            <span class="w-2.5 h-2.5 rounded-full bg-brand-gold" aria-hidden="true"></span>
+                            Asignados
+                        </span>
+                        <p class="text-lg font-bold text-brand-navy mt-0.5">{{ $asignadoDispositivos }}</p>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-emerald-50/70">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+                            Disponibles
+                        </span>
+                        <p class="text-lg font-bold text-emerald-700 mt-0.5">{{ $disponibleDispositivos }}</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    @if (($asignadoMobiliario + $disponibleMobiliario) > 0 || ($asignadoDispositivos + $disponibleDispositivos) > 0)
+        @push('scripts')
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+                integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+                crossorigin="anonymous"></script>
             <script>
-                @php
-                    $totalMobiliario = \App\Models\Mobiliario::where('disponibilidad', '!=', 'No Aplica para asignación')->count();
-                    $asignadoMobiliario = \App\Models\Asignacion::where('tipo', 'mobiliario')->whereDoesntHave('devolucion')->count();
-                    $totalDispositivos = \App\Models\Dispositivo::where('disponibilidad', '!=', 'No Aplica para asignación')->count();
-                    $asignadoDispositivos = \App\Models\Asignacion::where('tipo', 'dispositivo')->whereDoesntHave('devolucion')->count();
-
-                    $totalAsignado = $asignadoMobiliario + $asignadoDispositivos;
-                    $totalDisponible = max(0, ($totalMobiliario - $asignadoMobiliario) + ($totalDispositivos - $asignadoDispositivos));
-                @endphp
-
                 document.addEventListener('DOMContentLoaded', function() {
-                    const ctx = document.getElementById('estadoEquiposChart').getContext('2d');
-                    const estadoEquiposChart = new Chart(ctx, {
-                        type: 'pie',
-                        data: {
-                            labels: ['Asignado', 'Disponible'],
-                            datasets: [{
-                                label: 'Equipos',
-                                data: [{{ $totalAsignado }}, {{ $totalDisponible }}],
-                                backgroundColor: ['#f59e0b', '#10b981'],
-                                borderWidth: 0
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        font: {
-                                            size: 14
-                                        },
-                                        padding: 20
+                    if (typeof window.Chart === 'undefined') return;
+
+                    const rootStyles = getComputedStyle(document.documentElement);
+                    const colorGold = (rootStyles.getPropertyValue('--ccisur-gold') || '#AF9730').trim();
+                    const colorEmerald = '#10b981';
+
+                    function renderDonut(canvasId) {
+                        const canvas = document.getElementById(canvasId);
+                        if (!canvas) return;
+
+                        const asignado = parseInt(canvas.dataset.asignado || '0', 10);
+                        const disponible = parseInt(canvas.dataset.disponible || '0', 10);
+
+                        new Chart(canvas.getContext('2d'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Asignado', 'Disponible'],
+                                datasets: [{
+                                    data: [asignado, disponible],
+                                    backgroundColor: [colorGold, colorEmerald],
+                                    borderWidth: 0
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            font: { size: 13 },
+                                            padding: 16
+                                        }
+                                    },
+                                    tooltip: {
+                                        bodyFont: { size: 13 },
+                                        titleFont: { size: 14 }
                                     }
                                 },
-                                tooltip: {
-                                    bodyFont: {
-                                        size: 14
-                                    },
-                                    titleFont: {
-                                        size: 16
-                                    }
-                                }
-                            },
-                            cutout: '70%',
-                            borderRadius: 10,
-                            spacing: 5
-                        }
-                    });
+                                cutout: '70%',
+                                borderRadius: 8,
+                                spacing: 4
+                            }
+                        });
+                    }
+
+                    renderDonut('mobiliarioChart');
+                    renderDonut('dispositivosChart');
                 });
             </script>
-        </body>
-
-        </html>
+        @endpush
+    @endif
 </x-app-layout>

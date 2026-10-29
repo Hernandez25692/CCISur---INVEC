@@ -5,11 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Asignacion;
 use App\Models\Dispositivo;
 use App\Models\Mobiliario;
-use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Str;
-
-
+use Illuminate\Http\Request;
 
 class AsignacionController extends Controller
 {
@@ -20,11 +17,11 @@ class AsignacionController extends Controller
 
         if ($request->filled('buscar')) {
             $query->whereHas('empleado', function ($q) use ($request) {
-                $q->where('nombre_completo', 'like', '%' . $request->buscar . '%');
+                $q->where('nombre_completo', 'like', '%'.$request->buscar.'%');
             })->orWhereHas('mobiliario', function ($q) use ($request) {
-                $q->where('etiqueta', 'like', '%' . $request->buscar . '%');
+                $q->where('etiqueta', 'like', '%'.$request->buscar.'%');
             })->orWhereHas('dispositivo', function ($q) use ($request) {
-                $q->where('etiqueta', 'like', '%' . $request->buscar . '%');
+                $q->where('etiqueta', 'like', '%'.$request->buscar.'%');
             });
         }
 
@@ -41,8 +38,6 @@ class AsignacionController extends Controller
         return view('asignaciones.index', compact('asignaciones'));
     }
 
-
-
     // Formulario para nueva asignación
     public function create(Request $request)
     {
@@ -52,7 +47,6 @@ class AsignacionController extends Controller
 
         return view('asignaciones.create', compact('empleados', 'tipo', 'id_referencia'));
     }
-
 
     // Guardar nueva asignación
     public function store(Request $request)
@@ -67,7 +61,6 @@ class AsignacionController extends Controller
             'entregado_por' => 'required|string',
         ]);
 
-
         // Verificar si el bien ya está asignado
         $existeAsignacion = Asignacion::where('id_referencia', $request->id_referencia)
             ->where('tipo', $request->tipo)
@@ -81,7 +74,7 @@ class AsignacionController extends Controller
         // Crear la asignación
         $asignacion = Asignacion::create([
             ...$request->all(),
-            'uuid' => \Illuminate\Support\Str::uuid()
+            'uuid' => \Illuminate\Support\Str::uuid(),
         ]);
 
         // Cambiar disponibilidad
@@ -92,13 +85,12 @@ class AsignacionController extends Controller
         }
 
         if ($item) {
-            $item->disponibilidad = 'asignado';
+            $item->disponibilidad = 'Asignado';
             $item->save();
         }
 
         return redirect()->route('asignaciones.index')->with('success', 'Asignación registrada correctamente.');
     }
-
 
     // Mostrar detalles (opcional para PDF)
     public function show(Asignacion $asignacion)
@@ -116,6 +108,7 @@ class AsignacionController extends Controller
     public function destroy(Asignacion $asignacion)
     {
         $asignacion->delete();
+
         return redirect()->route('asignaciones.index')->with('success', 'Asignación eliminada.');
     }
 
@@ -126,7 +119,8 @@ class AsignacionController extends Controller
             : \App\Models\Dispositivo::find($asignacion->id_referencia);
 
         $pdf = Pdf::loadView('asignaciones.acta_pdf', compact('asignacion', 'item'));
-        return $pdf->stream('Acta_Entrega_' . $asignacion->id . '.pdf');
+
+        return $pdf->stream('Acta_Entrega_'.$asignacion->id.'.pdf');
     }
 
     public function historial($empleado_id)
