@@ -48,24 +48,135 @@
 
     </div>
 
-    <!-- Alertas -->
+    <!-- Alertas accesibles de respaldo -->
     @if (session('success'))
-        <div
-            class="fixed bottom-6 right-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow z-50">
-            {{ session('success') }}
+        <div id="flash-success" role="status"
+            class="fixed bottom-6 right-6 bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl shadow-md z-50 flex items-center gap-2.5 text-sm font-medium">
+            <i class="fas fa-check-circle text-emerald-600" aria-hidden="true"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div id="flash-error" role="alert"
+            class="fixed bottom-6 right-6 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-xl shadow-md z-50 flex items-center gap-2.5 text-sm font-medium max-w-md">
+            <i class="fas fa-exclamation-circle text-red-600 shrink-0" aria-hidden="true"></i>
+            <span>{{ session('error') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="fixed bottom-6 left-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow z-50">
-            <strong>¡Error!</strong>
-            <ul class="mt-2 list-disc list-inside text-sm">
+        <div role="alert"
+            class="fixed bottom-6 left-6 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-xl shadow-md z-50 max-w-md">
+            <strong class="font-semibold text-sm">¡Revisá los datos ingresados!</strong>
+            <ul class="mt-1.5 list-disc list-inside text-xs space-y-0.5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
         </div>
     @endif
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Confirmación SweetAlert2 para formularios de eliminación permitida
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('form[data-swal-delete]');
+                if (!form || form.dataset.swalConfirmed === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const nombre = form.dataset.swalNombre || 'este registro';
+                const etiqueta = form.dataset.swalEtiqueta ? ` (${form.dataset.swalEtiqueta})` : '';
+
+                if (typeof window.Swal === 'undefined') {
+                    if (window.confirm(`¿Estás seguro de eliminar ${nombre}${etiqueta}?`)) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                    return;
+                }
+
+                window.Swal.fire({
+                    icon: 'warning',
+                    title: '¿Eliminar este bien?',
+                    text: `Se eliminará definitivamente «${nombre}»${etiqueta}. Esta acción no se puede deshacer.`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#031940',
+                    reverseButtons: true,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+            });
+
+            // Modal informativo cuando un bien está protegido y NO se puede eliminar
+            document.addEventListener('click', function (event) {
+                const lockedBtn = event.target.closest('[data-swal-locked]');
+                if (!lockedBtn) {
+                    return;
+                }
+
+                event.preventDefault();
+                const motivo = lockedBtn.dataset.swalLocked || 'Este registro no cumple las condiciones para ser eliminado.';
+                const titulo = lockedBtn.dataset.swalTitle || 'Eliminación bloqueada';
+
+                if (typeof window.Swal === 'undefined') {
+                    window.alert(`${titulo}: ${motivo}`);
+                    return;
+                }
+
+                window.Swal.fire({
+                    icon: 'info',
+                    title: titulo,
+                    text: motivo,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#031940'
+                });
+            });
+
+            // Mostrar alertas de sesión con SweetAlert2
+            @if (session('success'))
+                if (typeof window.Swal !== 'undefined') {
+                    const fallbackSuccess = document.getElementById('flash-success');
+                    if (fallbackSuccess) fallbackSuccess.classList.add('sr-only');
+                    window.Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: @json(session('success')),
+                        showConfirmButton: false,
+                        timer: 3500,
+                        timerProgressBar: true
+                    });
+                }
+            @endif
+
+            @if (session('error'))
+                if (typeof window.Swal !== 'undefined') {
+                    const fallbackError = document.getElementById('flash-error');
+                    if (fallbackError) fallbackError.classList.add('sr-only');
+                    window.Swal.fire({
+                        icon: 'error',
+                        title: 'Acción no permitida',
+                        text: @json(session('error')),
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#031940'
+                    });
+                }
+            @endif
+        });
+    </script>
 
     @stack('scripts')
 </body>

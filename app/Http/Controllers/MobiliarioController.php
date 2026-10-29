@@ -3,96 +3,150 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mobiliario;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class MobiliarioController extends Controller
 {
-    // Mostrar listado
-    public function index(Request $request)
+    // Mostrar listado paginado y filtrado
+    public function index(Request $request): View
     {
-        $query = Mobiliario::query();
+        $query = Mobiliario::query()->withCount(['asignacionesActivas', 'asignaciones']);
 
         if ($request->filled('nombre')) {
-            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+            $termino = addcslashes(trim((string) $request->input('nombre')), '%_\\');
+            $query->where(function (Builder $q) use ($termino): void {
+                $q->where('nombre', 'like', "%{$termino}%")
+                    ->orWhere('etiqueta', 'like', "%{$termino}%");
+            });
         }
 
         if ($request->filled('tipo')) {
-            $query->where('tipo', 'like', '%' . $request->tipo . '%');
+            $query->where('tipo', (string) $request->input('tipo'));
         }
 
         if ($request->filled('ubicacion')) {
-            $query->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
+            $ubicacion = addcslashes(trim((string) $request->input('ubicacion')), '%_\\');
+            $query->where('ubicacion', 'like', "%{$ubicacion}%");
         }
 
         if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+            $query->where('estado', (string) $request->input('estado'));
         }
 
-        $mobiliarios = $query->latest()->get();
+        if ($request->filled('disponibilidad')) {
+            match ((string) $request->input('disponibilidad')) {
+                Mobiliario::DISPONIBILIDAD_ASIGNADO => $query->asignados(),
+                Mobiliario::DISPONIBILIDAD_SIN_ASIGNAR => $query->disponibles(),
+                Mobiliario::DISPONIBILIDAD_NO_APLICA => $query->noAsignables(),
+                default => null,
+            };
+        }
 
-        return view('mobiliario.index', compact('mobiliarios'));
+        $hayFiltros = collect($request->only(['nombre', 'tipo', 'ubicacion', 'estado', 'disponibilidad']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
+
+        $mobiliarios = $query->latest()->paginate(15)->withQueryString();
+
+        return view('mobiliario.index', compact('mobiliarios', 'hayFiltros'));
     }
 
-
     // Mostrar formulario de creación
-    public function create()
+    public function create(): View
     {
         return view('mobiliario.create');
     }
 
     // Guardar nuevo mobiliario
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'tipo' => 'required|string|max:255',
-            'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
-            'fecha_registro' => 'required|date',
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'tipo' => ['required', 'string', Rule::in(Mobiliario::TIPOS)],
+            'ubicacion' => ['required', 'string', 'max:255'],
+            'estado' => ['required', Rule::in(Mobiliario::ESTADOS)],
+            'fecha_registro' => ['required', 'date'],
+            'es_area_comun' => ['nullable', 'boolean'],
         ]);
 
+        $validated['disponibilidad'] = Mobiliario::calcularDisponibilidad(
+            $validated['estado'],
+            $request->boolean('es_area_comun'),
+            false
+        );
 
-        // Creamos primero el registro sin la etiqueta
-        $mobiliario = Mobiliario::create($request->all());
+        unset($validated['es_area_comun']);
 
-        // Generamos la etiqueta y actualizamos
-        $etiqueta = 'INV-MOB-' . date('Y') . '-' . str_pad($mobiliario->id, 4, '0', STR_PAD_LEFT);
-        $mobiliario->etiqueta = $etiqueta;
-        $mobiliario->save();
+        DB::transaction(function () use ($validated): void {
+            $mobiliario = Mobiliario::create($validated);
+            $anio = Carbon::parse($validated['fecha_registro'])->format('Y');
+            $mobiliario->etiqueta = 'INV-MOB-'.$anio.'-'.str_pad((string) $mobiliario->id, 4, '0', STR_PAD_LEFT);
+            $mobiliario->save();
+        });
 
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario registrado correctamente.');
     }
 
-
     // Mostrar formulario de edición
-    public function edit(Mobiliario $mobiliario)
+    public function edit(Mobiliario $mobiliario): View
     {
+        $mobiliario->loadCount('asignacionesActivas');
+
         return view('mobiliario.edit', compact('mobiliario'));
     }
 
     // Actualizar registro
-    public function update(Request $request, Mobiliario $mobiliario)
+    public function update(Request $request, Mobiliario $mobiliario): RedirectResponse
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'tipo' => 'required|string|max:255',
-            'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
-            'disponibilidad' => 'required|in:Asignado,Sin Asignar,No Aplica para asignación',
-            'fecha_registro' => 'required|date',
+        $tieneAsignacionActiva = $mobiliario->estaAsignado();
+
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'tipo' => ['required', 'string', Rule::in(Mobiliario::TIPOS)],
+            'ubicacion' => ['required', 'string', 'max:255'],
+            'estado' => [$tieneAsignacionActiva ? 'nullable' : 'required', Rule::in(Mobiliario::ESTADOS)],
+            'fecha_registro' => ['required', 'date'],
+            'es_area_comun' => ['nullable', 'boolean'],
         ]);
 
-        $mobiliario->update($request->except('etiqueta'));
+        if ($tieneAsignacionActiva) {
+            // Mientras el mueble está asignado, su estado físico y disponibilidad están bloqueados
+            $validated['estado'] = $mobiliario->estado;
+            $validated['disponibilidad'] = Mobiliario::DISPONIBILIDAD_ASIGNADO;
+        } else {
+            $validated['disponibilidad'] = Mobiliario::calcularDisponibilidad(
+                $validated['estado'],
+                $request->boolean('es_area_comun'),
+                false
+            );
+        }
+
+        unset($validated['es_area_comun']);
+
+        $mobiliario->update($validated);
 
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario actualizado correctamente.');
     }
 
-
-
     // Eliminar registro
-    public function destroy(Mobiliario $mobiliario)
+    public function destroy(Mobiliario $mobiliario): RedirectResponse
     {
+        $mobiliario->loadCount(['asignacionesActivas', 'asignaciones']);
+
+        if (! $mobiliario->puede_eliminarse) {
+            return redirect()
+                ->route('mobiliario.index')
+                ->with('error', $mobiliario->motivo_no_eliminable ?? 'No se puede eliminar este mueble.');
+        }
+
         $mobiliario->delete();
-        return redirect()->route('mobiliario.index')->with('success', 'Mobiliario eliminado.');
+
+        return redirect()->route('mobiliario.index')->with('success', 'Mobiliario eliminado correctamente.');
     }
 }

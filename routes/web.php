@@ -73,7 +73,7 @@ Route::middleware(['auth'])->group(function () {
         }
 
         $query = $baseQuery->where(function ($q) use ($forzarId) {
-            $q->where('disponibilidad', 'Sin Asignar');
+            $q->disponibles();
             if ($forzarId) {
                 $q->orWhere('id', $forzarId); // Incluir el solicitado aunque esté asignado
             }

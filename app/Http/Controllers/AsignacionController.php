@@ -74,18 +74,20 @@ class AsignacionController extends Controller
         // Crear la asignación
         $asignacion = Asignacion::create([
             ...$request->all(),
+            'mobiliario_id' => $request->tipo === Asignacion::TIPO_MOBILIARIO ? (int) $request->id_referencia : null,
+            'dispositivo_id' => $request->tipo === Asignacion::TIPO_DISPOSITIVO ? (int) $request->id_referencia : null,
             'uuid' => \Illuminate\Support\Str::uuid(),
         ]);
 
         // Cambiar disponibilidad
-        if ($request->tipo === 'mobiliario') {
-            $item = \App\Models\Mobiliario::find($request->id_referencia);
+        if ($request->tipo === Asignacion::TIPO_MOBILIARIO) {
+            $item = Mobiliario::find($request->id_referencia);
         } else {
-            $item = \App\Models\Dispositivo::find($request->id_referencia);
+            $item = Dispositivo::find($request->id_referencia);
         }
 
         if ($item) {
-            $item->disponibilidad = 'Asignado';
+            $item->disponibilidad = Mobiliario::DISPONIBILIDAD_ASIGNADO;
             $item->save();
         }
 

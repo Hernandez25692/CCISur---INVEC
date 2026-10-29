@@ -17,6 +17,8 @@ class Asignacion extends Model
     protected $fillable = [
         'tipo',
         'id_referencia',
+        'mobiliario_id',
+        'dispositivo_id',
         'empleado_id',
         'area',
         'observaciones',
