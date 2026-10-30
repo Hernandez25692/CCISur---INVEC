@@ -6,11 +6,23 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Colaboradores Registrados</h1>
                 <p class="mt-1 text-sm text-gray-500">Gestión de personal institucional y control de bienes asignados por gerencia</p>
             </div>
-            <a href="{{ route('empleados.create') }}"
-                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                <i class="fas fa-user-plus text-xs" aria-hidden="true"></i>
-                Nuevo Colaborador
-            </a>
+            <div class="flex flex-wrap items-center gap-2.5">
+                <a href="{{ route('empleados.bajas') }}"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    <i class="fas fa-user-slash text-xs text-gray-500" aria-hidden="true"></i>
+                    <span>Dados de baja</span>
+                    @if (($inactivosCount ?? 0) > 0)
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-800 font-bold">
+                            {{ $inactivosCount }}
+                        </span>
+                    @endif
+                </a>
+                <a href="{{ route('empleados.create') }}"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                    <i class="fas fa-user-plus text-xs" aria-hidden="true"></i>
+                    Nuevo Colaborador
+                </a>
+            </div>
         </div>
 
         <!-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) -->
@@ -193,27 +205,27 @@
                                                 <i class="fas fa-pen text-xs" aria-hidden="true"></i>
                                             </a>
 
-                                            @if ($e->puede_eliminarse)
+                                            @if ($e->puede_darse_de_baja)
                                                 <form action="{{ route('empleados.destroy', $e->id) }}" method="POST" class="inline"
-                                                    data-swal-delete
+                                                    data-swal-confirm-baja
                                                     data-swal-nombre="{{ $e->nombre_completo }}"
                                                     data-swal-etiqueta="{{ $e->codigo }}">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
-                                                        class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                                                        title="Eliminar colaborador" aria-label="Eliminar {{ $e->nombre_completo }}">
-                                                        <i class="fas fa-trash text-xs" aria-hidden="true"></i>
+                                                        class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
+                                                        title="Dar de baja al colaborador" aria-label="Dar de baja a {{ $e->nombre_completo }}">
+                                                        <i class="fas fa-user-slash text-xs" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
                                             @else
                                                 <button type="button"
-                                                    data-swal-locked="{{ $e->motivo_no_eliminable }}"
-                                                    data-swal-title="No se puede eliminar este colaborador"
+                                                    data-swal-locked="{{ $e->motivo_no_baja }}"
+                                                    data-swal-title="No se puede dar de baja a este colaborador"
                                                     class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-                                                    title="{{ $e->motivo_no_eliminable }}"
-                                                    aria-label="Eliminación protegida para {{ $e->nombre_completo }}">
-                                                    <i class="fas fa-trash text-xs" aria-hidden="true"></i>
+                                                    title="{{ $e->motivo_no_baja }}"
+                                                    aria-label="Baja bloqueada para {{ $e->nombre_completo }}">
+                                                    <i class="fas fa-user-slash text-xs" aria-hidden="true"></i>
                                                 </button>
                                             @endif
                                         </div>
@@ -267,28 +279,28 @@
                                     Editar
                                 </a>
 
-                                @if ($e->puede_eliminarse)
+                                @if ($e->puede_darse_de_baja)
                                     <form action="{{ route('empleados.destroy', $e->id) }}" method="POST" class="inline"
-                                        data-swal-delete
+                                        data-swal-confirm-baja
                                         data-swal-nombre="{{ $e->nombre_completo }}"
                                         data-swal-etiqueta="{{ $e->codigo }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 transition"
-                                            aria-label="Eliminar {{ $e->nombre_completo }}">
-                                            <i class="fas fa-trash text-[11px]" aria-hidden="true"></i>
-                                            Eliminar
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200 text-xs font-medium text-amber-700 hover:bg-amber-50 transition"
+                                            aria-label="Dar de baja a {{ $e->nombre_completo }}">
+                                            <i class="fas fa-user-slash text-[11px]" aria-hidden="true"></i>
+                                            Dar de baja
                                         </button>
                                     </form>
                                 @else
                                     <button type="button"
-                                        data-swal-locked="{{ $e->motivo_no_eliminable }}"
-                                        data-swal-title="No se puede eliminar este colaborador"
+                                        data-swal-locked="{{ $e->motivo_no_baja }}"
+                                        data-swal-title="No se puede dar de baja a este colaborador"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-gray-50 transition"
-                                        aria-label="Eliminación protegida para {{ $e->nombre_completo }}">
-                                        <i class="fas fa-trash text-[11px]" aria-hidden="true"></i>
-                                        Eliminar
+                                        aria-label="Baja bloqueada para {{ $e->nombre_completo }}">
+                                        <i class="fas fa-user-slash text-[11px]" aria-hidden="true"></i>
+                                        Dar de baja
                                     </button>
                                 @endif
                             </div>

@@ -45,8 +45,9 @@ class EmpleadoController extends Controller
             ->isNotEmpty();
 
         $empleados = $query->latest()->orderByDesc('id')->paginate(15)->withQueryString();
+        $inactivosCount = Empleado::onlyTrashed()->count();
 
-        return view('empleados.index', compact('empleados', 'hayFiltros'));
+        return view('empleados.index', compact('empleados', 'hayFiltros', 'inactivosCount'));
     }
 
     public function create(): View
@@ -144,17 +145,62 @@ class EmpleadoController extends Controller
 
     public function destroy(Empleado $empleado): RedirectResponse
     {
-        $empleado->loadCount(['asignacionesActivas', 'asignaciones']);
+        $empleado->loadCount(['asignacionesActivas']);
 
-        if (! $empleado->puede_eliminarse) {
+        if (! $empleado->puede_darse_de_baja) {
             return redirect()
                 ->route('empleados.index')
-                ->with('error', $empleado->motivo_no_eliminable ?? 'No se puede eliminar este colaborador.');
+                ->with('error', $empleado->motivo_no_baja ?? 'No se puede dar de baja a este colaborador.');
         }
 
         $empleado->delete();
 
-        return redirect()->route('empleados.index')->with('success', 'Colaborador eliminado correctamente.');
+        return redirect()->route('empleados.index')->with('success', 'Colaborador dado de baja correctamente.');
+    }
+
+    public function bajas(Request $request): View
+    {
+        $query = Empleado::onlyTrashed()->withCount(['asignacionesActivas', 'asignaciones']);
+
+        if ($request->filled('buscar')) {
+            $terminoRaw = trim((string) $request->input('buscar'));
+            $termino = addcslashes($terminoRaw, '%_\\');
+            $terminoSinGuiones = addcslashes(Empleado::normalizarIdentidad($terminoRaw), '%_\\');
+
+            $query->where(function (Builder $q) use ($termino, $terminoSinGuiones): void {
+                $q->where('nombre_completo', 'like', "%{$termino}%")
+                    ->orWhere('codigo', 'like', "%{$termino}%")
+                    ->orWhere('identidad', 'like', "%{$termino}%");
+
+                if ($terminoSinGuiones !== '' && $terminoSinGuiones !== $termino) {
+                    $q->orWhere('identidad', 'like', "%{$terminoSinGuiones}%");
+                }
+            });
+        }
+
+        if ($request->filled('gerencia')) {
+            $query->where('gerencia', (string) $request->input('gerencia'));
+        }
+
+        if ($request->filled('ubicacion')) {
+            $query->where('ubicacion', (string) $request->input('ubicacion'));
+        }
+
+        $hayFiltros = collect($request->only(['buscar', 'gerencia', 'ubicacion']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
+
+        $empleados = $query->latest('deleted_at')->orderByDesc('id')->paginate(15)->withQueryString();
+
+        return view('empleados.bajas', compact('empleados', 'hayFiltros'));
+    }
+
+    public function reactivar(int $id): RedirectResponse
+    {
+        $empleado = Empleado::onlyTrashed()->findOrFail($id);
+        $empleado->restore();
+
+        return redirect()->route('empleados.bajas')->with('success', "Colaborador {$empleado->nombre_completo} reactivado correctamente.");
     }
 
     public function historial(Request $request, Empleado $empleado): View

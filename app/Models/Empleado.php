@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Empleado extends Model
 {
+    use SoftDeletes;
+
     public const GERENCIAS = [
         'Dirección Ejecutiva',
         'Gerencia Administrativa y Financiera',
@@ -67,19 +70,15 @@ class Empleado extends Model
         return $this->asignaciones()->exists();
     }
 
-    public function getPuedeEliminarseAttribute(): bool
+    public function getPuedeDarseDeBajaAttribute(): bool
     {
-        return ! $this->tieneAsignacionesActivas() && ! $this->tieneHistorialAsignaciones();
+        return ! $this->tieneAsignacionesActivas();
     }
 
-    public function getMotivoNoEliminableAttribute(): ?string
+    public function getMotivoNoBajaAttribute(): ?string
     {
         if ($this->tieneAsignacionesActivas()) {
-            return 'Este colaborador tiene bienes asignados actualmente. Registrá primero la devolución de sus equipos.';
-        }
-
-        if ($this->tieneHistorialAsignaciones()) {
-            return 'Este colaborador posee historial de asignaciones y actas registradas, por lo que debe conservarse para respaldo documental.';
+            return 'No se puede dar de baja a este colaborador porque aún tiene bienes en su poder. Debe registrar primero la devolución de todos sus equipos y mobiliario.';
         }
 
         return null;

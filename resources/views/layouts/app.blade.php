@@ -120,6 +120,82 @@
                 });
             });
 
+            // Confirmación SweetAlert2 para dar de baja a un colaborador
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('form[data-swal-confirm-baja]');
+                if (!form || form.dataset.swalConfirmed === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const nombre = form.dataset.swalNombre || 'este colaborador';
+                const etiqueta = form.dataset.swalEtiqueta ? ` (${form.dataset.swalEtiqueta})` : '';
+
+                if (typeof window.Swal === 'undefined') {
+                    if (window.confirm(`¿Está seguro de dar de baja a ${nombre}${etiqueta}? Pasará al listado de colaboradores inactivos.`)) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                    return;
+                }
+
+                window.Swal.fire({
+                    icon: 'warning',
+                    title: '¿Dar de baja a este colaborador?',
+                    text: `«${nombre}»${etiqueta} pasará al listado de colaboradores inactivos. Su historial de actas y préstamos se conservará intacto.`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, dar de baja',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#d97706',
+                    cancelButtonColor: '#031940',
+                    reverseButtons: true,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+            });
+
+            // Confirmación SweetAlert2 para reactivar a un colaborador
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('form[data-swal-confirm-reactivar]');
+                if (!form || form.dataset.swalConfirmed === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const nombre = form.dataset.swalNombre || 'este colaborador';
+
+                if (typeof window.Swal === 'undefined') {
+                    if (window.confirm(`¿Reactivar a ${nombre}? Volverá a estar disponible para asignaciones.`)) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                    return;
+                }
+
+                window.Swal.fire({
+                    icon: 'question',
+                    title: '¿Reactivar colaborador?',
+                    text: `«${nombre}» volverá a aparecer en el listado activo y podrá recibir nuevas asignaciones.`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, reactivar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#059669',
+                    cancelButtonColor: '#031940',
+                    reverseButtons: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+            });
+
             // Modal informativo cuando un bien está protegido y NO se puede eliminar
             document.addEventListener('click', function (event) {
                 const lockedBtn = event.target.closest('[data-swal-locked]');

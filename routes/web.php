@@ -30,6 +30,8 @@ Route::middleware(['auth'])->group(function () {
     // CRUD de recursos
     Route::resource('mobiliario', MobiliarioController::class);
     Route::resource('dispositivos', DispositivoController::class);
+    Route::get('/empleados/bajas', [\App\Http\Controllers\EmpleadoController::class, 'bajas'])->name('empleados.bajas');
+    Route::post('/empleados/{id}/reactivar', [\App\Http\Controllers\EmpleadoController::class, 'reactivar'])->name('empleados.reactivar');
     Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
     Route::resource('asignaciones', AsignacionController::class)->parameters([
         'asignaciones' => 'asignacion',
@@ -54,8 +56,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('reportes.asignados.exportar');
     Route::get('/reportes/disponibles/exportar', [ReporteController::class, 'exportarDisponibles'])->name('reportes.disponibles.exportar');
 
-    Route::get('/empleados/{empleado}/historial', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->name('empleados.historial');
-    Route::get('/asignaciones/empleado/{empleado}', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->name('asignaciones.historial');
+    Route::get('/empleados/{empleado}/historial', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->withTrashed()->name('empleados.historial');
+    Route::get('/asignaciones/empleado/{empleado}', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->withTrashed()->name('asignaciones.historial');
     Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class);
     Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->name('devoluciones.pdf');
     Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
