@@ -2,17 +2,55 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Concerns\TieneEstadoInventario;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Dispositivo extends Model
 {
-    public const DISPONIBILIDAD_ASIGNADO = 'Asignado';
+    use TieneEstadoInventario;
 
-    public const DISPONIBILIDAD_SIN_ASIGNAR = 'Sin Asignar';
+    public const TIPO_ASIGNACION = Asignacion::TIPO_DISPOSITIVO;
 
-    public const DISPONIBILIDAD_NO_APLICA = 'No Aplica para asignación';
+    public const ETIQUETA_BIEN = 'dispositivo';
+
+    public const TIPOS = [
+        'Laptop',
+        'Computadora de escritorio',
+        'Proyector',
+        'Impresora',
+        'Escáner',
+        'Monitor',
+        'Teclado',
+        'Mouse',
+        'Tablet',
+        'Switch de red',
+        'Router',
+        'Access Point (AP)',
+        'Servidor',
+        'Disco duro externo',
+        'No-break / UPS',
+        'Cámara Web',
+        'Micrófono',
+        'Sistema de sonido',
+        'Pantalla interactiva',
+        'Control remoto',
+        'Cargador de laptop',
+        'Cable HDMI',
+        'Otro',
+    ];
+
+    public const TIPOS_SERIE_OPCIONAL = [
+        'Teclado',
+        'Mouse',
+        'Disco duro externo',
+        'Cámara Web',
+        'Micrófono',
+        'Sistema de sonido',
+        'Control remoto',
+        'Cargador de laptop',
+        'Cable HDMI',
+        'Otro',
+    ];
 
     protected $fillable = [
         'nombre',
@@ -27,29 +65,31 @@ class Dispositivo extends Model
         'fecha_registro',
     ];
 
-    public function asignaciones(): HasMany
+    protected $casts = [
+        'fecha_registro' => 'date',
+    ];
+
+    public static function requiereSerie(?string $tipo): bool
     {
-        return $this->hasMany(Asignacion::class, 'id_referencia')
-            ->where('tipo', Asignacion::TIPO_DISPOSITIVO);
+        if (! $tipo) {
+            return true;
+        }
+
+        return ! in_array($tipo, self::TIPOS_SERIE_OPCIONAL, true);
     }
 
-    public function asignacionesActivas(): HasMany
+    public static function normalizarSerie(?string $serie): ?string
     {
-        return $this->asignaciones()->whereDoesntHave('devolucion');
-    }
+        if ($serie === null) {
+            return null;
+        }
 
-    public function scopeAsignables(Builder $query): Builder
-    {
-        return $query->where('disponibilidad', '!=', self::DISPONIBILIDAD_NO_APLICA);
-    }
+        $limpio = trim($serie);
 
-    public function scopeAsignados(Builder $query): Builder
-    {
-        return $query->asignables()->whereHas('asignacionesActivas');
-    }
+        if ($limpio === '' || in_array(mb_strtoupper($limpio), ['N/A', 'NA', 'S/N', 'SN', 'SIN SERIE', '-'], true)) {
+            return null;
+        }
 
-    public function scopeDisponibles(Builder $query): Builder
-    {
-        return $query->asignables()->whereDoesntHave('asignacionesActivas');
+        return $limpio;
     }
 }

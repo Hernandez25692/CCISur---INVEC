@@ -13,80 +13,98 @@
             </a>
         </div>
 
-        <!-- Filtros de búsqueda -->
-        <form method="GET" action="{{ route('mobiliario.index') }}"
-            class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div>
-                    <label for="filtro_nombre" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                        Nombre o etiqueta
-                    </label>
-                    <input type="text" id="filtro_nombre" name="nombre" value="{{ request('nombre') }}"
-                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
-                        placeholder="Ej. Escritorio o INV-MOB">
+        <!-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) -->
+        <div x-data="{ mostrarFiltros: @js((bool) ($hayFiltros ?? false)) }"
+            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <button type="button" @click="mostrarFiltros = !mostrarFiltros"
+                :aria-expanded="mostrarFiltros.toString()"
+                class="sm:hidden w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-brand-navy bg-gray-50/70 hover:bg-gray-100/70 transition">
+                <span class="inline-flex items-center gap-2">
+                    <i class="fas fa-sliders-h text-brand-gold text-xs" aria-hidden="true"></i>
+                    Filtros de búsqueda
+                    @if ($hayFiltros ?? false)
+                        <span class="px-2 py-0.5 text-[11px] rounded-full bg-brand-gold text-brand-navy font-bold">Activos</span>
+                    @endif
+                </span>
+                <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform duration-200"
+                    :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
+            </button>
+
+            <form method="GET" action="{{ route('mobiliario.index') }}"
+                x-bind:class="mostrarFiltros ? 'block' : 'hidden sm:block'"
+                class="p-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        <label for="filtro_nombre" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Nombre o etiqueta
+                        </label>
+                        <input type="text" id="filtro_nombre" name="nombre" value="{{ request('nombre') }}"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
+                            placeholder="Ej. Escritorio o INV-MOB">
+                    </div>
+
+                    <div>
+                        <label for="filtro_tipo" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Tipo
+                        </label>
+                        <select id="filtro_tipo" name="tipo"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <option value="">Todos</option>
+                            @foreach (\App\Models\Mobiliario::TIPOS as $tipo)
+                                <option value="{{ $tipo }}" @selected(request('tipo') === $tipo)>{{ $tipo }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="filtro_ubicacion" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Ubicación
+                        </label>
+                        <input type="text" id="filtro_ubicacion" name="ubicacion" value="{{ request('ubicacion') }}"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
+                            placeholder="Ej. Oficina 1, Bodega">
+                    </div>
+
+                    <div>
+                        <label for="filtro_estado" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Estado físico
+                        </label>
+                        <select id="filtro_estado" name="estado"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <option value="">Todos</option>
+                            @foreach (\App\Models\Mobiliario::ESTADOS as $estado)
+                                <option value="{{ $estado }}" @selected(request('estado') === $estado)>{{ $estado }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="filtro_disponibilidad" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Disponibilidad
+                        </label>
+                        <select id="filtro_disponibilidad" name="disponibilidad"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <option value="">Todas</option>
+                            @foreach (\App\Models\Mobiliario::DISPONIBILIDADES as $disp)
+                                <option value="{{ $disp }}" @selected(request('disponibilidad') === $disp)>{{ $disp }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
-                <div>
-                    <label for="filtro_tipo" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                        Tipo
-                    </label>
-                    <select id="filtro_tipo" name="tipo"
-                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
-                        <option value="">Todos</option>
-                        @foreach (\App\Models\Mobiliario::TIPOS as $tipo)
-                            <option value="{{ $tipo }}" @selected(request('tipo') === $tipo)>{{ $tipo }}</option>
-                        @endforeach
-                    </select>
+                <div class="flex flex-wrap items-center justify-end gap-2.5 mt-4 pt-4 border-t border-gray-100">
+                    <a href="{{ route('mobiliario.index') }}"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                        Limpiar
+                    </a>
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        <i class="fas fa-search text-xs" aria-hidden="true"></i>
+                        Filtrar
+                    </button>
                 </div>
-
-                <div>
-                    <label for="filtro_ubicacion" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                        Ubicación
-                    </label>
-                    <input type="text" id="filtro_ubicacion" name="ubicacion" value="{{ request('ubicacion') }}"
-                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
-                        placeholder="Ej. Oficina 1, Bodega">
-                </div>
-
-                <div>
-                    <label for="filtro_estado" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                        Estado físico
-                    </label>
-                    <select id="filtro_estado" name="estado"
-                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
-                        <option value="">Todos</option>
-                        @foreach (\App\Models\Mobiliario::ESTADOS as $estado)
-                            <option value="{{ $estado }}" @selected(request('estado') === $estado)>{{ $estado }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div>
-                    <label for="filtro_disponibilidad" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                        Disponibilidad
-                    </label>
-                    <select id="filtro_disponibilidad" name="disponibilidad"
-                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
-                        <option value="">Todas</option>
-                        @foreach (\App\Models\Mobiliario::DISPONIBILIDADES as $disp)
-                            <option value="{{ $disp }}" @selected(request('disponibilidad') === $disp)>{{ $disp }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap items-center justify-end gap-2.5 mt-4 pt-4 border-t border-gray-100">
-                <a href="{{ route('mobiliario.index') }}"
-                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
-                    Limpiar
-                </a>
-                <button type="submit"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                    <i class="fas fa-search text-xs" aria-hidden="true"></i>
-                    Filtrar
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
 
         <!-- Contenedor de Resultados -->
         <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
@@ -134,53 +152,55 @@
                     @endif
                 </div>
             @else
-                <!-- Vista de Tabla para Escritorio (md+) -->
+                <!-- Vista de Tabla para Escritorio y Tablet (md+) -->
                 <div class="hidden md:block overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                         <caption class="sr-only">Listado de mobiliario registrado</caption>
                         <thead class="bg-brand-navy text-white">
                             <tr>
-                                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Etiqueta</th>
-                                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Mueble</th>
-                                <th scope="col" class="hidden xl:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Ubicación</th>
-                                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Estado Físico</th>
-                                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Disponibilidad</th>
-                                <th scope="col" class="hidden xl:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">Registro</th>
-                                <th scope="col" class="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider">Acciones</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Etiqueta</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Mueble</th>
+                                <th scope="col" class="hidden xl:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Ubicación</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Disponibilidad</th>
+                                <th scope="col" class="hidden xl:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Registro</th>
+                                <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             @foreach ($mobiliarios as $item)
                                 <tr class="even:bg-gray-50/50 hover:bg-brand-gold-50/40 transition-colors">
-                                    <td class="px-4 py-3.5 whitespace-nowrap">
+                                    <td class="px-4 py-3 whitespace-nowrap">
                                         <span class="px-2.5 py-1 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded-md">
                                             {{ $item->etiqueta }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3.5">
+                                    <td class="px-4 py-3">
                                         <div class="font-medium text-gray-900">{{ $item->nombre }}</div>
                                         <div class="text-xs text-gray-500">
                                             <span class="capitalize">{{ $item->tipo }}</span>
                                             <span class="xl:hidden"> · {{ $item->ubicacion }}</span>
                                         </div>
                                     </td>
-                                    <td class="hidden xl:table-cell px-4 py-3.5 text-gray-600">
+                                    <td class="hidden xl:table-cell px-4 py-3 text-gray-600">
                                         {{ $item->ubicacion }}
                                     </td>
-                                    <td class="px-4 py-3.5">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset {{ $item->clase_estado }}">
-                                            {{ $item->estado }}
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span title="{{ $item->estado }}"
+                                            class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset {{ $item->clase_estado }}">
+                                            {{ $item->estado_corto }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3.5 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset {{ $item->clase_disponibilidad }}">
-                                            {{ $item->disponibilidad_real }}
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span title="{{ $item->disponibilidad_real }}"
+                                            class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset {{ $item->clase_disponibilidad }}">
+                                            {{ $item->disponibilidad_corta }}
                                         </span>
                                     </td>
-                                    <td class="hidden xl:table-cell px-4 py-3.5 whitespace-nowrap text-gray-600">
+                                    <td class="hidden xl:table-cell px-4 py-3 whitespace-nowrap text-gray-600">
                                         {{ $item->fecha_registro?->format('d/m/Y') ?? 'N/A' }}
                                     </td>
-                                    <td class="px-4 py-3.5 whitespace-nowrap text-right font-medium">
+                                    <td class="px-4 py-3 whitespace-nowrap text-right font-medium">
                                         <div class="inline-flex items-center justify-end gap-1.5">
                                             <a href="{{ route('mobiliario.edit', $item->id) }}"
                                                 class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
@@ -245,14 +265,16 @@
                                     <h3 class="text-sm font-bold text-gray-900">{{ $item->nombre }}</h3>
                                     <p class="text-xs text-gray-500 capitalize">{{ $item->tipo }} · {{ $item->ubicacion }}</p>
                                 </div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 {{ $item->clase_disponibilidad }}">
-                                    {{ $item->disponibilidad_real }}
+                                <span title="{{ $item->disponibilidad_real }}"
+                                    class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 {{ $item->clase_disponibilidad }}">
+                                    {{ $item->disponibilidad_corta }}
                                 </span>
                             </div>
 
                             <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-50 text-xs text-gray-500">
-                                <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset {{ $item->clase_estado }}">
-                                    {{ $item->estado }}
+                                <span title="{{ $item->estado }}"
+                                    class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset {{ $item->clase_estado }}">
+                                    {{ $item->estado_corto }}
                                 </span>
                                 <span>Registro: {{ $item->fecha_registro?->format('d/m/Y') ?? 'N/A' }}</span>
                             </div>

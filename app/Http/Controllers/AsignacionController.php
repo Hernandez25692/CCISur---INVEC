@@ -7,6 +7,9 @@ use App\Models\Dispositivo;
 use App\Models\Mobiliario;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AsignacionController extends Controller
 {
@@ -51,44 +54,52 @@ class AsignacionController extends Controller
     // Guardar nueva asignación
     public function store(Request $request)
     {
-        $request->validate([
-            'tipo' => 'required|string',
-            'id_referencia' => 'required|integer',
-            'empleado_id' => 'required|exists:empleados,id',
-            'area' => 'required|string',
-            'observaciones' => 'nullable|string',
-            'fecha_entrega' => 'required|date',
-            'entregado_por' => 'required|string',
+        $validated = $request->validate([
+            'tipo' => ['required', 'string', Rule::in([Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO])],
+            'id_referencia' => ['required', 'integer', 'min:1'],
+            'empleado_id' => ['required', 'exists:empleados,id'],
+            'area' => ['required', 'string', 'max:255'],
+            'observaciones' => ['nullable', 'string'],
+            'fecha_entrega' => ['required', 'date'],
+            'entregado_por' => ['required', 'string', 'max:255'],
         ]);
 
-        // Verificar si el bien ya está asignado
-        $existeAsignacion = Asignacion::where('id_referencia', $request->id_referencia)
-            ->where('tipo', $request->tipo)
-            ->doesntHave('devolucion') // sin devolución
-            ->exists();
+        $errorMensaje = DB::transaction(function () use ($validated): ?string {
+            $query = $validated['tipo'] === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::query()
+                : Dispositivo::query();
 
-        if ($existeAsignacion) {
-            return redirect()->back()->with('error', 'Este bien ya ha sido asignado y no ha sido devuelto.');
-        }
+            $item = $query->lockForUpdate()->find($validated['id_referencia']);
 
-        // Crear la asignación
-        $asignacion = Asignacion::create([
-            ...$request->all(),
-            'mobiliario_id' => $request->tipo === Asignacion::TIPO_MOBILIARIO ? (int) $request->id_referencia : null,
-            'dispositivo_id' => $request->tipo === Asignacion::TIPO_DISPOSITIVO ? (int) $request->id_referencia : null,
-            'uuid' => \Illuminate\Support\Str::uuid(),
-        ]);
+            if (! $item) {
+                return 'El bien seleccionado no existe en el inventario.';
+            }
 
-        // Cambiar disponibilidad
-        if ($request->tipo === Asignacion::TIPO_MOBILIARIO) {
-            $item = Mobiliario::find($request->id_referencia);
-        } else {
-            $item = Dispositivo::find($request->id_referencia);
-        }
+            if (! $item->puede_asignarse) {
+                return 'Este bien no está disponible para ser asignado (ya se encuentra asignado o no aplica para asignación).';
+            }
 
-        if ($item) {
-            $item->disponibilidad = Mobiliario::DISPONIBILIDAD_ASIGNADO;
+            Asignacion::create([
+                'tipo' => $validated['tipo'],
+                'id_referencia' => (int) $validated['id_referencia'],
+                'mobiliario_id' => $validated['tipo'] === Asignacion::TIPO_MOBILIARIO ? (int) $validated['id_referencia'] : null,
+                'dispositivo_id' => $validated['tipo'] === Asignacion::TIPO_DISPOSITIVO ? (int) $validated['id_referencia'] : null,
+                'empleado_id' => (int) $validated['empleado_id'],
+                'area' => $validated['area'],
+                'observaciones' => $validated['observaciones'] ?? null,
+                'fecha_entrega' => $validated['fecha_entrega'],
+                'entregado_por' => $validated['entregado_por'],
+                'uuid' => Str::uuid()->toString(),
+            ]);
+
+            $item->disponibilidad = $item::DISPONIBILIDAD_ASIGNADO;
             $item->save();
+
+            return null;
+        });
+
+        if ($errorMensaje !== null) {
+            return redirect()->back()->withInput()->with('error', $errorMensaje);
         }
 
         return redirect()->route('asignaciones.index')->with('success', 'Asignación registrada correctamente.');

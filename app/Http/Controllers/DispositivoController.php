@@ -3,110 +3,191 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dispositivo;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class DispositivoController extends Controller
 {
-    // Mostrar todos los dispositivos
-    public function index(Request $request)
+    // Mostrar listado paginado y filtrado
+    public function index(Request $request): View
     {
-        $query = Dispositivo::query();
+        $query = Dispositivo::query()->withCount(['asignacionesActivas', 'asignaciones']);
 
         if ($request->filled('nombre')) {
-            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+            $termino = addcslashes(trim((string) $request->input('nombre')), '%_\\');
+            $query->where(function (Builder $q) use ($termino): void {
+                $q->where('nombre', 'like', "%{$termino}%")
+                    ->orWhere('etiqueta', 'like', "%{$termino}%")
+                    ->orWhere('n_serie', 'like', "%{$termino}%");
+            });
+        }
+
+        if ($request->filled('tipo')) {
+            $query->where('tipo', (string) $request->input('tipo'));
         }
 
         if ($request->filled('marca')) {
-            $query->where('marca', 'like', '%' . $request->marca . '%');
-        }
-
-        if ($request->filled('modelo')) {
-            $query->where('modelo', 'like', '%' . $request->modelo . '%');
+            $marca = addcslashes(trim((string) $request->input('marca')), '%_\\');
+            $query->where(function (Builder $q) use ($marca): void {
+                $q->where('marca', 'like', "%{$marca}%")
+                    ->orWhere('modelo', 'like', "%{$marca}%");
+            });
         }
 
         if ($request->filled('ubicacion')) {
-            $query->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
+            $ubicacion = addcslashes(trim((string) $request->input('ubicacion')), '%_\\');
+            $query->where('ubicacion', 'like', "%{$ubicacion}%");
         }
 
         if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+            $query->where('estado', (string) $request->input('estado'));
         }
 
-        $dispositivos = $query->latest()->get();
+        if ($request->filled('disponibilidad')) {
+            match ((string) $request->input('disponibilidad')) {
+                Dispositivo::DISPONIBILIDAD_ASIGNADO => $query->asignados(),
+                Dispositivo::DISPONIBILIDAD_SIN_ASIGNAR => $query->disponibles(),
+                Dispositivo::DISPONIBILIDAD_NO_APLICA => $query->noAsignables(),
+                default => null,
+            };
+        }
 
-        return view('dispositivos.index', compact('dispositivos'));
+        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado', 'disponibilidad']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
+
+        $dispositivos = $query->latest()->paginate(15)->withQueryString();
+
+        return view('dispositivos.index', compact('dispositivos', 'hayFiltros'));
     }
 
-
-    // Formulario para crear
-    public function create()
+    // Mostrar formulario de creación
+    public function create(): View
     {
         return view('dispositivos.create');
     }
 
-    // Guardar nuevo
-    public function store(Request $request)
+    // Guardar nuevo dispositivo
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'tipo' => 'required|string|max:255',
-            'marca' => 'required|string|max:255',
-            'modelo' => 'required|string|max:255',
-            'n_serie' => 'required|string|max:255|unique:dispositivos,n_serie',
-            'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
-            'fecha_registro' => 'required|date',
+        $request->merge([
+            'n_serie' => Dispositivo::normalizarSerie($request->input('n_serie')),
+        ]);
+
+        $requiereSerie = Dispositivo::requiereSerie($request->input('tipo'));
+
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'tipo' => ['required', 'string', Rule::in(Dispositivo::TIPOS)],
+            'marca' => ['required', 'string', 'max:255'],
+            'modelo' => ['required', 'string', 'max:255'],
+            'n_serie' => [
+                $requiereSerie ? 'required' : 'nullable',
+                'string',
+                'max:255',
+                Rule::unique('dispositivos', 'n_serie'),
+            ],
+            'ubicacion' => ['required', 'string', 'max:255'],
+            'estado' => ['required', Rule::in(Dispositivo::ESTADOS)],
+            'fecha_registro' => ['required', 'date'],
+            'es_area_comun' => ['nullable', 'boolean'],
         ], [
-            'n_serie.required' => 'El número de serie es obligatorio.',
+            'n_serie.required' => 'El número de serie es obligatorio para este tipo de equipo.',
             'n_serie.unique' => 'El número de serie ingresado ya está registrado en otro dispositivo.',
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
 
-        $dispositivo = new Dispositivo($request->all());
-        $dispositivo->save();
+        $validated['disponibilidad'] = Dispositivo::calcularDisponibilidad(
+            $validated['estado'],
+            $request->boolean('es_area_comun'),
+            false
+        );
 
-        $dispositivo->etiqueta = 'INV-DIS-' . date('Y') . '-' . str_pad($dispositivo->id, 4, '0', STR_PAD_LEFT);
-        $dispositivo->save();
+        unset($validated['es_area_comun']);
+
+        DB::transaction(function () use ($validated): void {
+            $dispositivo = Dispositivo::create($validated);
+            $anio = Carbon::parse($validated['fecha_registro'])->format('Y');
+            $dispositivo->etiqueta = 'INV-DIS-'.$anio.'-'.str_pad((string) $dispositivo->id, 4, '0', STR_PAD_LEFT);
+            $dispositivo->save();
+        });
 
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo registrado correctamente.');
     }
 
-    // Formulario para editar
-    public function edit(Dispositivo $dispositivo)
+    // Mostrar formulario de edición
+    public function edit(Dispositivo $dispositivo): View
     {
+        $dispositivo->loadCount('asignacionesActivas');
+
         return view('dispositivos.edit', compact('dispositivo'));
     }
 
     // Actualizar registro
-    public function update(Request $request, Dispositivo $dispositivo)
+    public function update(Request $request, Dispositivo $dispositivo): RedirectResponse
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'tipo' => 'required|string|max:255',
-            'marca' => 'required|string|max:255',
-            'modelo' => 'required|string|max:255',
-            'n_serie' => 'required|string|max:255|unique:dispositivos,n_serie,' . $dispositivo->id,
-            'ubicacion' => 'required|string|max:255',
-            'estado' => 'required|in:Nuevo / En perfectas condiciones,Con pequeños detalles / Imperfecciones leves,Usado / Segunda mano,Dañado / Defectuoso,En reparación / En revisión,Producto incompleto,Caducado / No apto para uso',
-            'disponibilidad' => 'required|in:Asignado,Sin Asignar,No Aplica para asignación',
-            'fecha_registro' => 'required|date',
+        $request->merge([
+            'n_serie' => Dispositivo::normalizarSerie($request->input('n_serie')),
+        ]);
+
+        $tieneAsignacionActiva = $dispositivo->estaAsignado();
+        $requiereSerie = Dispositivo::requiereSerie($request->input('tipo'));
+
+        $validated = $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'tipo' => ['required', 'string', Rule::in(Dispositivo::TIPOS)],
+            'marca' => ['required', 'string', 'max:255'],
+            'modelo' => ['required', 'string', 'max:255'],
+            'n_serie' => [
+                $requiereSerie ? 'required' : 'nullable',
+                'string',
+                'max:255',
+                Rule::unique('dispositivos', 'n_serie')->ignore($dispositivo->id),
+            ],
+            'ubicacion' => ['required', 'string', 'max:255'],
+            'estado' => [$tieneAsignacionActiva ? 'nullable' : 'required', Rule::in(Dispositivo::ESTADOS)],
+            'fecha_registro' => ['required', 'date'],
+            'es_area_comun' => ['nullable', 'boolean'],
         ], [
-            'n_serie.required' => 'El número de serie es obligatorio.',
+            'n_serie.required' => 'El número de serie es obligatorio para este tipo de equipo.',
             'n_serie.unique' => 'El número de serie ingresado ya pertenece a otro dispositivo registrado.',
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
 
-        $dispositivo->update($request->except('etiqueta'));
+        if ($tieneAsignacionActiva) {
+            $validated['estado'] = $dispositivo->estado;
+            $validated['disponibilidad'] = Dispositivo::DISPONIBILIDAD_ASIGNADO;
+        } else {
+            $validated['disponibilidad'] = Dispositivo::calcularDisponibilidad(
+                $validated['estado'],
+                $request->boolean('es_area_comun'),
+                false
+            );
+        }
+
+        unset($validated['es_area_comun']);
+
+        $dispositivo->update($validated);
 
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo actualizado correctamente.');
     }
 
-
-    // Eliminar
-    public function destroy(Dispositivo $dispositivo)
+    // Eliminar registro
+    public function destroy(Dispositivo $dispositivo): RedirectResponse
     {
+        $dispositivo->loadCount(['asignacionesActivas', 'asignaciones']);
+
+        if (! $dispositivo->puede_eliminarse) {
+            return redirect()
+                ->route('dispositivos.index')
+                ->with('error', $dispositivo->motivo_no_eliminable ?? 'No se puede eliminar este dispositivo.');
+        }
+
         $dispositivo->delete();
 
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo eliminado correctamente.');
