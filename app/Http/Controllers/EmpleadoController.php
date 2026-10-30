@@ -3,69 +3,210 @@
 namespace App\Http\Controllers;
 
 use App\Models\Empleado;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class EmpleadoController extends Controller
 {
-    public function index()
+    public function index(Request $request): View
     {
-        $empleados = Empleado::latest()->paginate(10);
-        return view('empleados.index', compact('empleados'));
+        $query = Empleado::query()->withCount(['asignacionesActivas', 'asignaciones']);
+
+        if ($request->filled('buscar')) {
+            $terminoRaw = trim((string) $request->input('buscar'));
+            $termino = addcslashes($terminoRaw, '%_\\');
+            $terminoSinGuiones = addcslashes(Empleado::normalizarIdentidad($terminoRaw), '%_\\');
+
+            $query->where(function (Builder $q) use ($termino, $terminoSinGuiones): void {
+                $q->where('nombre_completo', 'like', "%{$termino}%")
+                    ->orWhere('codigo', 'like', "%{$termino}%")
+                    ->orWhere('identidad', 'like', "%{$termino}%");
+
+                if ($terminoSinGuiones !== '' && $terminoSinGuiones !== $termino) {
+                    $q->orWhere('identidad', 'like', "%{$terminoSinGuiones}%");
+                }
+            });
+        }
+
+        if ($request->filled('gerencia')) {
+            $query->where('gerencia', (string) $request->input('gerencia'));
+        }
+
+        if ($request->filled('ubicacion')) {
+            $query->where('ubicacion', (string) $request->input('ubicacion'));
+        }
+
+        $hayFiltros = collect($request->only(['buscar', 'gerencia', 'ubicacion']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
+
+        $empleados = $query->latest()->orderByDesc('id')->paginate(15)->withQueryString();
+
+        return view('empleados.index', compact('empleados', 'hayFiltros'));
     }
 
-    public function create()
+    public function create(): View
     {
         return view('empleados.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'identidad' => 'required|unique:empleados',
-            'nombre_completo' => 'required',
-            'gerencia' => 'required',
-            'ubicacion' => 'required',
+        $request->merge([
+            'identidad' => Empleado::normalizarIdentidad($request->input('identidad')),
+            'nombre_completo' => trim((string) $request->input('nombre_completo')),
         ]);
 
-        $ultimoId = Empleado::max('id') ?? 0;
-        $proximoNumero = $ultimoId + 1;
-        $codigo = 'EM' . str_pad($proximoNumero, 3, '0', STR_PAD_LEFT);
-
-        // Garantizar unicidad absoluta incluso si hubo eliminaciones intermedias
-        while (Empleado::where('codigo', $codigo)->exists()) {
-            $proximoNumero++;
-            $codigo = 'EM' . str_pad($proximoNumero, 3, '0', STR_PAD_LEFT);
-        }
-
-        Empleado::create([
-            'codigo' => $codigo,
-            ...$request->only(['identidad', 'nombre_completo', 'gerencia', 'ubicacion'])
+        $validated = $request->validate([
+            'identidad' => ['required', 'string', 'regex:/^\d{13}$/', Rule::unique('empleados', 'identidad')],
+            'nombre_completo' => ['required', 'string', 'max:255'],
+            'gerencia' => ['required', Rule::in(Empleado::GERENCIAS)],
+            'ubicacion' => ['required', Rule::in(Empleado::UBICACIONES)],
+        ], [
+            'identidad.required' => 'El número de identidad (DNI) es obligatorio.',
+            'identidad.regex' => 'El número de identidad debe contener exactamente 13 dígitos numéricos.',
+            'identidad.unique' => 'Este número de identidad ya se encuentra registrado en otro colaborador.',
+            'nombre_completo.required' => 'El nombre completo del colaborador es obligatorio.',
+            'gerencia.required' => 'Debe seleccionar una gerencia.',
+            'ubicacion.required' => 'Debe seleccionar una sede o ubicación.',
         ]);
 
-        return redirect()->route('empleados.index')->with('success', 'Empleado registrado.');
+        DB::transaction(function () use ($validated): void {
+            $maxNumero = Empleado::query()
+                ->lockForUpdate()
+                ->pluck('codigo')
+                ->map(fn ($cod): int => (int) preg_replace('/\D+/', '', (string) $cod))
+                ->max() ?? 0;
+
+            $proximoNumero = $maxNumero + 1;
+            $codigo = 'EM'.str_pad((string) $proximoNumero, 3, '0', STR_PAD_LEFT);
+
+            while (Empleado::query()->where('codigo', $codigo)->exists()) {
+                $proximoNumero++;
+                $codigo = 'EM'.str_pad((string) $proximoNumero, 3, '0', STR_PAD_LEFT);
+            }
+
+            Empleado::create([
+                'codigo' => $codigo,
+                ...$validated,
+            ]);
+        });
+
+        return redirect()->route('empleados.index')->with('success', 'Colaborador registrado correctamente.');
     }
 
-    public function edit(Empleado $empleado)
+    public function show(Empleado $empleado): RedirectResponse
     {
+        return redirect()->route('empleados.historial', $empleado->id);
+    }
+
+    public function edit(Empleado $empleado): View
+    {
+        $empleado->loadCount(['asignacionesActivas', 'asignaciones']);
+
         return view('empleados.edit', compact('empleado'));
     }
 
-    public function update(Request $request, Empleado $empleado)
+    public function update(Request $request, Empleado $empleado): RedirectResponse
     {
-        $request->validate([
-            'identidad' => 'required|unique:empleados,identidad,' . $empleado->id,
-            'nombre_completo' => 'required',
-            'gerencia' => 'required',
-            'ubicacion' => 'required',
+        $request->merge([
+            'identidad' => Empleado::normalizarIdentidad($request->input('identidad')),
+            'nombre_completo' => trim((string) $request->input('nombre_completo')),
         ]);
 
-        $empleado->update($request->all());
-        return redirect()->route('empleados.index')->with('success', 'Empleado actualizado.');
+        $validated = $request->validate([
+            'identidad' => [
+                'required',
+                'string',
+                'regex:/^\d{13}$/',
+                Rule::unique('empleados', 'identidad')->ignore($empleado->id),
+            ],
+            'nombre_completo' => ['required', 'string', 'max:255'],
+            'gerencia' => ['required', Rule::in(Empleado::GERENCIAS)],
+            'ubicacion' => ['required', Rule::in(Empleado::UBICACIONES)],
+        ], [
+            'identidad.required' => 'El número de identidad (DNI) es obligatorio.',
+            'identidad.regex' => 'El número de identidad debe contener exactamente 13 dígitos numéricos.',
+            'identidad.unique' => 'Este número de identidad ya pertenece a otro colaborador registrado.',
+            'nombre_completo.required' => 'El nombre completo del colaborador es obligatorio.',
+            'gerencia.required' => 'Debe seleccionar una gerencia.',
+            'ubicacion.required' => 'Debe seleccionar una sede o ubicación.',
+        ]);
+
+        $empleado->update($validated);
+
+        return redirect()->route('empleados.index')->with('success', 'Colaborador actualizado correctamente.');
     }
 
-    public function destroy(Empleado $empleado)
+    public function destroy(Empleado $empleado): RedirectResponse
     {
+        $empleado->loadCount(['asignacionesActivas', 'asignaciones']);
+
+        if (! $empleado->puede_eliminarse) {
+            return redirect()
+                ->route('empleados.index')
+                ->with('error', $empleado->motivo_no_eliminable ?? 'No se puede eliminar este colaborador.');
+        }
+
         $empleado->delete();
-        return back()->with('success', 'Empleado eliminado.');
+
+        return redirect()->route('empleados.index')->with('success', 'Colaborador eliminado correctamente.');
+    }
+
+    public function historial(Request $request, Empleado $empleado): View
+    {
+        $empleado->loadCount(['asignacionesActivas', 'asignaciones']);
+
+        $totalActivos = (int) $empleado->asignaciones_activas_count;
+        $totalDevueltos = max(0, (int) $empleado->asignaciones_count - $totalActivos);
+
+        $query = $empleado->asignaciones()->with(['mobiliario', 'dispositivo', 'devolucion']);
+
+        if ($request->filled('buscar')) {
+            $termino = addcslashes(trim((string) $request->input('buscar')), '%_\\');
+            $query->where(function (Builder $q) use ($termino): void {
+                $q->where('area', 'like', "%{$termino}%")
+                    ->orWhere(function (Builder $sub) use ($termino): void {
+                        $sub->where('tipo', 'mobiliario')
+                            ->whereHas('mobiliario', function (Builder $m) use ($termino): void {
+                                $m->where('nombre', 'like', "%{$termino}%")
+                                    ->orWhere('etiqueta', 'like', "%{$termino}%");
+                            });
+                    })
+                    ->orWhere(function (Builder $sub) use ($termino): void {
+                        $sub->where('tipo', 'dispositivo')
+                            ->whereHas('dispositivo', function (Builder $d) use ($termino): void {
+                                $d->where('nombre', 'like', "%{$termino}%")
+                                    ->orWhere('etiqueta', 'like', "%{$termino}%")
+                                    ->orWhere('n_serie', 'like', "%{$termino}%");
+                            });
+                    });
+            });
+        }
+
+        if ($request->filled('tipo')) {
+            $query->where('tipo', (string) $request->input('tipo'));
+        }
+
+        $hayFiltros = collect($request->only(['buscar', 'tipo']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
+
+        $asignaciones = $query->latest('fecha_entrega')
+            ->orderByDesc('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('asignaciones.historial', compact(
+            'empleado',
+            'asignaciones',
+            'totalActivos',
+            'totalDevueltos',
+            'hayFiltros'
+        ));
     }
 }

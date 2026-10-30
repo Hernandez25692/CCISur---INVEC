@@ -70,4 +70,11 @@ class Asignacion extends Model
 
         return $bien?->nombre ?? 'N/A';
     }
+
+    public function getEtiquetaBienAttribute(): string
+    {
+        $bien = $this->tipo === self::TIPO_MOBILIARIO ? $this->mobiliario : $this->dispositivo;
+
+        return $bien?->etiqueta ?? 'N/A';
+    }
 }

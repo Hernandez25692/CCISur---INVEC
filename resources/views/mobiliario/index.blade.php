@@ -31,8 +31,8 @@
             </button>
 
             <form method="GET" action="{{ route('mobiliario.index') }}"
-                :class="mostrarFiltros ? 'block' : 'hidden sm:block'"
-                class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden sm:block' }} p-5">
+                :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
+                class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div>
                         <label for="filtro_nombre" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">

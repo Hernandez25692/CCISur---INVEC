@@ -1,59 +1,307 @@
 <x-app-layout>
-    <div class="py-10 max-w-7xl mx-auto">
-        <h2 class="text-3xl font-extrabold mb-8 text-blue-800 text-center drop-shadow-lg">Listado de Empleados</h2>
-
-        <a href="{{ route('empleados.create') }}"
-           class="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-6 py-3 rounded-lg shadow hover:from-blue-600 hover:to-blue-800 mb-6 inline-block font-semibold transition duration-200">
-           + Nuevo Empleado
-        </a>
-
-        <div class="bg-white shadow-2xl p-8 rounded-xl border border-gray-200">
-            <table class="w-full text-base border-separate border-spacing-y-2">
-                <thead class="bg-gradient-to-r from-blue-100 to-blue-200">
-                    <tr>
-                        <th class="p-3 text-left font-bold text-blue-700">Código</th>
-                        <th class="p-3 text-left font-bold text-blue-700">Nombre</th>
-                        <th class="p-3 text-left font-bold text-blue-700">Identidad</th>
-                        <th class="p-3 text-left font-bold text-blue-700">Gerencia</th>
-                        <th class="p-3 text-left font-bold text-blue-700">Ubicación</th>
-                        <th class="p-3 text-center font-bold text-blue-700">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($empleados as $e)
-                        <tr class="bg-gray-50 hover:bg-blue-50 transition duration-150 rounded-lg shadow">
-                            <td class="p-3 rounded-l-lg">{{ $e->codigo }}</td>
-                            <td class="p-3">{{ $e->nombre_completo }}</td>
-                            <td class="p-3">{{ $e->identidad }}</td>
-                            <td class="p-3">{{ $e->gerencia }}</td>
-                            <td class="p-3">{{ $e->ubicacion }}</td>
-                            <td class="p-3 rounded-r-lg text-center space-x-2">
-                                <a href="{{ route('empleados.edit', $e) }}"
-                                   class="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 font-medium shadow transition duration-150"
-                                   title="Editar">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.536-6.536a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13z" />
-                                    </svg>
-                                </a>
-                                <form method="POST" action="{{ route('empleados.destroy', $e) }}" class="inline">
-                                    @csrf @method('DELETE')
-                                    <button onclick="return confirm('¿Eliminar?')"
-                                            class="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 font-medium shadow transition duration-150"
-                                            title="Eliminar">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-
-            <div class="mt-6 flex justify-center">
-                {{ $empleados->links() }}
+    <div class="py-4 space-y-6">
+        <!-- Encabezado -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Colaboradores Registrados</h1>
+                <p class="mt-1 text-sm text-gray-500">Gestión de personal institucional y control de bienes asignados por gerencia</p>
             </div>
+            <a href="{{ route('empleados.create') }}"
+                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                <i class="fas fa-user-plus text-xs" aria-hidden="true"></i>
+                Nuevo Colaborador
+            </a>
+        </div>
+
+        <!-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) -->
+        <div x-data="{ mostrarFiltros: @js((bool) ($hayFiltros ?? false)) }"
+            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <button type="button" @click="mostrarFiltros = !mostrarFiltros"
+                :aria-expanded="mostrarFiltros.toString()"
+                class="sm:hidden w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-brand-navy bg-gray-50/70 hover:bg-gray-100/70 transition">
+                <span class="inline-flex items-center gap-2">
+                    <i class="fas fa-sliders-h text-brand-gold text-xs" aria-hidden="true"></i>
+                    Filtros de búsqueda
+                    @if ($hayFiltros ?? false)
+                        <span class="px-2 py-0.5 text-[11px] rounded-full bg-brand-gold text-brand-navy font-bold">Activos</span>
+                    @endif
+                </span>
+                <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform duration-200"
+                    :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
+            </button>
+
+            <form method="GET" action="{{ route('empleados.index') }}"
+                :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
+                class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label for="filtro_buscar" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Nombre, identidad o código
+                        </label>
+                        <input type="text" id="filtro_buscar" name="buscar" value="{{ request('buscar') }}"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
+                            placeholder="Ej. Claudia, 0601... o EM001">
+                    </div>
+
+                    <div>
+                        <label for="filtro_gerencia" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Gerencia
+                        </label>
+                        <select id="filtro_gerencia" name="gerencia"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <option value="">Todas</option>
+                            @foreach (\App\Models\Empleado::GERENCIAS as $gerencia)
+                                <option value="{{ $gerencia }}" @selected(request('gerencia') === $gerencia)>{{ $gerencia }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="filtro_ubicacion" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Sede / Ubicación
+                        </label>
+                        <select id="filtro_ubicacion" name="ubicacion"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <option value="">Todas</option>
+                            @foreach (\App\Models\Empleado::UBICACIONES as $ubicacion)
+                                <option value="{{ $ubicacion }}" @selected(request('ubicacion') === $ubicacion)>{{ $ubicacion }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-end gap-2.5 mt-4 pt-4 border-t border-gray-100">
+                    <a href="{{ route('empleados.index') }}"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                        Limpiar
+                    </a>
+                    <button type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        <i class="fas fa-search text-xs" aria-hidden="true"></i>
+                        Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Contenedor de Resultados -->
+        <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+            @if ($empleados->total() > 0)
+                <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+                    <p>
+                        Mostrando <span class="font-semibold text-brand-navy">{{ $empleados->firstItem() }}–{{ $empleados->lastItem() }}</span>
+                        de <span class="font-semibold text-brand-navy">{{ $empleados->total() }}</span>
+                        {{ $empleados->total() === 1 ? 'colaborador registrado' : 'colaboradores registrados' }}
+                    </p>
+                    @if ($hayFiltros ?? false)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-gold-50 text-brand-navy font-medium">
+                            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
+                            Filtros aplicados
+                        </span>
+                    @endif
+                </div>
+            @endif
+
+            @if ($empleados->isEmpty())
+                <!-- Estado vacío contextual -->
+                <div class="px-6 py-12 text-center">
+                    @if ($hayFiltros ?? false)
+                        <i class="fas fa-search text-3xl text-gray-300 mb-2" aria-hidden="true"></i>
+                        <h3 class="mt-1 text-sm font-semibold text-brand-navy">No se encontraron colaboradores con esos criterios</h3>
+                        <p class="mt-1 text-xs text-gray-500">Probá ajustando o limpiando los filtros de búsqueda para ver todo el personal.</p>
+                        <div class="mt-4">
+                            <a href="{{ route('empleados.index') }}"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                                <i class="fas fa-undo" aria-hidden="true"></i>
+                                Limpiar filtros
+                            </a>
+                        </div>
+                    @else
+                        <i class="fas fa-users text-3xl text-gray-300 mb-2" aria-hidden="true"></i>
+                        <h3 class="mt-1 text-sm font-semibold text-brand-navy">No hay colaboradores registrados</h3>
+                        <p class="mt-1 text-xs text-gray-500">Comenzá registrando al personal de CCISur para poder asignarles mobiliario y dispositivos.</p>
+                        <div class="mt-4">
+                            <a href="{{ route('empleados.create') }}"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-gold text-brand-navy text-xs font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                                Registrar Colaborador
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            @else
+                <!-- Vista de Tabla para Escritorio y Tablet (md+) -->
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <caption class="sr-only">Listado de colaboradores registrados</caption>
+                        <thead class="bg-brand-navy text-white">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Código</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Colaborador</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Gerencia</th>
+                                <th scope="col" class="hidden xl:table-cell px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Sede</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Bienes Activos</th>
+                                <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-100">
+                            @foreach ($empleados as $e)
+                                <tr class="even:bg-gray-50/50 hover:bg-brand-gold-50/40 transition-colors">
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2.5 py-1 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded-md">
+                                            {{ $e->codigo }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-gray-900">{{ $e->nombre_completo }}</div>
+                                        <div class="text-xs font-mono text-gray-500">
+                                            Identidad: {{ $e->identidad_formateada }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-700" title="{{ $e->gerencia }}">
+                                        <div>{{ $e->gerencia_corta }}</div>
+                                        <div class="xl:hidden text-xs text-gray-500">Sede: {{ $e->ubicacion }}</div>
+                                    </td>
+                                    <td class="hidden xl:table-cell px-4 py-3 whitespace-nowrap text-gray-600">
+                                        {{ $e->ubicacion }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        @if (($e->asignaciones_activas_count ?? 0) > 0)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset bg-brand-navy-50 text-brand-navy ring-brand-navy/20">
+                                                {{ $e->asignaciones_activas_count }} {{ $e->asignaciones_activas_count === 1 ? 'asignado' : 'asignados' }}
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset bg-gray-100 text-gray-600 ring-gray-500/20">
+                                                Sin bienes activos
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-right font-medium">
+                                        <div class="inline-flex items-center justify-end gap-1.5">
+                                            @if (($e->asignaciones_count ?? 0) > 0)
+                                                <a href="{{ route('asignaciones.historial', $e->id) }}"
+                                                    class="p-1.5 rounded-lg text-brand-gold-700 hover:bg-brand-gold-50 transition-colors"
+                                                    title="Ver historial de asignaciones ({{ $e->asignaciones_count }})"
+                                                    aria-label="Ver historial de {{ $e->nombre_completo }}">
+                                                    <i class="fas fa-history text-xs" aria-hidden="true"></i>
+                                                </a>
+                                            @endif
+
+                                            <a href="{{ route('empleados.edit', $e->id) }}"
+                                                class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
+                                                title="Editar colaborador" aria-label="Editar {{ $e->nombre_completo }}">
+                                                <i class="fas fa-pen text-xs" aria-hidden="true"></i>
+                                            </a>
+
+                                            @if ($e->puede_eliminarse)
+                                                <form action="{{ route('empleados.destroy', $e->id) }}" method="POST" class="inline"
+                                                    data-swal-delete
+                                                    data-swal-nombre="{{ $e->nombre_completo }}"
+                                                    data-swal-etiqueta="{{ $e->codigo }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                                                        title="Eliminar colaborador" aria-label="Eliminar {{ $e->nombre_completo }}">
+                                                        <i class="fas fa-trash text-xs" aria-hidden="true"></i>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <button type="button"
+                                                    data-swal-locked="{{ $e->motivo_no_eliminable }}"
+                                                    data-swal-title="No se puede eliminar este colaborador"
+                                                    class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                                                    title="{{ $e->motivo_no_eliminable }}"
+                                                    aria-label="Eliminación protegida para {{ $e->nombre_completo }}">
+                                                    <i class="fas fa-trash text-xs" aria-hidden="true"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Vista de Tarjetas para Móvil (< md) -->
+                <div class="md:hidden divide-y divide-gray-100">
+                    @foreach ($empleados as $e)
+                        <div class="p-4 space-y-3">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
+                                        {{ $e->codigo }}
+                                    </span>
+                                    <h3 class="text-sm font-bold text-gray-900">{{ $e->nombre_completo }}</h3>
+                                    <p class="text-xs font-mono text-gray-500">Identidad: {{ $e->identidad_formateada }}</p>
+                                </div>
+                                @if (($e->asignaciones_activas_count ?? 0) > 0)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 bg-brand-navy-50 text-brand-navy ring-brand-navy/20">
+                                        {{ $e->asignaciones_activas_count }} {{ $e->asignaciones_activas_count === 1 ? 'asignado' : 'asignados' }}
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 bg-gray-100 text-gray-600 ring-gray-500/20">
+                                        Sin bienes activos
+                                    </span>
+                                @endif
+                            </div>
+
+                            <div class="pt-2 border-t border-gray-50 text-xs text-gray-600 space-y-0.5">
+                                <p><span class="font-semibold text-brand-navy">Gerencia:</span> {{ $e->gerencia }}</p>
+                                <p><span class="font-semibold text-brand-navy">Sede:</span> {{ $e->ubicacion }}</p>
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                                @if (($e->asignaciones_count ?? 0) > 0)
+                                    <a href="{{ route('asignaciones.historial', $e->id) }}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-gold-50 text-brand-navy text-xs font-semibold hover:bg-brand-gold-100 transition">
+                                        <i class="fas fa-history text-[11px]" aria-hidden="true"></i>
+                                        Historial ({{ $e->asignaciones_count }})
+                                    </a>
+                                @endif
+
+                                <a href="{{ route('empleados.edit', $e->id) }}"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-brand-navy hover:bg-brand-navy-50 transition">
+                                    <i class="fas fa-pen text-[11px]" aria-hidden="true"></i>
+                                    Editar
+                                </a>
+
+                                @if ($e->puede_eliminarse)
+                                    <form action="{{ route('empleados.destroy', $e->id) }}" method="POST" class="inline"
+                                        data-swal-delete
+                                        data-swal-nombre="{{ $e->nombre_completo }}"
+                                        data-swal-etiqueta="{{ $e->codigo }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 transition"
+                                            aria-label="Eliminar {{ $e->nombre_completo }}">
+                                            <i class="fas fa-trash text-[11px]" aria-hidden="true"></i>
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                @else
+                                    <button type="button"
+                                        data-swal-locked="{{ $e->motivo_no_eliminable }}"
+                                        data-swal-title="No se puede eliminar este colaborador"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-gray-50 transition"
+                                        aria-label="Eliminación protegida para {{ $e->nombre_completo }}">
+                                        <i class="fas fa-trash text-[11px]" aria-hidden="true"></i>
+                                        Eliminar
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            @if ($empleados->hasPages())
+                <div class="px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+                    {{ $empleados->links() }}
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

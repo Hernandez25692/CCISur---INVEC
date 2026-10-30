@@ -54,8 +54,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('reportes.asignados.exportar');
     Route::get('/reportes/disponibles/exportar', [ReporteController::class, 'exportarDisponibles'])->name('reportes.disponibles.exportar');
 
-    Route::get('/asignaciones/colaborador/{colaborador}', [App\Http\Controllers\AsignacionController::class, 'historial'])->name('asignaciones.historial');
-    Route::get('/asignaciones/empleado/{empleado}', [AsignacionController::class, 'historial'])->name('asignaciones.historial');
+    Route::get('/empleados/{empleado}/historial', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->name('empleados.historial');
+    Route::get('/asignaciones/empleado/{empleado}', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->name('asignaciones.historial');
     Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class);
     Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->name('devoluciones.pdf');
     Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
