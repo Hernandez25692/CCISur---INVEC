@@ -24,9 +24,8 @@
                                 $etiqueta = $item->etiqueta ?? 'Sin etiqueta';
                                 $nombre = $item->nombre ?? 'Sin nombre';
                             @endphp
-                            <option value="{{ $asignacion->id }}">
-                                {{ $asignacion->colaborador }} - {{ ucfirst($asignacion->tipo) }} - {{ $nombre }}
-                                - {{ $etiqueta }}
+                            <option value="{{ $asignacion->id }}" {{ (string) request('asignacion_id') === (string) $asignacion->id ? 'selected' : '' }}>
+                                {{ $asignacion->destinatario_texto }} - {{ ucfirst($asignacion->tipo) }} - {{ $nombre }} - {{ $etiqueta }}
                             </option>
                         @endforeach
                     </select>

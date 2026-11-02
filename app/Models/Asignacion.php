@@ -20,6 +20,7 @@ class Asignacion extends Model
         'mobiliario_id',
         'dispositivo_id',
         'empleado_id',
+        'es_area_comun',
         'area',
         'observaciones',
         'fecha_entrega',
@@ -28,6 +29,7 @@ class Asignacion extends Model
 
     protected $casts = [
         'fecha_entrega' => 'date',
+        'es_area_comun' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -44,6 +46,11 @@ class Asignacion extends Model
         return $query->whereDoesntHave('devolucion');
     }
 
+    public function scopeConcluidas(Builder $query): Builder
+    {
+        return $query->whereHas('devolucion');
+    }
+
     public function devolucion(): HasOne
     {
         return $this->hasOne(Devolucion::class);
@@ -51,12 +58,12 @@ class Asignacion extends Model
 
     public function mobiliario(): BelongsTo
     {
-        return $this->belongsTo(Mobiliario::class, 'id_referencia')->withTrashed();
+        return $this->belongsTo(Mobiliario::class, 'mobiliario_id')->withTrashed();
     }
 
     public function dispositivo(): BelongsTo
     {
-        return $this->belongsTo(Dispositivo::class, 'id_referencia')->withTrashed();
+        return $this->belongsTo(Dispositivo::class, 'dispositivo_id')->withTrashed();
     }
 
     public function empleado(): BelongsTo
@@ -76,5 +83,19 @@ class Asignacion extends Model
         $bien = $this->tipo === self::TIPO_MOBILIARIO ? $this->mobiliario : $this->dispositivo;
 
         return $bien?->etiqueta ?? 'N/A';
+    }
+
+    public function getDestinatarioTextoAttribute(): string
+    {
+        if ($this->es_area_comun) {
+            return 'Área Común: '.$this->area;
+        }
+
+        return $this->empleado?->nombre_completo ?? 'N/A';
+    }
+
+    public function getColaboradorAttribute(): string
+    {
+        return $this->destinatario_texto;
     }
 }

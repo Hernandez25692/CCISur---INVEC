@@ -4,67 +4,179 @@ namespace App\Http\Controllers;
 
 use App\Models\Asignacion;
 use App\Models\Dispositivo;
+use App\Models\Empleado;
 use App\Models\Mobiliario;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class AsignacionController extends Controller
 {
-    // Listar asignaciones
-    public function index(Request $request)
+    /**
+     * Listar asignaciones activas (únicamente bienes en custodia actual).
+     */
+    public function index(Request $request): View
     {
-        $query = Asignacion::query();
+        $tipo = $request->input('tipo');
+        $buscar = trim((string) $request->input('buscar'));
 
-        if ($request->filled('buscar')) {
-            $query->whereHas('empleado', function ($q) use ($request) {
-                $q->where('nombre_completo', 'like', '%'.$request->buscar.'%');
-            })->orWhereHas('mobiliario', function ($q) use ($request) {
-                $q->where('etiqueta', 'like', '%'.$request->buscar.'%');
-            })->orWhereHas('dispositivo', function ($q) use ($request) {
-                $q->where('etiqueta', 'like', '%'.$request->buscar.'%');
+        // Métricas de inventario activo en custodia
+        $totalActivas = Asignacion::activas()->count();
+        $totalDispositivos = Asignacion::activas()->where('tipo', Asignacion::TIPO_DISPOSITIVO)->count();
+        $totalMobiliario = Asignacion::activas()->where('tipo', Asignacion::TIPO_MOBILIARIO)->count();
+        $totalCustodios = Asignacion::activas()->whereNotNull('empleado_id')->distinct('empleado_id')->count('empleado_id');
+
+        // La vista de Asignaciones se enfoca 100% en asignaciones activas
+        $query = Asignacion::activas()->with(['empleado', 'mobiliario', 'dispositivo']);
+
+        // Filtro por tipo de bien
+        if ($tipo && in_array($tipo, [Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO], true)) {
+            $query->where('tipo', $tipo);
+        }
+
+        // Filtro por rango de fechas válidas de forma segura (sin errores 500 por manipulación)
+        $fechaInicio = rescue(fn () => $request->filled('fecha_inicio') ? $request->date('fecha_inicio') : null);
+        if ($fechaInicio) {
+            $query->whereDate('fecha_entrega', '>=', $fechaInicio);
+        }
+
+        $fechaFin = rescue(fn () => $request->filled('fecha_fin') ? $request->date('fecha_fin') : null);
+        if ($fechaFin) {
+            $query->whereDate('fecha_entrega', '<=', $fechaFin);
+        }
+
+        // Búsqueda inteligente con escape de comodines
+        if ($buscar !== '') {
+            $buscarSafe = addcslashes($buscar, '%_\\');
+            $query->where(function ($q) use ($buscarSafe): void {
+                $q->whereHas('empleado', function ($sub) use ($buscarSafe): void {
+                    $sub->where('nombre_completo', 'like', "%{$buscarSafe}%")
+                        ->orWhere('identidad', 'like', "%{$buscarSafe}%")
+                        ->orWhere('codigo', 'like', "%{$buscarSafe}%");
+                })
+                    ->orWhere('area', 'like', "%{$buscarSafe}%")
+                    ->orWhereHas('mobiliario', function ($sub) use ($buscarSafe): void {
+                        $sub->where('etiqueta', 'like', "%{$buscarSafe}%")
+                            ->orWhere('nombre', 'like', "%{$buscarSafe}%");
+                    })
+                    ->orWhereHas('dispositivo', function ($sub) use ($buscarSafe): void {
+                        $sub->where('etiqueta', 'like', "%{$buscarSafe}%")
+                            ->orWhere('nombre', 'like', "%{$buscarSafe}%")
+                            ->orWhere('n_serie', 'like', "%{$buscarSafe}%");
+                    });
             });
         }
 
-        if ($request->filled('fecha_inicio')) {
-            $query->whereDate('fecha_entrega', '>=', $request->fecha_inicio);
-        }
+        $asignaciones = $query->latest('id')->paginate(15)->withQueryString();
 
-        if ($request->filled('fecha_fin')) {
-            $query->whereDate('fecha_entrega', '<=', $request->fecha_fin);
-        }
-
-        $asignaciones = $query->latest()->paginate(15);
-
-        return view('asignaciones.index', compact('asignaciones'));
+        return view('asignaciones.index', compact(
+            'asignaciones',
+            'tipo',
+            'buscar',
+            'totalActivas',
+            'totalDispositivos',
+            'totalMobiliario',
+            'totalCustodios'
+        ));
     }
 
-    // Formulario para nueva asignación
-    public function create(Request $request)
+    /**
+     * Formulario para nueva asignación.
+     */
+    public function create(Request $request): View
     {
-        $empleados = \App\Models\Empleado::orderBy('nombre_completo')->get();
-        $tipo = $request->tipo ?? null;
-        $id_referencia = $request->id ?? null;
+        $tipo = in_array($request->query('tipo'), [Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO], true)
+            ? $request->query('tipo')
+            : Asignacion::TIPO_DISPOSITIVO;
 
-        return view('asignaciones.create', compact('empleados', 'tipo', 'id_referencia'));
+        $id_referencia = filter_var($request->query('id'), FILTER_VALIDATE_INT) ?: null;
+
+        // Cargar colaboradores activos con identidad formateada y versión corrida para búsqueda
+        $empleados = Empleado::orderBy('nombre_completo')
+            ->get(['id', 'codigo', 'nombre_completo', 'identidad', 'gerencia'])
+            ->map(fn (Empleado $emp): array => [
+                'id' => $emp->id,
+                'codigo' => $emp->codigo,
+                'nombre_completo' => $emp->nombre_completo,
+                'identidad' => $emp->identidad_formateada,
+                'identidad_raw' => Empleado::normalizarIdentidad($emp->identidad),
+                'gerencia' => $emp->gerencia,
+            ]);
+
+        // Categorías institucionales predefinidas
+        $categoriasDispositivos = Dispositivo::TIPOS;
+        $categoriasMobiliario = Mobiliario::TIPOS;
+
+        // Bienes actualmente disponibles
+        $dispositivosDisponibles = Dispositivo::disponibles()
+            ->orWhere(function ($q) use ($id_referencia, $tipo): void {
+                if ($tipo === Asignacion::TIPO_DISPOSITIVO && $id_referencia) {
+                    $q->where('id', $id_referencia);
+                }
+            })
+            ->get(['id', 'nombre', 'tipo', 'marca', 'modelo', 'n_serie', 'estado', 'etiqueta']);
+
+        $mobiliarioDisponible = Mobiliario::disponibles()
+            ->orWhere(function ($q) use ($id_referencia, $tipo): void {
+                if ($tipo === Asignacion::TIPO_MOBILIARIO && $id_referencia) {
+                    $q->where('id', $id_referencia);
+                }
+            })
+            ->get(['id', 'nombre', 'tipo', 'estado', 'etiqueta']);
+
+        return view('asignaciones.create', compact(
+            'tipo',
+            'id_referencia',
+            'empleados',
+            'categoriasDispositivos',
+            'categoriasMobiliario',
+            'dispositivosDisponibles',
+            'mobiliarioDisponible'
+        ));
     }
 
-    // Guardar nueva asignación
-    public function store(Request $request)
+    /**
+     * Guardar nueva asignación.
+     */
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'tipo' => ['required', 'string', Rule::in([Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO])],
             'id_referencia' => ['required', 'integer', 'min:1'],
-            'empleado_id' => ['required', 'exists:empleados,id'],
+            'destino' => ['required', 'string', Rule::in(['empleado', 'area_comun'])],
+            'empleado_id' => [
+                Rule::requiredIf($request->input('destino') === 'empleado'),
+                'nullable',
+                Rule::exists('empleados', 'id')->whereNull('deleted_at'),
+            ],
             'area' => ['required', 'string', 'max:255'],
-            'observaciones' => ['nullable', 'string'],
+            'observaciones' => ['nullable', 'string', 'max:2000'],
             'fecha_entrega' => ['required', 'date'],
             'entregado_por' => ['required', 'string', 'max:255'],
+        ], [
+            'tipo.required' => 'Debe seleccionar si asignará mobiliario o un dispositivo.',
+            'id_referencia.required' => 'Debe seleccionar el artículo específico a asignar.',
+            'destino.required' => 'Indique si el bien se asigna a un colaborador o a un área común.',
+            'empleado_id.required_if' => 'Debe seleccionar al colaborador responsable del bien.',
+            'empleado_id.exists' => 'El colaborador seleccionado no existe o se encuentra inactivo.',
+            'area.required' => 'El área o departamento es obligatorio.',
+            'fecha_entrega.required' => 'La fecha de entrega es obligatoria.',
+            'entregado_por.required' => 'Indique el nombre de la persona que entrega el bien.',
         ]);
 
-        $errorMensaje = DB::transaction(function () use ($validated): ?string {
+        $esAreaComun = $validated['destino'] === 'area_comun';
+
+        // Si es a un colaborador, asegurar el área con la gerencia real del empleado en el servidor
+        if (! $esAreaComun) {
+            $empleado = Empleado::findOrFail($validated['empleado_id']);
+            $validated['area'] = $empleado->gerencia ?? $validated['area'];
+        }
+
+        $errorMensaje = DB::transaction(function () use ($validated, $esAreaComun): ?string {
             $query = $validated['tipo'] === Asignacion::TIPO_MOBILIARIO
                 ? Mobiliario::query()
                 : Dispositivo::query();
@@ -76,7 +188,7 @@ class AsignacionController extends Controller
             }
 
             if (! $item->puede_asignarse) {
-                return 'Este bien no está disponible para ser asignado (ya se encuentra asignado o no aplica para asignación).';
+                return 'Este bien no está disponible para ser asignado (ya se encuentra asignado o su estado físico no lo permite).';
             }
 
             Asignacion::create([
@@ -84,12 +196,12 @@ class AsignacionController extends Controller
                 'id_referencia' => (int) $validated['id_referencia'],
                 'mobiliario_id' => $validated['tipo'] === Asignacion::TIPO_MOBILIARIO ? (int) $validated['id_referencia'] : null,
                 'dispositivo_id' => $validated['tipo'] === Asignacion::TIPO_DISPOSITIVO ? (int) $validated['id_referencia'] : null,
-                'empleado_id' => (int) $validated['empleado_id'],
+                'es_area_comun' => $esAreaComun,
+                'empleado_id' => $esAreaComun ? null : (int) $validated['empleado_id'],
                 'area' => $validated['area'],
                 'observaciones' => $validated['observaciones'] ?? null,
                 'fecha_entrega' => $validated['fecha_entrega'],
                 'entregado_por' => $validated['entregado_por'],
-                'uuid' => Str::uuid()->toString(),
             ]);
 
             $item->disponibilidad = $item::DISPONIBILIDAD_ASIGNADO;
@@ -105,8 +217,10 @@ class AsignacionController extends Controller
         return redirect()->route('asignaciones.index')->with('success', 'Asignación registrada correctamente.');
     }
 
-    // Mostrar detalles (opcional para PDF)
-    public function show(Asignacion $asignacion)
+    /**
+     * Mostrar detalles de la asignación.
+     */
+    public function show(Asignacion $asignacion): View
     {
         $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
             ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
@@ -115,9 +229,28 @@ class AsignacionController extends Controller
         return view('asignaciones.show', compact('asignacion', 'item'));
     }
 
-    // Eliminar asignación
-    public function destroy(Asignacion $asignacion)
+    /**
+     * Anular asignación por error humano (requiere contraseña del usuario en sesión).
+     */
+    public function destroy(Request $request, Asignacion $asignacion): RedirectResponse
     {
+        // 1. Prohibir eliminación si ya cuenta con devolución
+        if ($asignacion->devolucion()->exists()) {
+            return redirect()->back()->with('error', 'Acción denegada: No se puede anular una asignación que ya cuenta con un acta de devolución formal registrada.');
+        }
+
+        // 2. Exigir y verificar contraseña del usuario en sesión
+        $request->validate([
+            'password' => ['required', 'string'],
+        ], [
+            'password.required' => 'Debe ingresar su contraseña de usuario para autorizar la anulación de esta asignación.',
+        ]);
+
+        if (! Hash::check($request->password, $request->user()->password)) {
+            return redirect()->back()->with('error', 'La contraseña ingresada es incorrecta. La asignación NO fue eliminada.');
+        }
+
+        // 3. Ejecutar anulación y liberación del bien en transacción
         DB::transaction(function () use ($asignacion): void {
             $tipo = $asignacion->tipo;
             $idReferencia = $asignacion->id_referencia;
@@ -134,9 +267,12 @@ class AsignacionController extends Controller
             }
         });
 
-        return redirect()->route('asignaciones.index')->with('success', 'Asignación eliminada.');
+        return redirect()->route('asignaciones.index')->with('success', 'Asignación anulada exitosamente. El bien ha sido liberado y queda nuevamente disponible en el inventario.');
     }
 
+    /**
+     * Generar PDF del Acta de Entrega con membrete institucional CCISur.
+     */
     public function pdf(Asignacion $asignacion)
     {
         $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
@@ -146,13 +282,5 @@ class AsignacionController extends Controller
         $pdf = Pdf::loadView('asignaciones.acta_pdf', compact('asignacion', 'item'));
 
         return $pdf->stream('Acta_Entrega_'.$asignacion->id.'.pdf');
-    }
-
-    public function historial($empleado_id)
-    {
-        $asignaciones = Asignacion::where('empleado_id', $empleado_id)->latest()->get();
-        $empleado = \App\Models\Empleado::find($empleado_id);
-
-        return view('asignaciones.historial', compact('asignaciones', 'empleado'));
     }
 }

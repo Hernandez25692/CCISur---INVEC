@@ -39,7 +39,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/empleados/bajas', [\App\Http\Controllers\EmpleadoController::class, 'bajas'])->name('empleados.bajas');
     Route::post('/empleados/{id}/reactivar', [\App\Http\Controllers\EmpleadoController::class, 'reactivar'])->name('empleados.reactivar');
     Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
-    Route::resource('asignaciones', AsignacionController::class)->parameters([
+    Route::resource('asignaciones', AsignacionController::class)->except(['edit', 'update'])->parameters([
         'asignaciones' => 'asignacion',
     ]);
 
@@ -68,7 +68,91 @@ Route::middleware(['auth'])->group(function () {
     Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->name('devoluciones.pdf');
     Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
 
-    // API para obtener ítems por tipo (uso en formularios dinámicos)
+    // APIs para formularios dinámicos y búsquedas ágiles
+    Route::get('/api/buscar-empleados', function (\Illuminate\Http\Request $request) {
+        $q = trim((string) $request->input('q'));
+        $query = \App\Models\Empleado::query();
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q): void {
+                $sub->where('nombre_completo', 'like', "%{$q}%")
+                    ->orWhere('identidad', 'like', "%{$q}%")
+                    ->orWhere('codigo', 'like', "%{$q}%");
+            });
+        }
+
+        return $query->select(['id', 'codigo', 'nombre_completo', 'identidad', 'gerencia', 'cargo'])
+            ->orderBy('nombre_completo')
+            ->limit(20)
+            ->get();
+    });
+
+    Route::get('/api/categorias-items/{tipo}', function (string $tipo) {
+        $model = $tipo === 'mobiliario'
+            ? \App\Models\Mobiliario::query()
+            : ($tipo === 'dispositivo' ? \App\Models\Dispositivo::query() : null);
+
+        if (! $model) {
+            return response()->json([]);
+        }
+
+        $categorias = $model->disponibles()
+            ->whereNotNull('tipo')
+            ->where('tipo', '!=', '')
+            ->distinct()
+            ->orderBy('tipo')
+            ->pluck('tipo');
+
+        return response()->json($categorias);
+    });
+
+    Route::get('/api/buscar-items/{tipo}', function (string $tipo, \Illuminate\Http\Request $request) {
+        $categoria = trim((string) $request->input('categoria'));
+        $q = trim((string) $request->input('q'));
+        $forzarId = $request->input('id');
+
+        $baseQuery = $tipo === 'mobiliario'
+            ? \App\Models\Mobiliario::query()
+            : ($tipo === 'dispositivo' ? \App\Models\Dispositivo::query() : null);
+
+        if (! $baseQuery) {
+            return response()->json([]);
+        }
+
+        $query = $baseQuery->where(function ($scope) use ($forzarId): void {
+            $scope->disponibles();
+            if ($forzarId) {
+                $scope->orWhere('id', $forzarId);
+            }
+        });
+
+        if ($categoria !== '') {
+            $query->where('tipo', $categoria);
+        }
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q, $tipo): void {
+                $sub->where('nombre', 'like', "%{$q}%")
+                    ->orWhere('etiqueta', 'like', "%{$q}%");
+                if ($tipo === 'dispositivo') {
+                    $sub->orWhere('n_serie', 'like', "%{$q}%")
+                        ->orWhere('marca', 'like', "%{$q}%")
+                        ->orWhere('modelo', 'like', "%{$q}%");
+                }
+            });
+        }
+
+        $columns = ['id', 'nombre', 'tipo', 'etiqueta', 'estado', 'disponibilidad'];
+        if ($tipo === 'dispositivo') {
+            $columns = array_merge($columns, ['marca', 'modelo', 'n_serie']);
+        }
+
+        $items = $query->select($columns)->orderBy('nombre')->limit(30)->get();
+
+        return response()->json($items);
+    });
+
+    // API para compatibilidad con llamadas existentes
     Route::get('/api/obtener-items/{tipo}', function ($tipo) {
         $forzarId = request('id');
 
@@ -83,7 +167,7 @@ Route::middleware(['auth'])->group(function () {
         $query = $baseQuery->where(function ($q) use ($forzarId) {
             $q->disponibles();
             if ($forzarId) {
-                $q->orWhere('id', $forzarId); // Incluir el solicitado aunque esté asignado
+                $q->orWhere('id', $forzarId);
             }
         });
 

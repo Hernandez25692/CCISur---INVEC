@@ -1,159 +1,377 @@
 <x-app-layout>
-    <div class="py-10 px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-6">
+    <div class="py-6 space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {{-- Encabezado principal --}}
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold text-gray-900">Gestión de Asignaciones</h1>
-                <p class="text-base text-gray-500 mt-1">Listado completo de asignaciones de equipos y mobiliario</p>
+                <nav class="flex items-center gap-2 text-xs text-gray-500 mb-1" aria-label="Breadcrumb">
+                    <a href="{{ route('dashboard') }}" class="hover:text-brand-navy">Inicio</a>
+                    <span>/</span>
+                    <span class="text-brand-navy font-semibold">Asignaciones</span>
+                </nav>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Gestión de Asignaciones</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Control de bienes institucionales actualmente en uso y custodia</p>
             </div>
             <a href="{{ route('asignaciones.create') }}"
-                class="inline-flex items-center px-5 py-3 bg-blue-700 border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-wider shadow hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
+                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-navy text-white rounded-lg font-semibold text-xs uppercase tracking-wider shadow-sm hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                <i class="fas fa-plus text-xs text-brand-gold" aria-hidden="true"></i>
                 Nueva Asignación
             </a>
         </div>
-        <!-- Formulario de búsqueda con rango de fechas -->
-        <form method="GET" action="{{ route('asignaciones.index') }}" class="mb-6">
-            <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-end gap-4">
-                <input type="text" name="buscar" placeholder="Buscar por empleado o etiqueta"
-                    value="{{ request('buscar') }}"
-                    class="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
 
-                <div>
-                    <label for="fecha_inicio" class="block text-xs text-gray-500 mb-1">Desde</label>
-                    <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
-                        class="px-4 py-2 border border-gray-300 rounded-lg shadow focus:ring-blue-400 focus:border-blue-400 transition">
+        {{-- Tarjetas de métricas rápidas (Inventario activo) --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {{-- Activas en uso --}}
+            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Activas en Uso</p>
+                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($totalActivas) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <i class="fas fa-hand-holding text-lg" aria-hidden="true"></i>
+                    </div>
                 </div>
-
-                <div>
-                    <label for="fecha_fin" class="block text-xs text-gray-500 mb-1">Hasta</label>
-                    <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
-                        class="px-4 py-2 border border-gray-300 rounded-lg shadow focus:ring-blue-400 focus:border-blue-400 transition">
+                <div class="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Bienes bajo custodia</span>
                 </div>
-
-                <button type="submit"
-                    class="bg-blue-700 text-white px-5 py-2 rounded-lg shadow hover:bg-blue-800 transition mt-1 font-semibold">Buscar</button>
-                <a href="{{ route('asignaciones.index') }}"
-                    class="text-sm text-gray-500 hover:underline mt-2">Limpiar</a>
             </div>
-        </form>
 
-        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+            {{-- Dispositivos Activos --}}
+            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dispositivos Activos</p>
+                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($totalDispositivos) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <i class="fas fa-laptop text-lg" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Equipos de computación y red</p>
+            </div>
+
+            {{-- Mobiliario Activo --}}
+            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mobiliario Activo</p>
+                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($totalMobiliario) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                        <i class="fas fa-chair text-lg" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Muebles y estaciones de trabajo</p>
+            </div>
+
+            {{-- Custodios / Colaboradores --}}
+            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Colaboradores con Bienes</p>
+                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($totalCustodios) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                        <i class="fas fa-users text-lg" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Personal con actas activas</p>
+            </div>
+        </div>
+
+        {{-- Formulario de búsqueda y filtros --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <form method="GET" action="{{ route('asignaciones.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                {{-- Buscador general --}}
+                <div class="sm:col-span-2 lg:col-span-4">
+                    <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fas fa-search text-xs" aria-hidden="true"></i>
+                        </div>
+                        <input type="text" name="buscar" id="buscar"
+                            value="{{ $buscar }}"
+                            placeholder="Colaborador, DNI, etiqueta o bien..."
+                            class="block w-full pl-9 pr-3 py-2 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs placeholder-gray-400">
+                    </div>
+                </div>
+
+                {{-- Tipo de Bien --}}
+                <div class="lg:col-span-2">
+                    <label for="tipo" class="block text-xs font-semibold text-gray-600 mb-1">Tipo de Bien</label>
+                    <select name="tipo" id="tipo"
+                        class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                        <option value="">Todos los tipos</option>
+                        <option value="dispositivo" {{ $tipo === 'dispositivo' ? 'selected' : '' }}>Dispositivos</option>
+                        <option value="mobiliario" {{ $tipo === 'mobiliario' ? 'selected' : '' }}>Mobiliario</option>
+                    </select>
+                </div>
+
+                {{-- Fecha Inicio --}}
+                <div class="lg:col-span-2">
+                    <label for="fecha_inicio" class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
+                    <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
+                        class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                </div>
+
+                {{-- Fecha Fin --}}
+                <div class="lg:col-span-2">
+                    <label for="fecha_fin" class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
+                    <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
+                        class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                </div>
+
+                {{-- Botones de acción --}}
+                <div class="sm:col-span-2 lg:col-span-2 flex items-center gap-2">
+                    <button type="submit"
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                        <i class="fas fa-filter text-[11px]" aria-hidden="true"></i>
+                        Filtrar
+                    </button>
+                    @if(request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']))
+                        <a href="{{ route('asignaciones.index') }}"
+                            class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-gray-600 hover:text-brand-navy hover:bg-gray-50 text-xs font-semibold rounded-lg shadow-xs transition"
+                            title="Limpiar filtros">
+                            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+                        </a>
+                    @endif
+                </div>
+            </form>
+        </div>
+
+        {{-- Tabla de asignaciones activas --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full w-full table-auto divide-y divide-gray-200">
-                    <thead class="bg-blue-50">
+                <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+                    <thead class="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider">
                         <tr>
-                            <th class="min-w-[50px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">#</th>
-                            <th class="min-w-[180px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">Empleado</th>
-                            <th class="min-w-[100px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">Tipo</th>
-                            <th class="min-w-[200px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">Elemento</th>
-                            <th class="min-w-[150px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">Etiqueta</th>
-                            <th class="min-w-[150px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">Área</th>
-                            <th class="min-w-[120px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">Fecha</th>
-                            <th class="min-w-[120px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">Estado</th>
-                            <th class="min-w-[180px] px-3 py-4 text-left text-xs font-bold text-blue-700 uppercase">Acciones</th>
+                            <th scope="col" class="px-4 py-3.5 text-center w-12">#</th>
+                            <th scope="col" class="px-4 py-3.5">Destinatario</th>
+                            <th scope="col" class="px-4 py-3.5">Tipo</th>
+                            <th scope="col" class="px-4 py-3.5">Bien Asignado</th>
+                            <th scope="col" class="px-4 py-3.5">Etiqueta</th>
+                            <th scope="col" class="px-4 py-3.5">Área / Ubicación</th>
+                            <th scope="col" class="px-4 py-3.5">Fecha Entrega</th>
+                            <th scope="col" class="px-4 py-3.5 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
-                        @foreach ($asignaciones as $item)
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        @forelse ($asignaciones as $item)
                             @php
                                 $referencia = $item->tipo === 'mobiliario' ? $item->mobiliario : $item->dispositivo;
-                                $estado = $item->devolucion ? 'Devuelto' : 'Activo';
-                                $color = $item->devolucion ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800';
                             @endphp
-                            <tr class="hover:bg-blue-50 transition">
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->id }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{{ $item->empleado->nombre_completo ?? 'N/A' }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{{ $item->tipo }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{{ $referencia->nombre ?? 'N/A' }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{{ $referencia->etiqueta ?? '---' }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">{{ $item->area }}</td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ \Carbon\Carbon::parse($item->fecha_entrega)->format('d/m/Y') }}
+                            <tr class="hover:bg-brand-navy-50/30 transition">
+                                {{-- ID --}}
+                                <td class="px-4 py-3 text-center font-mono text-gray-500 font-medium">
+                                    {{ $item->id }}
                                 </td>
-                                <td class="px-3 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $color }}">
-                                        {{ $estado }}
+
+                                {{-- Destinatario --}}
+                                <td class="px-4 py-3">
+                                    @if ($item->es_area_comun)
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-7 h-7 rounded-lg bg-amber-50 text-brand-gold-700 flex items-center justify-center shrink-0">
+                                                <i class="fas fa-building text-xs" aria-hidden="true"></i>
+                                            </span>
+                                            <div>
+                                                <p class="font-bold text-gray-900">Área Común</p>
+                                                <p class="text-[11px] text-gray-500">{{ $item->area }}</p>
+                                            </div>
+                                        </div>
+                                    @elseif ($item->empleado)
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-7 h-7 rounded-lg bg-brand-navy text-brand-gold flex items-center justify-center font-bold text-xs shrink-0">
+                                                {{ strtoupper(substr($item->empleado->nombre_completo, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <a href="{{ route('empleados.historial', $item->empleado_id) }}"
+                                                    class="font-semibold text-brand-navy hover:underline">
+                                                    {{ $item->empleado->nombre_completo }}
+                                                </a>
+                                                <p class="text-[11px] text-gray-500 font-mono">
+                                                    {{ $item->empleado->codigo }} &bull; {{ $item->empleado->identidad_formateada ?? $item->empleado->identidad ?? 'Sin DNI' }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400 italic">No asignado</span>
+                                    @endif
+                                </td>
+
+                                {{-- Tipo --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    @if ($item->tipo === 'dispositivo')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                                            <i class="fas fa-laptop text-[10px]" aria-hidden="true"></i>
+                                            Dispositivo
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                                            <i class="fas fa-chair text-[10px]" aria-hidden="true"></i>
+                                            Mobiliario
+                                        </span>
+                                    @endif
+                                </td>
+
+                                {{-- Elemento --}}
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-gray-900">{{ $referencia->nombre ?? 'N/A' }}</div>
+                                    @if ($item->tipo === 'dispositivo' && !empty($referencia?->n_serie))
+                                        <div class="text-[11px] text-gray-500 font-mono">S/N: {{ $referencia->n_serie }}</div>
+                                    @endif
+                                </td>
+
+                                {{-- Etiqueta --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="font-mono font-semibold text-brand-navy bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                                        {{ $referencia->etiqueta ?? '---' }}
                                     </span>
                                 </td>
-                                <td class="px-3 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
-                                        <a href="{{ route('asignaciones.show', ['asignacion' => $item->id]) }}"
-                                            class="text-blue-700 hover:text-blue-900" title="Ver acta">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
+
+                                {{-- Área --}}
+                                <td class="px-4 py-3 text-gray-600">
+                                    {{ $item->area }}
+                                </td>
+
+                                {{-- Fecha --}}
+                                <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                                    {{ $item->fecha_entrega?->format('d/m/Y') ?? '---' }}
+                                </td>
+
+                                {{-- Acciones --}}
+                                <td class="px-4 py-3 whitespace-nowrap text-center">
+                                    <div class="inline-flex items-center gap-1.5">
+                                        {{-- Botón rápido: Devolver Bien --}}
+                                        <a href="{{ route('devoluciones.create', ['asignacion_id' => $item->id]) }}"
+                                            class="inline-flex items-center justify-center px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded hover:bg-emerald-600 hover:text-white text-xs font-semibold shadow-2xs transition"
+                                            title="Registrar Devolución de este bien">
+                                            <i class="fas fa-undo text-xs mr-1" aria-hidden="true"></i>
+                                            Devolver
                                         </a>
-                                        <a href="{{ route('asignaciones.historial', $item->empleado_id) }}"
-                                            class="text-indigo-700 hover:text-indigo-900" title="Historial">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                            </svg>
+
+                                        {{-- Ver Acta --}}
+                                        <a href="{{ route('asignaciones.show', $item->id) }}"
+                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-gray-500 hover:text-brand-navy hover:bg-gray-100 transition"
+                                            title="Ver acta de entrega">
+                                            <i class="fas fa-eye text-xs" aria-hidden="true"></i>
                                         </a>
-                                        <a href="{{ route('asignaciones.pdf', ['asignacion' => $item->id]) }}"
-                                            class="text-purple-700 hover:text-purple-900" title="Descargar PDF"
-                                            target="_blank">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                                            </svg>
+
+                                        {{-- Descargar PDF --}}
+                                        <a href="{{ route('asignaciones.pdf', $item->id) }}"
+                                            target="_blank"
+                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-purple-600 hover:text-purple-900 hover:bg-purple-50 transition"
+                                            title="Descargar Acta en PDF">
+                                            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
                                         </a>
-                                        <form action="{{ route('asignaciones.destroy', $item->id) }}" method="POST"
-                                            class="inline">
-                                            @csrf @method('DELETE')
-                                            <button
-                                                onclick="return confirm('¿Está seguro de eliminar esta asignación?')"
-                                                class="text-red-600 hover:text-red-900" title="Eliminar">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </form>
+
+                                        {{-- Anular Asignación con contraseña (data-attributes seguros contra XSS) --}}
+                                        <button type="button"
+                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
+                                            title="Anular asignación por error"
+                                            data-id="{{ $item->id }}"
+                                            data-nombre="{{ $referencia->nombre ?? 'Bien' }}"
+                                            data-etiqueta="{{ $referencia->etiqueta ?? 'Sin etiqueta' }}">
+                                            <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="8" class="px-6 py-12 text-center">
+                                    <div class="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+                                        <i class="fas fa-inbox text-xl" aria-hidden="true"></i>
+                                    </div>
+                                    <p class="text-sm font-semibold text-gray-700">No se encontraron asignaciones activas</p>
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        {{ $buscar !== '' ? 'Pruebe ajustando los términos de búsqueda o filtros.' : 'No hay asignaciones activas registradas en este momento.' }}
+                                    </p>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
-            <div class="p-4">
-                {{ $asignaciones->withQueryString()->links() }}
-            </div>
 
-            @if ($asignaciones->isEmpty())
-                <div class="text-center py-16">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-14 w-14 text-gray-300" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 class="mt-4 text-lg font-semibold text-gray-900">No hay asignaciones registradas</h3>
-                    <p class="mt-2 text-base text-gray-500">Comience creando una nueva asignación.</p>
-                    <div class="mt-8">
-                        <a href="{{ route('asignaciones.create') }}"
-                            class="inline-flex items-center px-5 py-3 border border-transparent shadow text-base font-semibold rounded-lg text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4v16m8-8H4" />
-                            </svg>
-                            Nueva Asignación
-                        </a>
-                    </div>
+            {{-- Paginación --}}
+            @if ($asignaciones->hasPages())
+                <div class="px-4 py-3 border-t border-gray-200">
+                    {{ $asignaciones->links() }}
                 </div>
             @endif
         </div>
     </div>
+
+    {{-- Formulario oculto para anular asignación con contraseña --}}
+    <form id="form-anular-asignacion" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+        <input type="hidden" name="password" id="input-password-anulacion">
+    </form>
+
+    {{-- Script seguro contra XSS utilizando data attributes y escape nativo --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str || '';
+                return div.innerHTML;
+            }
+
+            document.querySelectorAll('.btn-anular').forEach(button => {
+                button.addEventListener('click', () => {
+                    const id = button.dataset.id;
+                    const nombre = escapeHtml(button.dataset.nombre);
+                    const etiqueta = escapeHtml(button.dataset.etiqueta);
+
+                    Swal.fire({
+                        title: '¿Anular esta Asignación?',
+                        html: `
+                            <p class="text-sm text-gray-600 mb-3">
+                                Esta acción debe realizarse <strong>únicamente en caso de equivocación</strong> al registrar.
+                                El bien <strong>${nombre}</strong> (${etiqueta}) será liberado inmediatamente y quedará disponible para ser asignado.
+                            </p>
+                            <div class="text-left mt-3">
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                    Ingrese su contraseña de usuario para autorizar:
+                                </label>
+                            </div>
+                        `,
+                        input: 'password',
+                        inputPlaceholder: 'Su contraseña actual de sesión...',
+                        inputAttributes: {
+                            autocapitalize: 'off',
+                            autocorrect: 'off',
+                            required: 'true'
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, Anular y Liberar Bien',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#DC2626',
+                        cancelButtonColor: '#6B7280',
+                        focusConfirm: false,
+                        preConfirm: (password) => {
+                            if (!password) {
+                                Swal.showValidationMessage('Debe ingresar su contraseña para proceder.');
+                            }
+                            return password;
+                        },
+                        customClass: {
+                            popup: 'rounded-xl text-left',
+                            confirmButton: 'rounded-lg text-xs font-semibold px-4 py-2',
+                            cancelButton: 'rounded-lg text-xs font-semibold px-4 py-2'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed && result.value) {
+                            const form = document.getElementById('form-anular-asignacion');
+                            form.action = `/asignaciones/${id}`;
+                            document.getElementById('input-password-anulacion').value = result.value;
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </x-app-layout>

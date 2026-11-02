@@ -251,28 +251,46 @@
         </table>
     </div>
 
-    <!-- 1. Datos del Colaborador -->
-    <div class="section-title">1. Información del Colaborador (Receptor)</div>
-    <table class="info-table">
-        <tr>
-            <th>Nombre Completo:</th>
-            <td>{{ $asignacion->empleado->nombre_completo ?? 'N/A' }}</td>
-            <th>Código de Empleado:</th>
-            <td>{{ $asignacion->empleado->codigo ?? 'N/A' }}</td>
-        </tr>
-        <tr>
-            <th>Número de Identidad:</th>
-            <td>{{ $asignacion->empleado->identidad ?? 'N/A' }}</td>
-            <th>Área / Gerencia:</th>
-            <td>{{ $asignacion->empleado->gerencia ?? $asignacion->area }}</td>
-        </tr>
-        <tr>
-            <th>Ubicación Asignada:</th>
-            <td>{{ $asignacion->area ?? $asignacion->empleado->ubicacion ?? 'Oficina Principal' }}</td>
-            <th>Fecha de Entrega:</th>
-            <td>{{ \Carbon\Carbon::parse($asignacion->fecha_entrega)->format('d/m/Y') }}</td>
-        </tr>
-    </table>
+    <!-- 1. Datos del Colaborador o Área Común -->
+    @if ($asignacion->es_area_comun)
+        <div class="section-title">1. Información de Ubicación / Espacio Institucional</div>
+        <table class="info-table">
+            <tr>
+                <th>Destino:</th>
+                <td><strong>Área Común / Dependencia Institucional</strong></td>
+                <th>Área / Espacio:</th>
+                <td>{{ $asignacion->area }}</td>
+            </tr>
+            <tr>
+                <th>Tipo de Custodia:</th>
+                <td>Uso general institucional (Sin colaborador exclusivo)</td>
+                <th>Fecha de Asignación:</th>
+                <td>{{ \Carbon\Carbon::parse($asignacion->fecha_entrega)->format('d/m/Y') }}</td>
+            </tr>
+        </table>
+    @else
+        <div class="section-title">1. Información del Colaborador (Receptor)</div>
+        <table class="info-table">
+            <tr>
+                <th>Nombre Completo:</th>
+                <td>{{ $asignacion->empleado->nombre_completo ?? 'N/A' }}</td>
+                <th>Código de Empleado:</th>
+                <td>{{ $asignacion->empleado->codigo ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <th>Número de Identidad:</th>
+                <td>{{ $asignacion->empleado->identidad_formateada ?? $asignacion->empleado->identidad ?? 'N/A' }}</td>
+                <th>Área / Gerencia:</th>
+                <td>{{ $asignacion->empleado->gerencia ?? $asignacion->area }}</td>
+            </tr>
+            <tr>
+                <th>Ubicación Asignada:</th>
+                <td>{{ $asignacion->area ?? $asignacion->empleado->ubicacion ?? 'Oficina Principal' }}</td>
+                <th>Fecha de Entrega:</th>
+                <td>{{ \Carbon\Carbon::parse($asignacion->fecha_entrega)->format('d/m/Y') }}</td>
+            </tr>
+        </table>
+    @endif
 
     <!-- 2. Detalle del Bien Asignado -->
     <div class="section-title">2. Descripción y Detalle del Bien Asignado</div>
@@ -336,9 +354,15 @@
             </td>
             <td>
                 <div class="signature-line"></div>
-                <p class="signature-name">{{ $asignacion->empleado->nombre_completo ?? 'Colaborador' }}</p>
-                <p class="signature-role">Recibí Conforme / Colaborador</p>
-                <p class="signature-role">Identidad: {{ $asignacion->empleado->identidad ?? '----------------' }}</p>
+                @if ($asignacion->es_area_comun)
+                    <p class="signature-name">{{ $asignacion->area }}</p>
+                    <p class="signature-role">Instalado / Destinado en Espacio</p>
+                    <p class="signature-role">Área Común CCISUR</p>
+                @else
+                    <p class="signature-name">{{ $asignacion->empleado->nombre_completo ?? 'Colaborador' }}</p>
+                    <p class="signature-role">Recibí Conforme / Colaborador</p>
+                    <p class="signature-role">Identidad: {{ $asignacion->empleado->identidad_formateada ?? $asignacion->empleado->identidad ?? '----------------' }}</p>
+                @endif
             </td>
         </tr>
     </table>
