@@ -83,10 +83,9 @@
             <div>
                 <strong>Elemento:</strong>
                 @php
-                    $item =
-                        $devolucion->asignacion->tipo === 'mobiliario'
-                            ? \App\Models\Mobiliario::find($devolucion->asignacion->id_referencia)
-                            : \App\Models\Dispositivo::find($devolucion->asignacion->id_referencia);
+                    $item = $devolucion->asignacion->tipo === 'mobiliario'
+                        ? $devolucion->asignacion->mobiliario
+                        : $devolucion->asignacion->dispositivo;
                 @endphp
                 {{ $item->nombre ?? 'N/A' }}
             </div>

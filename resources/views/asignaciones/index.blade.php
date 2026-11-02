@@ -59,11 +59,7 @@
                     <tbody class="bg-white divide-y divide-gray-100">
                         @foreach ($asignaciones as $item)
                             @php
-                                $referencia =
-                                    $item->tipo === 'mobiliario'
-                                        ? \App\Models\Mobiliario::find($item->id_referencia)
-                                        : \App\Models\Dispositivo::find($item->id_referencia);
-
+                                $referencia = $item->tipo === 'mobiliario' ? $item->mobiliario : $item->dispositivo;
                                 $estado = $item->devolucion ? 'Devuelto' : 'Activo';
                                 $color = $item->devolucion ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800';
                             @endphp

@@ -109,10 +109,6 @@ trait TieneEstadoInventario
 
     public function estaAsignado(): bool
     {
-        if ($this->disponibilidad === self::DISPONIBILIDAD_ASIGNADO) {
-            return true;
-        }
-
         if (array_key_exists('asignaciones_activas_count', $this->attributes)) {
             return (int) $this->attributes['asignaciones_activas_count'] > 0;
         }
@@ -152,21 +148,6 @@ trait TieneEstadoInventario
         }
 
         return null;
-    }
-
-    public function esEstadoEliminable(): bool
-    {
-        return $this->esEstadoDescartable();
-    }
-
-    public function getPuedeEliminarseAttribute(): bool
-    {
-        return $this->getPuedeDarseDeBajaAttribute();
-    }
-
-    public function getMotivoNoEliminableAttribute(): ?string
-    {
-        return $this->getMotivoNoBajaAttribute();
     }
 
     public function getDisponibilidadRealAttribute(): string

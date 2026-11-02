@@ -56,7 +56,7 @@ class Asignacion extends Model
 
     public function dispositivo(): BelongsTo
     {
-        return $this->belongsTo(Dispositivo::class, 'id_referencia');
+        return $this->belongsTo(Dispositivo::class, 'id_referencia')->withTrashed();
     }
 
     public function empleado(): BelongsTo

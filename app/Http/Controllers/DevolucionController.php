@@ -8,6 +8,7 @@ use App\Models\Dispositivo;
 use App\Models\Mobiliario;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DevolucionController extends Controller
 {
@@ -95,9 +96,9 @@ class DevolucionController extends Controller
     public function pdf(Devolucion $devolucion)
     {
         $asignacion = $devolucion->asignacion;
-        $item = $asignacion->tipo === 'mobiliario'
-            ? Mobiliario::find($asignacion->id_referencia)
-            : Dispositivo::find($asignacion->id_referencia);
+        $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+            ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
+            : Dispositivo::withTrashed()->find($asignacion->id_referencia);
 
         $pdf = Pdf::loadView('devoluciones.pdf', compact('devolucion', 'asignacion', 'item'));
 
@@ -106,7 +107,22 @@ class DevolucionController extends Controller
 
     public function destroy(Devolucion $devolucion)
     {
-        $devolucion->delete();
+        DB::transaction(function () use ($devolucion): void {
+            $asignacion = $devolucion->asignacion;
+            $devolucion->delete();
+
+            if ($asignacion) {
+                $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+                    ? Mobiliario::find($asignacion->id_referencia)
+                    : Dispositivo::find($asignacion->id_referencia);
+
+                if ($item) {
+                    // Al borrar la devolución, el bien vuelve a estar asignado a esa persona
+                    $item->disponibilidad = $item::DISPONIBILIDAD_ASIGNADO;
+                    $item->save();
+                }
+            }
+        });
 
         return redirect()->route('devoluciones.index')->with('success', 'Devolución eliminada.');
     }
@@ -116,9 +132,9 @@ class DevolucionController extends Controller
         $asignacion = Asignacion::where('uuid', $uuid)->firstOrFail();
         $devolucion = \App\Models\Devolucion::where('asignacion_id', $asignacion->id)->firstOrFail();
 
-        $item = $asignacion->tipo === 'mobiliario'
-            ? \App\Models\Mobiliario::find($asignacion->id_referencia)
-            : \App\Models\Dispositivo::find($asignacion->id_referencia);
+        $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+            ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
+            : Dispositivo::withTrashed()->find($asignacion->id_referencia);
 
         return view('devoluciones.publica', compact('devolucion', 'asignacion', 'item'));
     }

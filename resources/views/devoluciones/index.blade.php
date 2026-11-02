@@ -200,14 +200,7 @@
                             @foreach ($devoluciones as $devolucion)
                                 @php
                                     $asig = $devolucion->asignacion;
-                                    $item = null;
-
-                                    if ($asig) {
-                                        $item =
-                                            $asig->tipo === 'mobiliario'
-                                                ? \App\Models\Mobiliario::find($asig->id_referencia)
-                                                : \App\Models\Dispositivo::find($asig->id_referencia);
-                                    }
+                                    $item = $asig ? ($asig->tipo === 'mobiliario' ? $asig->mobiliario : $asig->dispositivo) : null;
                                 @endphp
 
                                 @if ($asig)

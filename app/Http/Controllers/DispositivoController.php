@@ -62,8 +62,9 @@ class DispositivoController extends Controller
             ->isNotEmpty();
 
         $dispositivos = $query->latest()->paginate(15)->withQueryString();
+        $inactivosCount = Dispositivo::onlyTrashed()->count();
 
-        return view('dispositivos.index', compact('dispositivos', 'hayFiltros'));
+        return view('dispositivos.index', compact('dispositivos', 'hayFiltros', 'inactivosCount'));
     }
 
     // Mostrar formulario de creación
@@ -98,7 +99,7 @@ class DispositivoController extends Controller
             'es_area_comun' => ['nullable', 'boolean'],
         ], [
             'n_serie.required' => 'El número de serie es obligatorio para este tipo de equipo.',
-            'n_serie.unique' => 'El número de serie ingresado ya está registrado en otro dispositivo.',
+            'n_serie.unique' => 'El número de serie ingresado ya está registrado en el inventario (verifique si se encuentra en el archivo de bajas para reactivarlo).',
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
 
@@ -155,7 +156,7 @@ class DispositivoController extends Controller
             'es_area_comun' => ['nullable', 'boolean'],
         ], [
             'n_serie.required' => 'El número de serie es obligatorio para este tipo de equipo.',
-            'n_serie.unique' => 'El número de serie ingresado ya pertenece a otro dispositivo registrado.',
+            'n_serie.unique' => 'El número de serie ingresado ya pertenece a otro dispositivo registrado (o archivado en bajas).',
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
 
@@ -177,19 +178,129 @@ class DispositivoController extends Controller
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo actualizado correctamente.');
     }
 
-    // Eliminar registro
+    public function show(Dispositivo $dispositivo): RedirectResponse
+    {
+        return redirect()->route('dispositivos.historial', $dispositivo->id);
+    }
+
+    // Dar de baja registro (Soft Delete)
     public function destroy(Dispositivo $dispositivo): RedirectResponse
+    {
+        return DB::transaction(function () use ($dispositivo): RedirectResponse {
+            $dispositivoActualizado = Dispositivo::lockForUpdate()->find($dispositivo->id);
+
+            if (! $dispositivoActualizado) {
+                return redirect()->route('dispositivos.index')->with('error', 'El dispositivo ya no existe.');
+            }
+
+            $dispositivoActualizado->loadCount(['asignacionesActivas']);
+
+            if (! $dispositivoActualizado->puede_darse_de_baja) {
+                return redirect()
+                    ->route('dispositivos.index')
+                    ->with('error', $dispositivoActualizado->motivo_no_baja ?? 'No se puede dar de baja este dispositivo.');
+            }
+
+            $dispositivoActualizado->delete();
+
+            return redirect()->route('dispositivos.index')->with('success', 'Dispositivo dado de baja correctamente.');
+        });
+    }
+
+    // Listar dispositivos dados de baja
+    public function bajas(Request $request): View
+    {
+        $query = Dispositivo::onlyTrashed()->withCount(['asignacionesActivas', 'asignaciones']);
+
+        if ($request->filled('nombre')) {
+            $termino = addcslashes(trim((string) $request->input('nombre')), '%_\\');
+            $query->where(function (Builder $q) use ($termino): void {
+                $q->where('nombre', 'like', "%{$termino}%")
+                    ->orWhere('etiqueta', 'like', "%{$termino}%")
+                    ->orWhere('n_serie', 'like', "%{$termino}%");
+            });
+        }
+
+        if ($request->filled('tipo')) {
+            $query->where('tipo', (string) $request->input('tipo'));
+        }
+
+        if ($request->filled('marca')) {
+            $marca = addcslashes(trim((string) $request->input('marca')), '%_\\');
+            $query->where(function (Builder $q) use ($marca): void {
+                $q->where('marca', 'like', "%{$marca}%")
+                    ->orWhere('modelo', 'like', "%{$marca}%");
+            });
+        }
+
+        if ($request->filled('ubicacion')) {
+            $ubicacion = addcslashes(trim((string) $request->input('ubicacion')), '%_\\');
+            $query->where('ubicacion', 'like', "%{$ubicacion}%");
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', (string) $request->input('estado'));
+        }
+
+        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
+
+        $dispositivos = $query->latest('deleted_at')->orderByDesc('id')->paginate(15)->withQueryString();
+
+        return view('dispositivos.bajas', compact('dispositivos', 'hayFiltros'));
+    }
+
+    // Reactivar dispositivo dado de baja
+    public function reactivar(int $id): RedirectResponse
+    {
+        $dispositivo = Dispositivo::onlyTrashed()->findOrFail($id);
+        $dispositivo->restore();
+
+        // Al restaurar, recalcular disponibilidad según su estado físico actual
+        $dispositivo->disponibilidad = Dispositivo::calcularDisponibilidad($dispositivo->estado, false, false);
+        $dispositivo->save();
+
+        return redirect()->route('dispositivos.bajas')->with('success', "Dispositivo {$dispositivo->etiqueta} reactivado correctamente.");
+    }
+
+    // Hoja de Vida / Historial del bien
+    public function historial(Request $request, Dispositivo $dispositivo): View
     {
         $dispositivo->loadCount(['asignacionesActivas', 'asignaciones']);
 
-        if (! $dispositivo->puede_eliminarse) {
-            return redirect()
-                ->route('dispositivos.index')
-                ->with('error', $dispositivo->motivo_no_eliminable ?? 'No se puede eliminar este dispositivo.');
+        $totalAsignaciones = (int) $dispositivo->asignaciones_count;
+        $totalDevueltos = max(0, $totalAsignaciones - (int) $dispositivo->asignaciones_activas_count);
+
+        $query = $dispositivo->asignaciones()->with(['empleado', 'devolucion']);
+
+        if ($request->filled('buscar')) {
+            $termino = addcslashes(trim((string) $request->input('buscar')), '%_\\');
+            $query->where(function (Builder $q) use ($termino): void {
+                $q->where('area', 'like', "%{$termino}%")
+                    ->orWhereHas('empleado', function (Builder $emp) use ($termino): void {
+                        $emp->where('nombre_completo', 'like', "%{$termino}%")
+                            ->orWhere('codigo', 'like', "%{$termino}%")
+                            ->orWhere('identidad', 'like', "%{$termino}%");
+                    });
+            });
         }
 
-        $dispositivo->delete();
+        $hayFiltros = collect($request->only(['buscar']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
 
-        return redirect()->route('dispositivos.index')->with('success', 'Dispositivo eliminado correctamente.');
+        $asignaciones = $query->latest('fecha_entrega')
+            ->orderByDesc('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('dispositivos.historial', compact(
+            'dispositivo',
+            'asignaciones',
+            'totalAsignaciones',
+            'totalDevueltos',
+            'hayFiltros'
+        ));
     }
 }

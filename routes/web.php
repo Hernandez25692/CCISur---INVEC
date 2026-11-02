@@ -32,6 +32,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/mobiliario/{id}/reactivar', [\App\Http\Controllers\MobiliarioController::class, 'reactivar'])->name('mobiliario.reactivar');
     Route::get('/mobiliario/{mobiliario}/historial', [\App\Http\Controllers\MobiliarioController::class, 'historial'])->withTrashed()->name('mobiliario.historial');
     Route::resource('mobiliario', MobiliarioController::class);
+    Route::get('/dispositivos/bajas', [\App\Http\Controllers\DispositivoController::class, 'bajas'])->name('dispositivos.bajas');
+    Route::post('/dispositivos/{id}/reactivar', [\App\Http\Controllers\DispositivoController::class, 'reactivar'])->name('dispositivos.reactivar');
+    Route::get('/dispositivos/{dispositivo}/historial', [\App\Http\Controllers\DispositivoController::class, 'historial'])->withTrashed()->name('dispositivos.historial');
     Route::resource('dispositivos', DispositivoController::class);
     Route::get('/empleados/bajas', [\App\Http\Controllers\EmpleadoController::class, 'bajas'])->name('empleados.bajas');
     Route::post('/empleados/{id}/reactivar', [\App\Http\Controllers\EmpleadoController::class, 'reactivar'])->name('empleados.reactivar');

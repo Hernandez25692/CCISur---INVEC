@@ -135,20 +135,33 @@ class MobiliarioController extends Controller
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario actualizado correctamente.');
     }
 
+    public function show(Mobiliario $mobiliario): RedirectResponse
+    {
+        return redirect()->route('mobiliario.historial', $mobiliario->id);
+    }
+
     // Dar de baja registro (Soft Delete)
     public function destroy(Mobiliario $mobiliario): RedirectResponse
     {
-        $mobiliario->loadCount(['asignacionesActivas']);
+        return DB::transaction(function () use ($mobiliario): RedirectResponse {
+            $mobiliarioActualizado = Mobiliario::lockForUpdate()->find($mobiliario->id);
 
-        if (! $mobiliario->puede_darse_de_baja) {
-            return redirect()
-                ->route('mobiliario.index')
-                ->with('error', $mobiliario->motivo_no_baja ?? 'No se puede dar de baja este mueble.');
-        }
+            if (! $mobiliarioActualizado) {
+                return redirect()->route('mobiliario.index')->with('error', 'El mobiliario ya no existe.');
+            }
 
-        $mobiliario->delete();
+            $mobiliarioActualizado->loadCount(['asignacionesActivas']);
 
-        return redirect()->route('mobiliario.index')->with('success', 'Mobiliario dado de baja correctamente.');
+            if (! $mobiliarioActualizado->puede_darse_de_baja) {
+                return redirect()
+                    ->route('mobiliario.index')
+                    ->with('error', $mobiliarioActualizado->motivo_no_baja ?? 'No se puede dar de baja este mueble.');
+            }
+
+            $mobiliarioActualizado->delete();
+
+            return redirect()->route('mobiliario.index')->with('success', 'Mobiliario dado de baja correctamente.');
+        });
     }
 
     // Listar mobiliario dado de baja

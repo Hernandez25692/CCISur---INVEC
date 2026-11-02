@@ -108,11 +108,9 @@ class AsignacionController extends Controller
     // Mostrar detalles (opcional para PDF)
     public function show(Asignacion $asignacion)
     {
-        if ($asignacion->tipo === 'mobiliario') {
-            $item = Mobiliario::find($asignacion->id_referencia);
-        } else {
-            $item = Dispositivo::find($asignacion->id_referencia);
-        }
+        $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+            ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
+            : Dispositivo::withTrashed()->find($asignacion->id_referencia);
 
         return view('asignaciones.show', compact('asignacion', 'item'));
     }
@@ -120,16 +118,30 @@ class AsignacionController extends Controller
     // Eliminar asignación
     public function destroy(Asignacion $asignacion)
     {
-        $asignacion->delete();
+        DB::transaction(function () use ($asignacion): void {
+            $tipo = $asignacion->tipo;
+            $idReferencia = $asignacion->id_referencia;
+
+            $asignacion->delete();
+
+            $item = $tipo === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::find($idReferencia)
+                : Dispositivo::find($idReferencia);
+
+            if ($item) {
+                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, false, $item->estaAsignado());
+                $item->save();
+            }
+        });
 
         return redirect()->route('asignaciones.index')->with('success', 'Asignación eliminada.');
     }
 
     public function pdf(Asignacion $asignacion)
     {
-        $item = $asignacion->tipo === 'mobiliario'
-            ? \App\Models\Mobiliario::find($asignacion->id_referencia)
-            : \App\Models\Dispositivo::find($asignacion->id_referencia);
+        $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+            ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
+            : Dispositivo::withTrashed()->find($asignacion->id_referencia);
 
         $pdf = Pdf::loadView('asignaciones.acta_pdf', compact('asignacion', 'item'));
 

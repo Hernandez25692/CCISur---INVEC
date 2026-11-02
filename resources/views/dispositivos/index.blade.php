@@ -6,11 +6,23 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Inventario de Dispositivos</h1>
                 <p class="mt-1 text-sm text-gray-500">Gestión y control de equipos tecnológicos e informáticos institucionales</p>
             </div>
-            <a href="{{ route('dispositivos.create') }}"
-                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                Nuevo Dispositivo
-            </a>
+            <div class="flex flex-wrap items-center gap-2.5">
+                <a href="{{ route('dispositivos.bajas') }}"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
+                    <span>Dados de baja</span>
+                    @if (($inactivosCount ?? 0) > 0)
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-800 font-bold">
+                            {{ $inactivosCount }}
+                        </span>
+                    @endif
+                </a>
+                <a href="{{ route('dispositivos.create') }}"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                    <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                    Nuevo Dispositivo
+                </a>
+            </div>
         </div>
 
         <!-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) -->
@@ -215,33 +227,39 @@
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-right font-medium">
                                         <div class="inline-flex items-center justify-end gap-1.5">
+                                            <a href="{{ route('dispositivos.historial', $item->id) }}"
+                                                class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
+                                                title="Hoja de vida / Historial de asignaciones" aria-label="Historial de {{ $item->nombre }}">
+                                                <i class="fas fa-history text-xs text-brand-gold-600" aria-hidden="true"></i>
+                                            </a>
+
                                             <a href="{{ route('dispositivos.edit', $item->id) }}"
                                                 class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
                                                 title="Editar" aria-label="Editar {{ $item->nombre }}">
                                                 <i class="fas fa-pen text-xs" aria-hidden="true"></i>
                                             </a>
 
-                                            @if ($item->puede_eliminarse)
+                                            @if ($item->puede_darse_de_baja)
                                                 <form action="{{ route('dispositivos.destroy', $item->id) }}" method="POST" class="inline"
-                                                    data-swal-delete
+                                                    data-swal-confirm-baja-bien
                                                     data-swal-nombre="{{ $item->nombre }}"
                                                     data-swal-etiqueta="{{ $item->etiqueta }}">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
-                                                        class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                                                        title="Eliminar dispositivo" aria-label="Eliminar {{ $item->nombre }}">
-                                                        <i class="fas fa-trash text-xs" aria-hidden="true"></i>
+                                                        class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
+                                                        title="Dar de baja dispositivo" aria-label="Dar de baja {{ $item->nombre }}">
+                                                        <i class="fas fa-archive text-xs" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
                                             @else
                                                 <button type="button"
-                                                    data-swal-locked="{{ $item->motivo_no_eliminable }}"
-                                                    data-swal-title="No se puede eliminar este dispositivo"
+                                                    data-swal-locked="{{ $item->motivo_no_baja }}"
+                                                    data-swal-title="No se puede dar de baja este dispositivo"
                                                     class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-                                                    title="{{ $item->motivo_no_eliminable }}"
-                                                    aria-label="Eliminación protegida para {{ $item->nombre }}">
-                                                    <i class="fas fa-trash text-xs" aria-hidden="true"></i>
+                                                    title="{{ $item->motivo_no_baja }}"
+                                                    aria-label="Baja bloqueada para {{ $item->nombre }}">
+                                                    <i class="fas fa-archive text-xs" aria-hidden="true"></i>
                                                 </button>
                                             @endif
 
@@ -295,7 +313,13 @@
                                 <span>Registro: {{ $item->fecha_registro?->format('d/m/Y') ?? 'N/A' }}</span>
                             </div>
 
-                            <div class="flex items-center justify-end gap-2 pt-2">
+                            <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                                <a href="{{ route('dispositivos.historial', $item->id) }}"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-gold-50 text-brand-navy text-xs font-semibold hover:bg-brand-gold-100 transition">
+                                    <i class="fas fa-history text-[11px]" aria-hidden="true"></i>
+                                    Historial
+                                </a>
+
                                 <a href="{{ route('dispositivos.edit', $item->id) }}"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-brand-navy hover:bg-brand-navy-50 transition">
                                     <i class="fas fa-pen text-[11px]" aria-hidden="true"></i>
@@ -310,28 +334,28 @@
                                     </a>
                                 @endif
 
-                                @if ($item->puede_eliminarse)
+                                @if ($item->puede_darse_de_baja)
                                     <form action="{{ route('dispositivos.destroy', $item->id) }}" method="POST" class="inline"
-                                        data-swal-delete
+                                        data-swal-confirm-baja-bien
                                         data-swal-nombre="{{ $item->nombre }}"
                                         data-swal-etiqueta="{{ $item->etiqueta }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-xs font-medium text-red-600 hover:bg-red-50 transition"
-                                            aria-label="Eliminar {{ $item->nombre }}">
-                                            <i class="fas fa-trash text-[11px]" aria-hidden="true"></i>
-                                            Eliminar
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200 text-xs font-medium text-amber-700 hover:bg-amber-50 transition"
+                                            aria-label="Dar de baja {{ $item->nombre }}">
+                                            <i class="fas fa-archive text-[11px]" aria-hidden="true"></i>
+                                            Dar de baja
                                         </button>
                                     </form>
                                 @else
                                     <button type="button"
-                                        data-swal-locked="{{ $item->motivo_no_eliminable }}"
-                                        data-swal-title="No se puede eliminar este dispositivo"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-gray-50 transition"
-                                        aria-label="Eliminación protegida para {{ $item->nombre }}">
-                                        <i class="fas fa-trash text-[11px]" aria-hidden="true"></i>
-                                        Eliminar
+                                        data-swal-locked="{{ $item->motivo_no_baja }}"
+                                        data-swal-title="No se puede dar de baja este dispositivo"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-400 hover:bg-gray-50 transition"
+                                        aria-label="Baja bloqueada para {{ $item->nombre }}">
+                                        <i class="fas fa-archive text-[11px]" aria-hidden="true"></i>
+                                        Dar de baja
                                     </button>
                                 @endif
                             </div>
