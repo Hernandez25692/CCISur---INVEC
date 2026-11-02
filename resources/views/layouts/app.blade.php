@@ -196,6 +196,83 @@
                 });
             });
 
+            // Confirmación SweetAlert2 para dar de baja a un bien (mobiliario/dispositivo)
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('form[data-swal-confirm-baja-bien]');
+                if (!form || form.dataset.swalConfirmed === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const nombre = form.dataset.swalNombre || 'este bien';
+                const etiqueta = form.dataset.swalEtiqueta ? ` (${form.dataset.swalEtiqueta})` : '';
+
+                if (typeof window.Swal === 'undefined') {
+                    if (window.confirm(`¿Está seguro de dar de baja «${nombre}»${etiqueta}? Pasará al archivo de bienes dados de baja.`)) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                    return;
+                }
+
+                window.Swal.fire({
+                    icon: 'warning',
+                    title: '¿Dar de baja este bien?',
+                    text: `«${nombre}»${etiqueta} pasará al archivo de bienes dados de baja. Su historial de actas y préstamos se conservará intacto.`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, dar de baja',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#d97706',
+                    cancelButtonColor: '#031940',
+                    reverseButtons: true,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+            });
+
+            // Confirmación SweetAlert2 para reactivar un bien
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('form[data-swal-confirm-reactivar-bien]');
+                if (!form || form.dataset.swalConfirmed === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const nombre = form.dataset.swalNombre || 'este bien';
+                const etiqueta = form.dataset.swalEtiqueta ? ` (${form.dataset.swalEtiqueta})` : '';
+
+                if (typeof window.Swal === 'undefined') {
+                    if (window.confirm(`¿Reactivar «${nombre}»${etiqueta}? Volverá a estar en el inventario activo.`)) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                    return;
+                }
+
+                window.Swal.fire({
+                    icon: 'question',
+                    title: '¿Reactivar este bien?',
+                    text: `«${nombre}»${etiqueta} volverá a aparecer en el inventario general. Recuerde verificar su estado físico y disponibilidad.`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, reactivar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#059669',
+                    cancelButtonColor: '#031940',
+                    reverseButtons: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+            });
+
             // Modal informativo cuando un bien está protegido y NO se puede eliminar
             document.addEventListener('click', function (event) {
                 const lockedBtn = event.target.closest('[data-swal-locked]');

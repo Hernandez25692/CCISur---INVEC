@@ -53,8 +53,9 @@ class MobiliarioController extends Controller
             ->isNotEmpty();
 
         $mobiliarios = $query->latest()->paginate(15)->withQueryString();
+        $inactivosCount = Mobiliario::onlyTrashed()->count();
 
-        return view('mobiliario.index', compact('mobiliarios', 'hayFiltros'));
+        return view('mobiliario.index', compact('mobiliarios', 'hayFiltros', 'inactivosCount'));
     }
 
     // Mostrar formulario de creación
@@ -134,19 +135,107 @@ class MobiliarioController extends Controller
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario actualizado correctamente.');
     }
 
-    // Eliminar registro
+    // Dar de baja registro (Soft Delete)
     public function destroy(Mobiliario $mobiliario): RedirectResponse
     {
-        $mobiliario->loadCount(['asignacionesActivas', 'asignaciones']);
+        $mobiliario->loadCount(['asignacionesActivas']);
 
-        if (! $mobiliario->puede_eliminarse) {
+        if (! $mobiliario->puede_darse_de_baja) {
             return redirect()
                 ->route('mobiliario.index')
-                ->with('error', $mobiliario->motivo_no_eliminable ?? 'No se puede eliminar este mueble.');
+                ->with('error', $mobiliario->motivo_no_baja ?? 'No se puede dar de baja este mueble.');
         }
 
         $mobiliario->delete();
 
-        return redirect()->route('mobiliario.index')->with('success', 'Mobiliario eliminado correctamente.');
+        return redirect()->route('mobiliario.index')->with('success', 'Mobiliario dado de baja correctamente.');
+    }
+
+    // Listar mobiliario dado de baja
+    public function bajas(Request $request): View
+    {
+        $query = Mobiliario::onlyTrashed()->withCount(['asignacionesActivas', 'asignaciones']);
+
+        if ($request->filled('nombre')) {
+            $termino = addcslashes(trim((string) $request->input('nombre')), '%_\\');
+            $query->where(function (Builder $q) use ($termino): void {
+                $q->where('nombre', 'like', "%{$termino}%")
+                    ->orWhere('etiqueta', 'like', "%{$termino}%");
+            });
+        }
+
+        if ($request->filled('tipo')) {
+            $query->where('tipo', (string) $request->input('tipo'));
+        }
+
+        if ($request->filled('ubicacion')) {
+            $ubicacion = addcslashes(trim((string) $request->input('ubicacion')), '%_\\');
+            $query->where('ubicacion', 'like', "%{$ubicacion}%");
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', (string) $request->input('estado'));
+        }
+
+        $hayFiltros = collect($request->only(['nombre', 'tipo', 'ubicacion', 'estado']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
+
+        $mobiliarios = $query->latest('deleted_at')->orderByDesc('id')->paginate(15)->withQueryString();
+
+        return view('mobiliario.bajas', compact('mobiliarios', 'hayFiltros'));
+    }
+
+    // Reactivar mobiliario dado de baja
+    public function reactivar(int $id): RedirectResponse
+    {
+        $mobiliario = Mobiliario::onlyTrashed()->findOrFail($id);
+        $mobiliario->restore();
+
+        // Al restaurar, recalcular disponibilidad según su estado físico actual
+        $mobiliario->disponibilidad = Mobiliario::calcularDisponibilidad($mobiliario->estado, false, false);
+        $mobiliario->save();
+
+        return redirect()->route('mobiliario.bajas')->with('success', "Mobiliario {$mobiliario->etiqueta} reactivado correctamente.");
+    }
+
+    // Hoja de Vida / Historial del bien
+    public function historial(Request $request, Mobiliario $mobiliario): View
+    {
+        $mobiliario->loadCount(['asignacionesActivas', 'asignaciones']);
+
+        $totalAsignaciones = (int) $mobiliario->asignaciones_count;
+        $totalDevueltos = max(0, $totalAsignaciones - (int) $mobiliario->asignaciones_activas_count);
+
+        $query = $mobiliario->asignaciones()->with(['empleado', 'devolucion']);
+
+        if ($request->filled('buscar')) {
+            $termino = addcslashes(trim((string) $request->input('buscar')), '%_\\');
+            $query->where(function (Builder $q) use ($termino): void {
+                $q->where('area', 'like', "%{$termino}%")
+                    ->orWhereHas('empleado', function (Builder $emp) use ($termino): void {
+                        $emp->where('nombre_completo', 'like', "%{$termino}%")
+                            ->orWhere('codigo', 'like', "%{$termino}%")
+                            ->orWhere('identidad', 'like', "%{$termino}%");
+                    });
+            });
+        }
+
+        $hayFiltros = collect($request->only(['buscar']))
+            ->filter(fn ($valor): bool => filled($valor))
+            ->isNotEmpty();
+
+        $asignaciones = $query->latest('fecha_entrega')
+            ->orderByDesc('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('mobiliario.historial', compact(
+            'mobiliario',
+            'asignaciones',
+            'totalAsignaciones',
+            'totalDevueltos',
+            'hayFiltros'
+        ));
     }
 }

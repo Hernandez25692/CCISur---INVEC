@@ -77,7 +77,7 @@ class EmpleadoController extends Controller
         ]);
 
         DB::transaction(function () use ($validated): void {
-            $maxNumero = Empleado::query()
+            $maxNumero = Empleado::withTrashed()
                 ->lockForUpdate()
                 ->pluck('codigo')
                 ->map(fn ($cod): int => (int) preg_replace('/\D+/', '', (string) $cod))
@@ -86,7 +86,7 @@ class EmpleadoController extends Controller
             $proximoNumero = $maxNumero + 1;
             $codigo = 'EM'.str_pad((string) $proximoNumero, 3, '0', STR_PAD_LEFT);
 
-            while (Empleado::query()->where('codigo', $codigo)->exists()) {
+            while (Empleado::withTrashed()->where('codigo', $codigo)->exists()) {
                 $proximoNumero++;
                 $codigo = 'EM'.str_pad((string) $proximoNumero, 3, '0', STR_PAD_LEFT);
             }

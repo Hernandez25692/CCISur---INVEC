@@ -129,35 +129,44 @@ trait TieneEstadoInventario
         return $this->asignaciones()->exists();
     }
 
-    public function esEstadoEliminable(): bool
+    public function esEstadoDescartable(): bool
     {
         return in_array((string) $this->estado, self::ESTADOS_ELIMINABLES, true);
     }
 
-    public function getPuedeEliminarseAttribute(): bool
+    public function getPuedeDarseDeBajaAttribute(): bool
     {
-        return ! $this->estaAsignado()
-            && ! $this->tieneHistorialAsignaciones()
-            && $this->esEstadoEliminable();
+        return ! $this->estaAsignado() && $this->esEstadoDescartable();
     }
 
-    public function getMotivoNoEliminableAttribute(): ?string
+    public function getMotivoNoBajaAttribute(): ?string
     {
         $etiquetaBien = static::ETIQUETA_BIEN;
 
         if ($this->estaAsignado()) {
-            return "Este {$etiquetaBien} tiene una asignación activa actualmente. Registrá primero su devolución.";
+            return "Este {$etiquetaBien} tiene una asignación activa actualmente. Debe registrar primero su devolución antes de darlo de baja.";
         }
 
-        if ($this->tieneHistorialAsignaciones()) {
-            return "Este {$etiquetaBien} posee historial de asignaciones y devoluciones registradas, por lo que debe conservarse para respaldo de actas.";
-        }
-
-        if (! $this->esEstadoEliminable()) {
-            return "No se permite eliminar un {$etiquetaBien} en estado «{$this->estado}». Solo pueden eliminarse bienes en estado Dañado, Producto incompleto o Caducado.";
+        if (! $this->esEstadoDescartable()) {
+            return "No se puede dar de baja un {$etiquetaBien} en estado «{$this->estado}». Solo se pueden dar de baja bienes descartados (Dañado / Defectuoso, Producto incompleto o Caducado / No apto para uso).";
         }
 
         return null;
+    }
+
+    public function esEstadoEliminable(): bool
+    {
+        return $this->esEstadoDescartable();
+    }
+
+    public function getPuedeEliminarseAttribute(): bool
+    {
+        return $this->getPuedeDarseDeBajaAttribute();
+    }
+
+    public function getMotivoNoEliminableAttribute(): ?string
+    {
+        return $this->getMotivoNoBajaAttribute();
     }
 
     public function getDisponibilidadRealAttribute(): string

@@ -51,7 +51,7 @@ class Asignacion extends Model
 
     public function mobiliario(): BelongsTo
     {
-        return $this->belongsTo(Mobiliario::class, 'id_referencia');
+        return $this->belongsTo(Mobiliario::class, 'id_referencia')->withTrashed();
     }
 
     public function dispositivo(): BelongsTo
@@ -61,7 +61,7 @@ class Asignacion extends Model
 
     public function empleado(): BelongsTo
     {
-        return $this->belongsTo(Empleado::class);
+        return $this->belongsTo(Empleado::class)->withTrashed();
     }
 
     public function getNombreBienAttribute(): string

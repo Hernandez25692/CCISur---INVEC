@@ -28,6 +28,9 @@ Route::middleware(['auth'])->group(function () {
 // Rutas protegidas (solo autenticados)
 Route::middleware(['auth'])->group(function () {
     // CRUD de recursos
+    Route::get('/mobiliario/bajas', [\App\Http\Controllers\MobiliarioController::class, 'bajas'])->name('mobiliario.bajas');
+    Route::post('/mobiliario/{id}/reactivar', [\App\Http\Controllers\MobiliarioController::class, 'reactivar'])->name('mobiliario.reactivar');
+    Route::get('/mobiliario/{mobiliario}/historial', [\App\Http\Controllers\MobiliarioController::class, 'historial'])->withTrashed()->name('mobiliario.historial');
     Route::resource('mobiliario', MobiliarioController::class);
     Route::resource('dispositivos', DispositivoController::class);
     Route::get('/empleados/bajas', [\App\Http\Controllers\EmpleadoController::class, 'bajas'])->name('empleados.bajas');

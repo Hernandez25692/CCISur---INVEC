@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Devolucion;
 use App\Models\Asignacion;
-use App\Models\Mobiliario;
+use App\Models\Devolucion;
 use App\Models\Dispositivo;
-use Illuminate\Http\Request;
+use App\Models\Mobiliario;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 
 class DevolucionController extends Controller
 {
@@ -35,8 +35,6 @@ class DevolucionController extends Controller
         return view('devoluciones.index', compact('devoluciones'));
     }
 
-
-
     public function create()
     {
         // Solo asignaciones que no tienen devolución registrada
@@ -47,7 +45,6 @@ class DevolucionController extends Controller
 
         return view('devoluciones.create', compact('asignaciones'));
     }
-
 
     public function store(Request $request)
     {
@@ -67,13 +64,13 @@ class DevolucionController extends Controller
 
         $asignacion = Asignacion::findOrFail($request->asignacion_id);
 
-        // Cambiar disponibilidad a disponible
+        // Cambiar disponibilidad respetando el estado físico del bien
         $item = $asignacion->tipo === 'mobiliario'
             ? \App\Models\Mobiliario::find($asignacion->id_referencia)
             : \App\Models\Dispositivo::find($asignacion->id_referencia);
 
         if ($item) {
-            $item->disponibilidad = 'Sin Asignar';
+            $item->disponibilidad = $item::calcularDisponibilidad($item->estado, false, false);
             $item->save();
         }
 
@@ -88,16 +85,12 @@ class DevolucionController extends Controller
         return redirect()->route('devoluciones.index')->with('success', 'Devolución registrada correctamente.');
     }
 
-
-
-
     public function show($id)
     {
         $devolucion = Devolucion::with('asignacion')->findOrFail($id);
 
         return view('devoluciones.show', compact('devolucion'));
     }
-
 
     public function pdf(Devolucion $devolucion)
     {
@@ -107,12 +100,14 @@ class DevolucionController extends Controller
             : Dispositivo::find($asignacion->id_referencia);
 
         $pdf = Pdf::loadView('devoluciones.pdf', compact('devolucion', 'asignacion', 'item'));
-        return $pdf->stream('Acta_Devolucion_' . $devolucion->id . '.pdf');
+
+        return $pdf->stream('Acta_Devolucion_'.$devolucion->id.'.pdf');
     }
 
     public function destroy(Devolucion $devolucion)
     {
         $devolucion->delete();
+
         return redirect()->route('devoluciones.index')->with('success', 'Devolución eliminada.');
     }
 
