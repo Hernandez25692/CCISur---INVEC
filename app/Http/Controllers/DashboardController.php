@@ -22,7 +22,6 @@ class DashboardController extends Controller
         $disponibleDispositivos = Dispositivo::disponibles()->count();
 
         $totalAsignado = $asignadoMobiliario + $asignadoDispositivos;
-        $totalDisponible = $disponibleMobiliario + $disponibleDispositivos;
 
         // Solo asignaciones activas (bajo custodia vigente, sin devolución registrada)
         $ultimasAsignaciones = Asignacion::activas()
@@ -39,7 +38,6 @@ class DashboardController extends Controller
             'asignadoDispositivos',
             'disponibleDispositivos',
             'totalAsignado',
-            'totalDisponible',
             'ultimasAsignaciones',
         ));
     }

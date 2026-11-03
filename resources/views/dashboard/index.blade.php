@@ -20,16 +20,11 @@
                     <i class="fas fa-undo text-xs text-brand-gold-600" aria-hidden="true"></i>
                     Devolución
                 </a>
-                <a href="{{ route('reportes.disponibles') }}"
-                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-brand-navy text-sm font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                    <i class="fas fa-clipboard-check text-xs text-emerald-600" aria-hidden="true"></i>
-                    Ver Reportes
-                </a>
             </div>
         </div>
 
         <!-- Tarjetas de métricas (KPIs interactivos) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Total Mobiliario -->
             <a href="{{ route('mobiliario.index') }}"
                 class="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 border-l-4 border-l-brand-navy flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-gold">
@@ -63,18 +58,6 @@
                 <div class="min-w-0">
                     <p class="text-sm font-semibold text-brand-gold-700">Asignaciones Activas</p>
                     <p class="text-3xl font-bold text-brand-gold-700">{{ $totalAsignado }}</p>
-                </div>
-            </a>
-
-            <!-- Bienes Disponibles (Verde = Disponible) -->
-            <a href="{{ route('reportes.disponibles') }}"
-                class="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 border-l-4 border-l-emerald-500 flex items-center gap-4 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-gold">
-                <div class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition">
-                    <i class="fas fa-check-circle text-2xl" aria-hidden="true"></i>
-                </div>
-                <div class="min-w-0">
-                    <p class="text-sm font-semibold text-emerald-700">Bienes Disponibles</p>
-                    <p class="text-3xl font-bold text-emerald-600">{{ $totalDisponible }}</p>
                 </div>
             </a>
         </div>
@@ -223,20 +206,24 @@
                 @endif
 
                 <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3 text-center">
-                    <div class="p-2.5 rounded-lg bg-brand-gold-50/70">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-gold-700">
+                    <a href="{{ route('asignaciones.index', ['tipo' => 'mobiliario']) }}"
+                        class="p-2.5 rounded-lg bg-brand-gold-50/70 hover:bg-brand-gold-100/90 transition focus:outline-none focus:ring-2 focus:ring-brand-gold group block"
+                        title="Ver asignaciones activas de mobiliario">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-gold-700 group-hover:text-brand-gold-800">
                             <span class="w-2.5 h-2.5 rounded-full bg-brand-gold" aria-hidden="true"></span>
                             Asignados
                         </span>
                         <p class="text-lg font-bold text-brand-navy mt-0.5">{{ $asignadoMobiliario }}</p>
-                    </div>
-                    <div class="p-2.5 rounded-lg bg-emerald-50/70">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                    </a>
+                    <a href="{{ route('mobiliario.index', ['disponibilidad' => 'Sin Asignar']) }}"
+                        class="p-2.5 rounded-lg bg-emerald-50/70 hover:bg-emerald-100/90 transition focus:outline-none focus:ring-2 focus:ring-emerald-500 group block"
+                        title="Ver mobiliario disponible para asignar">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 group-hover:text-emerald-800">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
                             Disponibles
                         </span>
                         <p class="text-lg font-bold text-emerald-700 mt-0.5">{{ $disponibleMobiliario }}</p>
-                    </div>
+                    </a>
                 </div>
             </section>
 
@@ -267,20 +254,24 @@
                 @endif
 
                 <div class="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3 text-center">
-                    <div class="p-2.5 rounded-lg bg-brand-gold-50/70">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-gold-700">
+                    <a href="{{ route('asignaciones.index', ['tipo' => 'dispositivo']) }}"
+                        class="p-2.5 rounded-lg bg-brand-gold-50/70 hover:bg-brand-gold-100/90 transition focus:outline-none focus:ring-2 focus:ring-brand-gold group block"
+                        title="Ver asignaciones activas de dispositivos">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-brand-gold-700 group-hover:text-brand-gold-800">
                             <span class="w-2.5 h-2.5 rounded-full bg-brand-gold" aria-hidden="true"></span>
                             Asignados
                         </span>
                         <p class="text-lg font-bold text-brand-navy mt-0.5">{{ $asignadoDispositivos }}</p>
-                    </div>
-                    <div class="p-2.5 rounded-lg bg-emerald-50/70">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                    </a>
+                    <a href="{{ route('dispositivos.index', ['disponibilidad' => 'Sin Asignar']) }}"
+                        class="p-2.5 rounded-lg bg-emerald-50/70 hover:bg-emerald-100/90 transition focus:outline-none focus:ring-2 focus:ring-emerald-500 group block"
+                        title="Ver dispositivos disponibles para asignar">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 group-hover:text-emerald-800">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
                             Disponibles
                         </span>
                         <p class="text-lg font-bold text-emerald-700 mt-0.5">{{ $disponibleDispositivos }}</p>
-                    </div>
+                    </a>
                 </div>
             </section>
         </div>
