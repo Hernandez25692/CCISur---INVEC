@@ -195,6 +195,22 @@
 
         {{-- Tabla de Actas de Devolución --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            @if ($devoluciones->total() > 0)
+                <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+                    <p>
+                        Mostrando <span class="font-semibold text-brand-navy">{{ $devoluciones->firstItem() }}–{{ $devoluciones->lastItem() }}</span>
+                        de <span class="font-semibold text-brand-navy">{{ $devoluciones->total() }}</span>
+                        {{ $devoluciones->total() === 1 ? 'acta de devolución' : 'actas de devolución' }}
+                    </p>
+                    @if ($hayFiltros ?? false)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-gold-50 text-brand-navy font-medium">
+                            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
+                            Filtros aplicados
+                        </span>
+                    @endif
+                </div>
+            @endif
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
                     <thead class="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider">

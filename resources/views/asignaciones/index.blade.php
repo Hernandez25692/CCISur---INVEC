@@ -142,6 +142,22 @@
 
         {{-- Tabla de asignaciones activas --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            @if ($asignaciones->total() > 0)
+                <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+                    <p>
+                        Mostrando <span class="font-semibold text-brand-navy">{{ $asignaciones->firstItem() }}–{{ $asignaciones->lastItem() }}</span>
+                        de <span class="font-semibold text-brand-navy">{{ $asignaciones->total() }}</span>
+                        {{ $asignaciones->total() === 1 ? 'asignación activa' : 'asignaciones activas' }}
+                    </p>
+                    @if (request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']))
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-gold-50 text-brand-navy font-medium">
+                            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
+                            Filtros aplicados
+                        </span>
+                    @endif
+                </div>
+            @endif
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
                     <thead class="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider">
@@ -285,8 +301,16 @@
                                     </div>
                                     <p class="text-sm font-semibold text-gray-700">No se encontraron asignaciones activas</p>
                                     <p class="text-xs text-gray-400 mt-1">
-                                        {{ $buscar !== '' ? 'Pruebe ajustando los términos de búsqueda o filtros.' : 'No hay asignaciones activas registradas en este momento.' }}
+                                        {{ request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']) ? 'Pruebe ajustando los términos de búsqueda o filtros.' : 'No hay asignaciones activas registradas en este momento.' }}
                                     </p>
+                                    @if (request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']))
+                                        <div class="mt-3">
+                                            <a href="{{ route('asignaciones.index') }}"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-brand-navy hover:bg-gray-50 transition shadow-2xs">
+                                                <i class="fas fa-undo text-[11px]" aria-hidden="true"></i> Limpiar filtros y ver todas
+                                            </a>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse
