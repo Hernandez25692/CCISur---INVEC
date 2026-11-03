@@ -79,12 +79,15 @@
             </a>
         </div>
 
-        <!-- Últimas 5 Asignaciones -->
+        <!-- Últimas Asignaciones Activas -->
         <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div class="flex items-center justify-between gap-3 mb-5">
                 <div class="flex items-center gap-3">
                     <i class="fas fa-clock text-brand-gold text-lg" aria-hidden="true"></i>
-                    <h2 class="text-lg font-semibold text-brand-navy">Últimas 5 Asignaciones</h2>
+                    <div>
+                        <h2 class="text-lg font-semibold text-brand-navy">Últimas Asignaciones Activas</h2>
+                        <p class="text-xs text-gray-500">Bienes institucionales bajo custodia vigente</p>
+                    </div>
                 </div>
                 <a href="{{ route('asignaciones.index') }}" class="text-xs font-semibold text-brand-navy hover:text-brand-gold-700 transition">
                     Ver todas →
@@ -94,27 +97,39 @@
             <!-- Vista compacta en tarjetas para pantallas muy pequeñas (< sm) -->
             <div class="sm:hidden space-y-3">
                 @forelse ($ultimasAsignaciones as $asig)
-                    <div class="p-3.5 rounded-lg border border-gray-100 bg-gray-50/60 space-y-1">
+                    <div class="p-3.5 rounded-lg border border-gray-100 bg-gray-50/60 space-y-1.5">
                         <div class="flex items-center justify-between text-xs text-gray-500">
                             <span class="font-semibold text-brand-navy">#{{ $asig->id }} · <span class="capitalize">{{ $asig->tipo }}</span></span>
                             <span>{{ $asig->fecha_entrega->format('d/m/Y') }}</span>
                         </div>
                         <p class="text-sm font-semibold text-gray-900">{{ $asig->nombre_bien }}</p>
-                        <p class="text-xs text-gray-600">{{ $asig->empleado->nombre_completo ?? 'N/A' }}</p>
+                        @if ($asig->es_area_comun)
+                            <p class="text-xs font-medium text-amber-800 flex items-center gap-1.5">
+                                <i class="fas fa-building text-[10px]"></i>
+                                <span>Área Común: {{ $asig->area }}</span>
+                            </p>
+                        @elseif ($asig->empleado)
+                            <p class="text-xs text-gray-600 flex items-center gap-1.5">
+                                <i class="fas fa-user text-[10px] text-gray-400"></i>
+                                <span>{{ $asig->empleado->nombre_completo }} <span class="font-mono text-gray-400">({{ $asig->empleado->codigo }})</span></span>
+                            </p>
+                        @else
+                            <p class="text-xs text-gray-400 italic">No asignado</p>
+                        @endif
                     </div>
                 @empty
-                    <p class="py-6 text-center text-sm text-gray-400">No hay asignaciones registradas aún.</p>
+                    <p class="py-6 text-center text-sm text-gray-400">No hay asignaciones activas en este momento.</p>
                 @endforelse
             </div>
 
             <!-- Tabla en pantallas sm y superiores -->
             <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full text-sm text-left border-collapse">
-                    <caption class="sr-only">Listado de las últimas 5 asignaciones registradas</caption>
+                    <caption class="sr-only">Listado de las últimas asignaciones activas</caption>
                     <thead class="bg-gray-50 text-gray-600 border-b-2 border-gray-200">
                         <tr>
                             <th scope="col" class="py-3 px-4 font-semibold">#</th>
-                            <th scope="col" class="py-3 px-4 font-semibold">Colaborador</th>
+                            <th scope="col" class="py-3 px-4 font-semibold">Custodio / Destino</th>
                             <th scope="col" class="py-3 px-4 font-semibold">Tipo</th>
                             <th scope="col" class="py-3 px-4 font-semibold">Elemento</th>
                             <th scope="col" class="py-3 px-4 font-semibold">Fecha</th>
@@ -124,15 +139,53 @@
                         @forelse ($ultimasAsignaciones as $asig)
                             <tr class="hover:bg-brand-gold-50/50 transition">
                                 <td class="py-3 px-4 font-medium text-gray-900">{{ $asig->id }}</td>
-                                <td class="py-3 px-4">{{ $asig->empleado->nombre_completo ?? 'N/A' }}</td>
-                                <td class="py-3 px-4 capitalize">{{ $asig->tipo }}</td>
-                                <td class="py-3 px-4">{{ $asig->nombre_bien }}</td>
-                                <td class="py-3 px-4 whitespace-nowrap">{{ $asig->fecha_entrega->format('d/m/Y') }}</td>
+                                <td class="py-3 px-4">
+                                    @if ($asig->es_area_comun)
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                                                <i class="fas fa-building text-xs" aria-hidden="true"></i>
+                                            </span>
+                                            <div>
+                                                <p class="font-bold text-gray-900 text-xs">Área Común</p>
+                                                <p class="text-[11px] text-gray-500">{{ $asig->area }}</p>
+                                            </div>
+                                        </div>
+                                    @elseif ($asig->empleado)
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-7 h-7 rounded-lg bg-brand-navy text-brand-gold flex items-center justify-center font-bold text-xs shrink-0">
+                                                {{ strtoupper(substr($asig->empleado->nombre_completo, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <a href="{{ route('empleados.historial', $asig->empleado_id) }}" class="font-semibold text-brand-navy hover:underline text-xs">
+                                                    {{ $asig->empleado->nombre_completo }}
+                                                </a>
+                                                <p class="text-[11px] text-gray-500 font-mono">{{ $asig->empleado->codigo }}</p>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400 italic text-xs">No asignado</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-4 capitalize">
+                                    @if ($asig->tipo === 'dispositivo')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700">
+                                            <i class="fas fa-laptop text-[10px]" aria-hidden="true"></i>
+                                            Dispositivo
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700">
+                                            <i class="fas fa-chair text-[10px]" aria-hidden="true"></i>
+                                            Mobiliario
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-4 font-medium text-gray-900">{{ $asig->nombre_bien }}</td>
+                                <td class="py-3 px-4 whitespace-nowrap text-gray-600">{{ $asig->fecha_entrega->format('d/m/Y') }}</td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="5" class="py-6 px-4 text-center text-gray-400">
-                                    No hay asignaciones registradas aún.
+                                    No hay asignaciones activas en este momento.
                                 </td>
                             </tr>
                         @endforelse

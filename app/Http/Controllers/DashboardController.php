@@ -24,9 +24,10 @@ class DashboardController extends Controller
         $totalAsignado = $asignadoMobiliario + $asignadoDispositivos;
         $totalDisponible = $disponibleMobiliario + $disponibleDispositivos;
 
-        // Eager loading completo para evitar consultas N+1 por cada fila en la tabla
-        $ultimasAsignaciones = Asignacion::with(['empleado', 'mobiliario', 'dispositivo'])
-            ->latest()
+        // Solo asignaciones activas (bajo custodia vigente, sin devolución registrada)
+        $ultimasAsignaciones = Asignacion::activas()
+            ->with(['empleado', 'mobiliario', 'dispositivo'])
+            ->latest('id')
             ->take(5)
             ->get();
 
