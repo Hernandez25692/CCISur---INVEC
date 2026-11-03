@@ -1,14 +1,11 @@
 <?php
 
-use App\Exports\AsignacionesExport;
 use App\Http\Controllers\AsignacionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DispositivoController;
 use App\Http\Controllers\MobiliarioController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ReporteController;
 use Illuminate\Support\Facades\Route;
-use Maatwebsite\Excel\Facades\Excel;
 
 // Página de inicio pública
 Route::get('/', function () {
@@ -28,17 +25,25 @@ Route::middleware(['auth'])->group(function () {
 // Rutas protegidas (solo autenticados)
 Route::middleware(['auth'])->group(function () {
     // CRUD de recursos
+    Route::get('/mobiliario/bajas/exportar', [\App\Http\Controllers\MobiliarioController::class, 'exportarBajas'])->name('mobiliario.bajas.exportar');
     Route::get('/mobiliario/bajas', [\App\Http\Controllers\MobiliarioController::class, 'bajas'])->name('mobiliario.bajas');
+    Route::get('/mobiliario/exportar', [\App\Http\Controllers\MobiliarioController::class, 'exportar'])->name('mobiliario.exportar');
     Route::post('/mobiliario/{id}/reactivar', [\App\Http\Controllers\MobiliarioController::class, 'reactivar'])->name('mobiliario.reactivar');
     Route::get('/mobiliario/{mobiliario}/historial', [\App\Http\Controllers\MobiliarioController::class, 'historial'])->withTrashed()->name('mobiliario.historial');
     Route::resource('mobiliario', MobiliarioController::class);
+
+    Route::get('/dispositivos/bajas/exportar', [\App\Http\Controllers\DispositivoController::class, 'exportarBajas'])->name('dispositivos.bajas.exportar');
     Route::get('/dispositivos/bajas', [\App\Http\Controllers\DispositivoController::class, 'bajas'])->name('dispositivos.bajas');
+    Route::get('/dispositivos/exportar', [\App\Http\Controllers\DispositivoController::class, 'exportar'])->name('dispositivos.exportar');
     Route::post('/dispositivos/{id}/reactivar', [\App\Http\Controllers\DispositivoController::class, 'reactivar'])->name('dispositivos.reactivar');
     Route::get('/dispositivos/{dispositivo}/historial', [\App\Http\Controllers\DispositivoController::class, 'historial'])->withTrashed()->name('dispositivos.historial');
     Route::resource('dispositivos', DispositivoController::class);
+
     Route::get('/empleados/bajas', [\App\Http\Controllers\EmpleadoController::class, 'bajas'])->name('empleados.bajas');
     Route::post('/empleados/{id}/reactivar', [\App\Http\Controllers\EmpleadoController::class, 'reactivar'])->name('empleados.reactivar');
     Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
+
+    Route::get('/asignaciones/exportar', [AsignacionController::class, 'exportar'])->name('asignaciones.exportar');
     Route::resource('asignaciones', AsignacionController::class)->except(['edit', 'update'])->parameters([
         'asignaciones' => 'asignacion',
     ]);
@@ -46,24 +51,16 @@ Route::middleware(['auth'])->group(function () {
     // PDF de acta de asignación
     Route::get('asignaciones/{asignacion}/pdf', [AsignacionController::class, 'pdf'])->name('asignaciones.pdf');
 
-    // Reportes
-    Route::get('/reportes/asignados', [ReporteController::class, 'asignados'])->name('reportes.asignados');
-    Route::get('/reportes/disponibles', [ReporteController::class, 'disponibles'])->name('reportes.disponibles');
-
-    // Exportar reportes a Excel
-    Route::get('/reportes/asignados/exportar', function () {
-        $filtros = [
-            'tipo' => request('tipo'),
-            'empleado' => request('empleado'),
-            'elemento' => request('elemento'),
-        ];
-
-        return Excel::download(new AsignacionesExport($filtros), 'reporte_asignaciones.xlsx');
-    })->name('reportes.asignados.exportar');
-    Route::get('/reportes/disponibles/exportar', [ReporteController::class, 'exportarDisponibles'])->name('reportes.disponibles.exportar');
+    // Reportes (Redirección para compatibilidad)
+    Route::get('/reportes/asignados', fn () => redirect()->route('asignaciones.index', request()->query()))->name('reportes.asignados');
+    Route::get('/reportes/disponibles', fn () => redirect()->route('dispositivos.index', request()->query()))->name('reportes.disponibles');
+    Route::get('/reportes/asignados/exportar', fn () => redirect()->route('asignaciones.exportar', request()->query()))->name('reportes.asignados.exportar');
+    Route::get('/reportes/disponibles/exportar', fn () => redirect()->route('dispositivos.exportar', request()->query()))->name('reportes.disponibles.exportar');
 
     Route::get('/empleados/{empleado}/historial', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->withTrashed()->name('empleados.historial');
     Route::get('/asignaciones/empleado/{empleado}', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->withTrashed()->name('asignaciones.historial');
+
+    Route::get('/devoluciones/exportar', [\App\Http\Controllers\DevolucionController::class, 'exportar'])->name('devoluciones.exportar');
     Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class)
         ->except(['edit', 'update'])
         ->parameters(['devoluciones' => 'devolucion']);

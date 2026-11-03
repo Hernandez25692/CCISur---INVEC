@@ -20,10 +20,6 @@
                 ['asignaciones.index', 'asignaciones.*', 'fa-handshake', 'Asignaciones'],
                 ['devoluciones.index', 'devoluciones.*', 'fa-undo', 'Devoluciones'],
             ],
-            'Reportes' => [
-                ['reportes.asignados', 'reportes.asignados', 'fa-clipboard-list', 'Bienes Asignados'],
-                ['reportes.disponibles', 'reportes.disponibles', 'fa-clipboard-check', 'Bienes Disponibles'],
-            ],
         ];
     @endphp
 

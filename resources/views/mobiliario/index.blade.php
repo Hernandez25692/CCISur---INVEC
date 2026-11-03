@@ -7,6 +7,13 @@
                 <p class="mt-1 text-sm text-gray-500">Gestión y control de muebles y equipamiento institucional</p>
             </div>
             <div class="flex flex-wrap items-center gap-2.5">
+                <button type="button"
+                    onclick="const f = document.getElementById('filtroMobiliarioForm'); if (f) { const oldAction = f.action; f.action = '{{ route('mobiliario.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('mobiliario.exportar', request()->query()) }}'; }"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
+                    title="Exportar listado a Excel con los filtros aplicados">
+                    <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
+                    <span>Exportar Excel</span>
+                </button>
                 <a href="{{ route('mobiliario.bajas') }}"
                     class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
                     <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
@@ -42,10 +49,10 @@
                     :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
             </button>
 
-            <form method="GET" action="{{ route('mobiliario.index') }}"
+            <form id="filtroMobiliarioForm" method="GET" action="{{ route('mobiliario.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     <div>
                         <label for="filtro_nombre" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
                             Nombre o etiqueta
@@ -102,6 +109,17 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <div>
+                        <label for="filtro_incluir_bajas" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Histórico de registros
+                        </label>
+                        <select id="filtro_incluir_bajas" name="incluir_bajas"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <option value="0" @selected(!request()->boolean('incluir_bajas'))>Solo activos en inventario</option>
+                            <option value="1" @selected(request()->boolean('incluir_bajas'))>Todo el inventario (incluyendo dados de baja)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-end gap-2.5 mt-4 pt-4 border-t border-gray-100">
@@ -110,7 +128,7 @@
                         Limpiar
                     </a>
                     <button type="submit"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition cursor-pointer">
                         <i class="fas fa-search text-xs" aria-hidden="true"></i>
                         Filtrar
                     </button>
@@ -188,7 +206,14 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <div class="font-medium text-gray-900">{{ $item->nombre }}</div>
+                                        <div class="font-medium text-gray-900 flex items-center gap-1.5 flex-wrap">
+                                            <span>{{ $item->nombre }}</span>
+                                            @if ($item->trashed())
+                                                <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
+                                                    Dado de baja
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="text-xs text-gray-500">
                                             <span class="capitalize">{{ $item->tipo }}</span>
                                             <span class="xl:hidden"> · {{ $item->ubicacion }}</span>
@@ -280,7 +305,14 @@
                                     <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
                                         {{ $item->etiqueta }}
                                     </span>
-                                    <h3 class="text-sm font-bold text-gray-900">{{ $item->nombre }}</h3>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->nombre }}</h3>
+                                        @if ($item->trashed())
+                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
+                                                Dado de baja
+                                            </span>
+                                        @endif
+                                    </div>
                                     <p class="text-xs text-gray-500 capitalize">{{ $item->tipo }} · {{ $item->ubicacion }}</p>
                                 </div>
                                 <span title="{{ $item->disponibilidad_real }}"

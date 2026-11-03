@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AsignacionesExport;
 use App\Models\Asignacion;
 use App\Models\Dispositivo;
 use App\Models\Empleado;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AsignacionController extends Controller
 {
@@ -82,6 +84,14 @@ class AsignacionController extends Controller
             'totalMobiliario',
             'totalCustodios'
         ));
+    }
+
+    /**
+     * Exportar asignaciones activas a Excel.
+     */
+    public function exportar(Request $request)
+    {
+        return Excel::download(new AsignacionesExport($request), 'reporte_asignaciones.xlsx');
     }
 
     /**

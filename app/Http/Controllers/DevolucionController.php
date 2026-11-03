@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DevolucionesExport;
 use App\Models\Asignacion;
 use App\Models\Devolucion;
 use App\Models\Dispositivo;
@@ -13,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DevolucionController extends Controller
 {
@@ -137,6 +139,14 @@ class DevolucionController extends Controller
         ];
 
         return view('devoluciones.index', compact('devoluciones', 'metricas'));
+    }
+
+    /**
+     * Exportar devoluciones a Excel con los filtros aplicados.
+     */
+    public function exportar(Request $request)
+    {
+        return Excel::download(new DevolucionesExport($request), 'reporte_devoluciones.xlsx');
     }
 
     public function create(Request $request)

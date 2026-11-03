@@ -6,11 +6,18 @@
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Actas de Devolución</h1>
                 <p class="text-xs sm:text-sm text-gray-500 mt-1">Control formal de recepciones, estado físico del bien y finiquito de responsabilidad</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2.5">
+                <button type="button"
+                    onclick="const f = document.getElementById('filtroDevolucionesForm'); if (f) { const oldAction = f.action; f.action = '{{ route('devoluciones.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('devoluciones.exportar', request()->query()) }}'; }"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
+                    title="Exportar actas de devolución a Excel con los filtros aplicados">
+                    <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
+                    <span>Exportar Excel</span>
+                </button>
                 <a href="{{ route('devoluciones.create') }}"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy hover:bg-brand-navy-800 text-white rounded-lg text-xs font-semibold shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy hover:bg-brand-navy-800 text-white rounded-lg text-sm font-semibold shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
                     <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                    Registrar Devolución
+                    <span>Registrar Devolución</span>
                 </a>
             </div>
         </div>
@@ -117,7 +124,7 @@
                     :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
             </button>
 
-            <form method="GET" action="{{ route('devoluciones.index') }}"
+            <form id="filtroDevolucionesForm" method="GET" action="{{ route('devoluciones.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ $hayFiltros ? 'block' : 'hidden' }} sm:block p-4 space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
@@ -181,10 +188,10 @@
                         class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition shadow-2xs"
                         title="Restablecer todos los filtros">
                         <i class="fas fa-undo text-[11px] text-gray-500" aria-hidden="true"></i>
-                        <span>Limpiar Filtros</span>
+                        <span>Limpiar</span>
                     </a>
                     <button type="submit"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition cursor-pointer"
                         title="Aplicar filtros de búsqueda">
                         <i class="fas fa-filter text-[11px]" aria-hidden="true"></i>
                         <span>Filtrar</span>

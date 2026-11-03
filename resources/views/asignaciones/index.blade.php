@@ -11,11 +11,20 @@
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Gestión de Asignaciones</h1>
                 <p class="text-sm text-gray-500 mt-0.5">Control de bienes institucionales actualmente en uso y custodia</p>
             </div>
-            <a href="{{ route('asignaciones.create') }}"
-                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-navy text-white rounded-lg font-semibold text-xs uppercase tracking-wider shadow-sm hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                <i class="fas fa-plus text-xs text-brand-gold" aria-hidden="true"></i>
-                Nueva Asignación
-            </a>
+            <div class="flex flex-wrap items-center gap-2.5">
+                <button type="button"
+                    onclick="const f = document.getElementById('filtroAsignacionesForm'); if (f) { const oldAction = f.action; f.action = '{{ route('asignaciones.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('asignaciones.exportar', request()->query()) }}'; }"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
+                    title="Exportar asignaciones a Excel con los filtros aplicados">
+                    <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
+                    <span>Exportar Excel</span>
+                </button>
+                <a href="{{ route('asignaciones.create') }}"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                    <i class="fas fa-plus text-xs text-brand-gold" aria-hidden="true"></i>
+                    <span>Nueva Asignación</span>
+                </a>
+            </div>
         </div>
 
         {{-- Tarjetas de métricas rápidas (Inventario activo) --}}
@@ -82,7 +91,7 @@
 
         {{-- Formulario de búsqueda y filtros --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <form method="GET" action="{{ route('asignaciones.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+            <form id="filtroAsignacionesForm" method="GET" action="{{ route('asignaciones.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
                 {{-- Buscador general --}}
                 <div class="sm:col-span-2 lg:col-span-4">
                     <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
@@ -125,9 +134,9 @@
                 {{-- Botones de acción --}}
                 <div class="sm:col-span-2 lg:col-span-2 flex items-center gap-2">
                     <button type="submit"
-                        class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition cursor-pointer">
                         <i class="fas fa-filter text-[11px]" aria-hidden="true"></i>
-                        Filtrar
+                        <span>Filtrar</span>
                     </button>
                     @if(request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']))
                         <a href="{{ route('asignaciones.index') }}"

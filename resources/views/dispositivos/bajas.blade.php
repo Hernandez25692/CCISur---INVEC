@@ -12,9 +12,18 @@
                 <p class="mt-1 text-sm text-gray-500">Archivo histórico de equipos tecnológicos descartados, averiados o desincorporados</p>
             </div>
 
-            <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold">
-                <i class="fas fa-archive text-gray-500" aria-hidden="true"></i>
-                <span>Total en bajas: <strong>{{ $dispositivos->total() }}</strong></span>
+            <div class="flex flex-wrap items-center gap-2.5">
+                <button type="button"
+                    onclick="const f = document.getElementById('filtroDispositivosBajasForm'); if (f) { const oldAction = f.action; f.action = '{{ route('dispositivos.bajas.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('dispositivos.bajas.exportar', request()->query()) }}'; }"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
+                    title="Exportar archivo de bajas a Excel">
+                    <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
+                    <span>Exportar Excel</span>
+                </button>
+                <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold">
+                    <i class="fas fa-archive text-gray-500" aria-hidden="true"></i>
+                    <span>Total en bajas: <strong>{{ $dispositivos->total() }}</strong></span>
+                </div>
             </div>
         </div>
 
@@ -35,7 +44,7 @@
                     :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
             </button>
 
-            <form method="GET" action="{{ route('dispositivos.bajas') }}"
+            <form id="filtroDispositivosBajasForm" method="GET" action="{{ route('dispositivos.bajas') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

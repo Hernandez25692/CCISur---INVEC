@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\MobiliarioExport;
 use App\Models\Mobiliario;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,13 +11,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MobiliarioController extends Controller
 {
     // Mostrar listado paginado y filtrado
     public function index(Request $request): View
     {
-        $query = Mobiliario::query()->withCount(['asignacionesActivas', 'asignaciones']);
+        $incluirBajas = $request->boolean('incluir_bajas');
+        $query = $incluirBajas
+            ? Mobiliario::withTrashed()->withCount(['asignacionesActivas', 'asignaciones'])
+            : Mobiliario::query()->withCount(['asignacionesActivas', 'asignaciones']);
 
         if ($request->filled('nombre')) {
             $termino = addcslashes(trim((string) $request->input('nombre')), '%_\\');
@@ -36,7 +41,13 @@ class MobiliarioController extends Controller
         }
 
         if ($request->filled('estado')) {
-            $query->where('estado', (string) $request->input('estado'));
+            $estado = trim((string) $request->input('estado'));
+            $estadoCompleto = array_search($estado, Mobiliario::ESTADOS_CORTOS, true) ?: $estado;
+            $query->where(function (Builder $q) use ($estado, $estadoCompleto): void {
+                $q->where('estado', $estadoCompleto)
+                    ->orWhere('estado', $estado)
+                    ->orWhere('estado', 'like', "{$estado}%");
+            });
         }
 
         if ($request->filled('disponibilidad')) {
@@ -48,14 +59,32 @@ class MobiliarioController extends Controller
             };
         }
 
-        $hayFiltros = collect($request->only(['nombre', 'tipo', 'ubicacion', 'estado', 'disponibilidad']))
-            ->filter(fn ($valor): bool => filled($valor))
+        $hayFiltros = collect($request->only(['nombre', 'tipo', 'ubicacion', 'estado', 'disponibilidad', 'incluir_bajas']))
+            ->filter(fn ($valor): bool => filled($valor) && $valor !== '0')
             ->isNotEmpty();
 
-        $mobiliarios = $query->latest()->paginate(15)->withQueryString();
+        $mobiliarios = $query->latest('id')->paginate(15)->withQueryString();
         $inactivosCount = Mobiliario::onlyTrashed()->count();
 
         return view('mobiliario.index', compact('mobiliarios', 'hayFiltros', 'inactivosCount'));
+    }
+
+    // Exportar inventario actual de mobiliario a Excel
+    public function exportar(Request $request)
+    {
+        $nombreArchivo = $request->boolean('incluir_bajas')
+            ? 'inventario_historico_mobiliario.xlsx'
+            : 'inventario_mobiliario.xlsx';
+
+        return Excel::download(new MobiliarioExport($request), $nombreArchivo);
+    }
+
+    // Exportar archivo exclusivo de mobiliario dado de baja
+    public function exportarBajas(Request $request)
+    {
+        $request->merge(['bajas_solamente' => true]);
+
+        return Excel::download(new MobiliarioExport($request), 'mobiliario_dado_de_baja.xlsx');
     }
 
     // Mostrar formulario de creación
@@ -187,7 +216,13 @@ class MobiliarioController extends Controller
         }
 
         if ($request->filled('estado')) {
-            $query->where('estado', (string) $request->input('estado'));
+            $estado = trim((string) $request->input('estado'));
+            $estadoCompleto = array_search($estado, Mobiliario::ESTADOS_CORTOS, true) ?: $estado;
+            $query->where(function (Builder $q) use ($estado, $estadoCompleto): void {
+                $q->where('estado', $estadoCompleto)
+                    ->orWhere('estado', $estado)
+                    ->orWhere('estado', 'like', "{$estado}%");
+            });
         }
 
         $hayFiltros = collect($request->only(['nombre', 'tipo', 'ubicacion', 'estado']))

@@ -7,6 +7,13 @@
                 <p class="mt-1 text-sm text-gray-500">Gestión y control de equipos tecnológicos e informáticos institucionales</p>
             </div>
             <div class="flex flex-wrap items-center gap-2.5">
+                <button type="button"
+                    onclick="const f = document.getElementById('filtroDispositivosForm'); if (f) { const oldAction = f.action; f.action = '{{ route('dispositivos.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('dispositivos.exportar', request()->query()) }}'; }"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
+                    title="Exportar listado a Excel con los filtros aplicados">
+                    <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
+                    <span>Exportar Excel</span>
+                </button>
                 <a href="{{ route('dispositivos.bajas') }}"
                     class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
                     <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
@@ -42,10 +49,10 @@
                     :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
             </button>
 
-            <form method="GET" action="{{ route('dispositivos.index') }}"
+            <form id="filtroDispositivosForm" method="GET" action="{{ route('dispositivos.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <div>
                         <label for="filtro_nombre" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
                             Nombre, serie o etiqueta
@@ -111,6 +118,17 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <div class="sm:col-span-2 lg:col-span-1 xl:col-span-2">
+                        <label for="filtro_incluir_bajas" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Histórico de registros
+                        </label>
+                        <select id="filtro_incluir_bajas" name="incluir_bajas"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <option value="0" @selected(!request()->boolean('incluir_bajas'))>Solo activos en inventario</option>
+                            <option value="1" @selected(request()->boolean('incluir_bajas'))>Todo el inventario (incluyendo dados de baja)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-end gap-2.5 mt-4 pt-4 border-t border-gray-100">
@@ -119,7 +137,7 @@
                         Limpiar
                     </a>
                     <button type="submit"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition cursor-pointer">
                         <i class="fas fa-search text-xs" aria-hidden="true"></i>
                         Filtrar
                     </button>
@@ -200,7 +218,14 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <div class="font-medium text-gray-900">{{ $item->nombre }}</div>
+                                        <div class="font-medium text-gray-900 flex items-center gap-1.5 flex-wrap">
+                                            <span>{{ $item->nombre }}</span>
+                                            @if ($item->trashed())
+                                                <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
+                                                    Dado de baja
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="text-xs text-gray-500">
                                             <span>{{ $item->tipo }}</span>
                                             <span> · {{ $item->marca }} {{ $item->modelo }}</span>
@@ -296,7 +321,14 @@
                                         </span>
                                         <span class="text-xs font-mono text-gray-500">Serie: {{ $item->n_serie ?? 'Sin serie' }}</span>
                                     </div>
-                                    <h3 class="text-sm font-bold text-gray-900">{{ $item->nombre }}</h3>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->nombre }}</h3>
+                                        @if ($item->trashed())
+                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
+                                                Dado de baja
+                                            </span>
+                                        @endif
+                                    </div>
                                     <p class="text-xs text-gray-500">{{ $item->tipo }} · {{ $item->marca }} {{ $item->modelo }} · {{ $item->ubicacion }}</p>
                                 </div>
                                 <span title="{{ $item->disponibilidad_real }}"

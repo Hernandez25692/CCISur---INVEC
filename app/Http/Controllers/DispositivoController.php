@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DispositivosExport;
 use App\Models\Dispositivo;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,13 +11,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DispositivoController extends Controller
 {
     // Mostrar listado paginado y filtrado
     public function index(Request $request): View
     {
-        $query = Dispositivo::query()->withCount(['asignacionesActivas', 'asignaciones']);
+        $incluirBajas = $request->boolean('incluir_bajas');
+        $query = $incluirBajas
+            ? Dispositivo::withTrashed()->withCount(['asignacionesActivas', 'asignaciones'])
+            : Dispositivo::query()->withCount(['asignacionesActivas', 'asignaciones']);
 
         if ($request->filled('nombre')) {
             $termino = addcslashes(trim((string) $request->input('nombre')), '%_\\');
@@ -45,7 +50,13 @@ class DispositivoController extends Controller
         }
 
         if ($request->filled('estado')) {
-            $query->where('estado', (string) $request->input('estado'));
+            $estado = trim((string) $request->input('estado'));
+            $estadoCompleto = array_search($estado, Dispositivo::ESTADOS_CORTOS, true) ?: $estado;
+            $query->where(function (Builder $q) use ($estado, $estadoCompleto): void {
+                $q->where('estado', $estadoCompleto)
+                    ->orWhere('estado', $estado)
+                    ->orWhere('estado', 'like', "{$estado}%");
+            });
         }
 
         if ($request->filled('disponibilidad')) {
@@ -57,14 +68,32 @@ class DispositivoController extends Controller
             };
         }
 
-        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado', 'disponibilidad']))
-            ->filter(fn ($valor): bool => filled($valor))
+        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado', 'disponibilidad', 'incluir_bajas']))
+            ->filter(fn ($valor): bool => filled($valor) && $valor !== '0')
             ->isNotEmpty();
 
-        $dispositivos = $query->latest()->paginate(15)->withQueryString();
+        $dispositivos = $query->latest('id')->paginate(15)->withQueryString();
         $inactivosCount = Dispositivo::onlyTrashed()->count();
 
         return view('dispositivos.index', compact('dispositivos', 'hayFiltros', 'inactivosCount'));
+    }
+
+    // Exportar inventario actual de dispositivos a Excel
+    public function exportar(Request $request)
+    {
+        $nombreArchivo = $request->boolean('incluir_bajas')
+            ? 'inventario_historico_dispositivos.xlsx'
+            : 'inventario_dispositivos.xlsx';
+
+        return Excel::download(new DispositivosExport($request), $nombreArchivo);
+    }
+
+    // Exportar archivo exclusivo de dispositivos dados de baja
+    public function exportarBajas(Request $request)
+    {
+        $request->merge(['bajas_solamente' => true]);
+
+        return Excel::download(new DispositivosExport($request), 'dispositivos_dados_de_baja.xlsx');
     }
 
     // Mostrar formulario de creación
@@ -239,7 +268,13 @@ class DispositivoController extends Controller
         }
 
         if ($request->filled('estado')) {
-            $query->where('estado', (string) $request->input('estado'));
+            $estado = trim((string) $request->input('estado'));
+            $estadoCompleto = array_search($estado, Dispositivo::ESTADOS_CORTOS, true) ?: $estado;
+            $query->where(function (Builder $q) use ($estado, $estadoCompleto): void {
+                $q->where('estado', $estadoCompleto)
+                    ->orWhere('estado', $estado)
+                    ->orWhere('estado', 'like', "{$estado}%");
+            });
         }
 
         $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado']))
