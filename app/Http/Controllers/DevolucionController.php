@@ -8,6 +8,7 @@ use App\Models\Dispositivo;
 use App\Models\Mobiliario;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -31,29 +32,65 @@ class DevolucionController extends Controller
 
         if ($buscar !== '') {
             $busquedaEscapada = addcslashes($buscar, '%_\\');
-            $query->where(function ($q) use ($busquedaEscapada): void {
+
+            // Extraer ID numérico si la búsqueda corresponde a correlativos (DEV-INV-YYYY-XXXX, ACT-INV-YYYY-XXXX, INV-DIS-YYYY-XXXX, etc.)
+            $idDevolucion = null;
+            if (preg_match('/(?:DEV[-_]?INV[-_]?(?:\d{4})?[-_]?0*|^0*)(\d+)/i', $buscar, $m)) {
+                $idDevolucion = (int) $m[1];
+            } elseif (ctype_digit($buscar)) {
+                $idDevolucion = (int) $buscar;
+            }
+
+            $idAsignacion = null;
+            if (preg_match('/(?:ACT[-_]?INV[-_]?(?:\d{4})?[-_]?0*)(\d+)/i', $buscar, $m)) {
+                $idAsignacion = (int) $m[1];
+            }
+
+            $idBien = null;
+            if (preg_match('/(?:INV[-_]?(?:DIS|MOB)[-_]?(?:\d{4})?[-_]?0*)(\d+)/i', $buscar, $m)) {
+                $idBien = (int) $m[1];
+            } elseif (ctype_digit($buscar)) {
+                $idBien = (int) $buscar;
+            }
+
+            $query->where(function (Builder $q) use ($busquedaEscapada, $idDevolucion, $idAsignacion, $idBien): void {
                 $q->where('recibido_por', 'like', "%{$busquedaEscapada}%")
-                    ->orWhere('observaciones', 'like', "%{$busquedaEscapada}%")
-                    ->orWhere('id', $busquedaEscapada)
-                    ->orWhereHas('asignacion', function ($sub) use ($busquedaEscapada): void {
-                        $sub->where('area', 'like', "%{$busquedaEscapada}%")
-                            ->orWhereHas('empleado', function ($emp) use ($busquedaEscapada): void {
-                                $emp->where('nombre_completo', 'like', "%{$busquedaEscapada}%")
-                                    ->orWhere('codigo', 'like', "%{$busquedaEscapada}%")
-                                    ->orWhere('identidad', 'like', "%{$busquedaEscapada}%");
-                            })
-                            ->orWhereHas('mobiliario', function ($mob) use ($busquedaEscapada): void {
-                                $mob->where('etiqueta', 'like', "%{$busquedaEscapada}%")
-                                    ->orWhere('nombre', 'like', "%{$busquedaEscapada}%");
-                            })
-                            ->orWhereHas('dispositivo', function ($disp) use ($busquedaEscapada): void {
-                                $disp->where('etiqueta', 'like', "%{$busquedaEscapada}%")
-                                    ->orWhere('nombre', 'like', "%{$busquedaEscapada}%")
-                                    ->orWhere('marca', 'like', "%{$busquedaEscapada}%")
-                                    ->orWhere('modelo', 'like', "%{$busquedaEscapada}%")
-                                    ->orWhere('n_serie', 'like', "%{$busquedaEscapada}%");
-                            });
-                    });
+                    ->orWhere('observaciones', 'like', "%{$busquedaEscapada}%");
+
+                if ($idDevolucion !== null) {
+                    $q->orWhere('id', $idDevolucion);
+                }
+
+                $q->orWhereHas('asignacion', function (Builder $sub) use ($busquedaEscapada, $idAsignacion, $idBien): void {
+                    $sub->where('area', 'like', "%{$busquedaEscapada}%");
+
+                    if ($idAsignacion !== null) {
+                        $sub->orWhere('id', $idAsignacion);
+                    }
+
+                    if ($idBien !== null) {
+                        $sub->orWhere('id_referencia', $idBien);
+                    }
+
+                    $sub->orWhereHas('empleado', function (Builder $emp) use ($busquedaEscapada): void {
+                        $emp->where('nombre_completo', 'like', "%{$busquedaEscapada}%")
+                            ->orWhere('codigo', 'like', "%{$busquedaEscapada}%")
+                            ->orWhere('identidad', 'like', "%{$busquedaEscapada}%");
+                    })
+                        ->orWhereHas('mobiliario', function (Builder $mob) use ($busquedaEscapada): void {
+                            $mob->where('etiqueta', 'like', "%{$busquedaEscapada}%")
+                                ->orWhere('nombre', 'like', "%{$busquedaEscapada}%")
+                                ->orWhere('tipo', 'like', "%{$busquedaEscapada}%");
+                        })
+                        ->orWhereHas('dispositivo', function (Builder $disp) use ($busquedaEscapada): void {
+                            $disp->where('etiqueta', 'like', "%{$busquedaEscapada}%")
+                                ->orWhere('nombre', 'like', "%{$busquedaEscapada}%")
+                                ->orWhere('tipo', 'like', "%{$busquedaEscapada}%")
+                                ->orWhere('marca', 'like', "%{$busquedaEscapada}%")
+                                ->orWhere('modelo', 'like', "%{$busquedaEscapada}%")
+                                ->orWhere('n_serie', 'like', "%{$busquedaEscapada}%");
+                        });
+                });
             });
         }
 
@@ -188,8 +225,8 @@ class DevolucionController extends Controller
             if ($item) {
                 // Actualizar estado físico del bien recibido
                 $item->estado = $validated['estado_devuelto'];
-                // Recalcular disponibilidad automáticamente (si viene dañado/en reparación queda No Aplica)
-                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, false, false);
+                // Recalcular disponibilidad automáticamente (si viene dañado/en reparación queda No Aplica; si era de área común conserva su condición)
+                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacion->es_area_comun, false);
                 $item->save();
             }
 

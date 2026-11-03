@@ -3,7 +3,7 @@
         x-data="asignacionForm({
             initialTipo: @js(old('tipo', $tipo)),
             initialIdReferencia: @js(old('id_referencia', $id_referencia ? (int) $id_referencia : null)),
-            initialDestino: @js(old('destino', 'empleado')),
+            initialDestino: @js(old('destino', $destinoSugerido ?? 'empleado')),
             initialEmpleadoId: @js(old('empleado_id', '')),
             initialArea: @js(old('area', '')),
             empleados: @js($empleados),
@@ -271,7 +271,14 @@
                             <div class="p-3.5 rounded-xl border border-gray-200 hover:border-brand-navy hover:shadow-xs transition bg-white flex flex-col justify-between">
                                 <div>
                                     <div class="flex items-center justify-between gap-2">
-                                        <span class="font-mono text-[11px] font-bold text-brand-navy bg-gray-100 px-2 py-0.5 rounded border border-gray-200" x-text="item.etiqueta"></span>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="font-mono text-[11px] font-bold text-brand-navy bg-gray-100 px-2 py-0.5 rounded border border-gray-200" x-text="item.etiqueta"></span>
+                                            <template x-if="item.es_area_comun">
+                                                <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
+                                                    <i class="fas fa-building text-[9px]" aria-hidden="true"></i> Área Común
+                                                </span>
+                                            </template>
+                                        </div>
                                         <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700" x-text="item.estado"></span>
                                     </div>
                                     <p class="text-xs font-bold text-gray-900 mt-2" x-text="item.nombre"></p>
@@ -308,6 +315,11 @@
                         <div>
                             <div class="flex items-center gap-2">
                                 <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-brand-navy text-white" x-text="itemSeleccionado ? itemSeleccionado.etiqueta : ''"></span>
+                                <template x-if="itemSeleccionado && itemSeleccionado.es_area_comun">
+                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
+                                        <i class="fas fa-building text-[9px]" aria-hidden="true"></i> Área Común
+                                    </span>
+                                </template>
                                 <h3 class="text-sm font-bold text-brand-navy" x-text="itemSeleccionado ? itemSeleccionado.nombre : ''"></h3>
                             </div>
                             <p class="text-xs text-gray-600 mt-0.5">
@@ -472,6 +484,11 @@
                     const q = this.busquedaItem.trim().toLowerCase();
 
                     return items.filter(item => {
+                        // Si la asignación es a un empleado individual, excluir bienes exclusivos de infraestructura / área común
+                        if (this.destino === 'empleado' && item.es_area_comun) {
+                            return false;
+                        }
+
                         if (cat && (item.tipo || '').toLowerCase() !== cat) {
                             return false;
                         }
@@ -489,7 +506,24 @@
 
                 setDestino(nuevoDestino) {
                     this.destino = nuevoDestino;
-                    if (nuevoDestino === 'area_comun') {
+                    if (nuevoDestino === 'empleado') {
+                        // Si tenía seleccionado un bien exclusivo de área común, deseleccionarlo con aviso
+                        if (this.itemSeleccionado && this.itemSeleccionado.es_area_comun) {
+                            this.deseleccionarItem();
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Bien Exclusivo de Área Común',
+                                    text: 'El equipo que tenías seleccionado fue registrado para infraestructura o áreas comunes y no puede asignarse a un colaborador individual. Seleccione un bien de custodia personal.',
+                                    confirmButtonColor: '#002855'
+                                });
+                            }
+                        }
+                        this.empleadoId = '';
+                        this.empleadoSeleccionado = null;
+                        this.busquedaEmpleado = '';
+                        this.area = '';
+                    } else if (nuevoDestino === 'area_comun') {
                         this.empleadoId = '';
                         this.empleadoSeleccionado = null;
                         this.busquedaEmpleado = '';
@@ -546,6 +580,16 @@
                             icon: 'warning',
                             title: 'Bien Requerido',
                             text: 'Debe seleccionar el dispositivo o mobiliario a asignar.',
+                            confirmButtonColor: '#002855'
+                        });
+                        return false;
+                    }
+                    if (this.destino === 'empleado' && this.itemSeleccionado && this.itemSeleccionado.es_area_comun) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Asignación no permitida',
+                            text: 'Este bien está catalogado exclusivamente para áreas comunes o infraestructura y no puede asignarse a un colaborador individual.',
                             confirmButtonColor: '#002855'
                         });
                         return false;

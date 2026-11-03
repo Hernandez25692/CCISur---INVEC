@@ -166,6 +166,12 @@ trait TieneEstadoInventario
         return self::DISPONIBILIDAD_SIN_ASIGNAR;
     }
 
+    public function esEquipoAreaComun(): bool
+    {
+        return $this->disponibilidad === self::DISPONIBILIDAD_NO_APLICA
+            && self::esEstadoAsignable((string) $this->estado);
+    }
+
     public function getEstadoCortoAttribute(): string
     {
         return self::ESTADOS_CORTOS[$this->estado] ?? (string) $this->estado;
@@ -173,12 +179,33 @@ trait TieneEstadoInventario
 
     public function getDisponibilidadCortaAttribute(): string
     {
+        if ($this->estaAsignado()) {
+            return self::DISPONIBILIDADES_CORTAS[self::DISPONIBILIDAD_ASIGNADO];
+        }
+
+        if ($this->esEquipoAreaComun()) {
+            return 'Área Común';
+        }
+
         return self::DISPONIBILIDADES_CORTAS[$this->disponibilidad_real] ?? $this->disponibilidad_real;
     }
 
     public function getPuedeAsignarseAttribute(): bool
     {
-        return $this->disponibilidad_real === self::DISPONIBILIDAD_SIN_ASIGNAR;
+        return ! $this->estaAsignado() && self::esEstadoAsignable((string) $this->estado);
+    }
+
+    public function puedeAsignarseA(string $destino): bool
+    {
+        if (! $this->puede_asignarse) {
+            return false;
+        }
+
+        if ($destino === 'empleado' && $this->esEquipoAreaComun()) {
+            return false;
+        }
+
+        return true;
     }
 
     public function getClaseEstadoAttribute(): string
@@ -188,13 +215,20 @@ trait TieneEstadoInventario
 
     public function getClaseDisponibilidadAttribute(): string
     {
+        if ($this->estaAsignado()) {
+            return self::DISPONIBILIDADES_CLASES[self::DISPONIBILIDAD_ASIGNADO];
+        }
+
+        if ($this->esEquipoAreaComun()) {
+            return 'bg-amber-50 text-amber-800 ring-amber-600/20';
+        }
+
         return self::DISPONIBILIDADES_CLASES[$this->disponibilidad_real] ?? 'bg-gray-100 text-gray-600 ring-gray-500/20';
     }
 
     public function scopeAsignables(Builder $query): Builder
     {
-        return $query->where('disponibilidad', '!=', self::DISPONIBILIDAD_NO_APLICA)
-            ->whereNotIn('estado', self::ESTADOS_NO_ASIGNABLES);
+        return $query->whereNotIn('estado', self::ESTADOS_NO_ASIGNABLES);
     }
 
     public function scopeAsignados(Builder $query): Builder
@@ -217,8 +251,7 @@ trait TieneEstadoInventario
         return $query->where('disponibilidad', '!=', self::DISPONIBILIDAD_ASIGNADO)
             ->whereDoesntHave('asignacionesActivas')
             ->where(function (Builder $q): void {
-                $q->where('disponibilidad', self::DISPONIBILIDAD_NO_APLICA)
-                    ->orWhereIn('estado', self::ESTADOS_NO_ASIGNABLES);
+                $q->whereIn('estado', self::ESTADOS_NO_ASIGNABLES);
             });
     }
 }

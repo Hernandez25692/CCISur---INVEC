@@ -111,14 +111,37 @@ class AsignacionController extends Controller
         $categoriasDispositivos = Dispositivo::TIPOS;
         $categoriasMobiliario = Mobiliario::TIPOS;
 
-        // Bienes actualmente disponibles
+        // Preselección si viene por URL
+        $itemPreseleccionado = null;
+        if ($id_referencia) {
+            $itemPreseleccionado = $tipo === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::find($id_referencia)
+                : Dispositivo::find($id_referencia);
+        }
+
+        $destinoSugerido = ($itemPreseleccionado && $itemPreseleccionado->esEquipoAreaComun())
+            ? 'area_comun'
+            : 'empleado';
+
+        // Bienes actualmente disponibles (tanto generales como exclusivos de área común)
         $dispositivosDisponibles = Dispositivo::disponibles()
             ->orWhere(function ($q) use ($id_referencia, $tipo): void {
                 if ($tipo === Asignacion::TIPO_DISPOSITIVO && $id_referencia) {
                     $q->where('id', $id_referencia);
                 }
             })
-            ->get(['id', 'nombre', 'tipo', 'marca', 'modelo', 'n_serie', 'estado', 'etiqueta']);
+            ->get(['id', 'nombre', 'tipo', 'marca', 'modelo', 'n_serie', 'estado', 'disponibilidad', 'etiqueta'])
+            ->map(fn (Dispositivo $d): array => [
+                'id' => $d->id,
+                'nombre' => $d->nombre,
+                'tipo' => $d->tipo,
+                'marca' => $d->marca,
+                'modelo' => $d->modelo,
+                'n_serie' => $d->n_serie,
+                'estado' => $d->estado,
+                'etiqueta' => $d->etiqueta,
+                'es_area_comun' => $d->esEquipoAreaComun(),
+            ]);
 
         $mobiliarioDisponible = Mobiliario::disponibles()
             ->orWhere(function ($q) use ($id_referencia, $tipo): void {
@@ -126,11 +149,20 @@ class AsignacionController extends Controller
                     $q->where('id', $id_referencia);
                 }
             })
-            ->get(['id', 'nombre', 'tipo', 'estado', 'etiqueta']);
+            ->get(['id', 'nombre', 'tipo', 'estado', 'disponibilidad', 'etiqueta'])
+            ->map(fn (Mobiliario $m): array => [
+                'id' => $m->id,
+                'nombre' => $m->nombre,
+                'tipo' => $m->tipo,
+                'estado' => $m->estado,
+                'etiqueta' => $m->etiqueta,
+                'es_area_comun' => $m->esEquipoAreaComun(),
+            ]);
 
         return view('asignaciones.create', compact(
             'tipo',
             'id_referencia',
+            'destinoSugerido',
             'empleados',
             'categoriasDispositivos',
             'categoriasMobiliario',
@@ -187,7 +219,11 @@ class AsignacionController extends Controller
                 return 'El bien seleccionado no existe en el inventario.';
             }
 
-            if (! $item->puede_asignarse) {
+            if (! $item->puedeAsignarseA($validated['destino'])) {
+                if ($validated['destino'] === 'empleado' && $item->esEquipoAreaComun()) {
+                    return 'Este bien fue registrado para uso exclusivo en áreas comunes o infraestructura y no puede asignarse de forma individual a un colaborador.';
+                }
+
                 return 'Este bien no está disponible para ser asignado (ya se encuentra asignado o su estado físico no lo permite).';
             }
 
@@ -262,7 +298,7 @@ class AsignacionController extends Controller
                 : Dispositivo::find($idReferencia);
 
             if ($item) {
-                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, false, $item->estaAsignado());
+                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacion->es_area_comun, $item->estaAsignado());
                 $item->save();
             }
         });
