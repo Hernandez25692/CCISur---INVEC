@@ -64,9 +64,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/empleados/{empleado}/historial', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->withTrashed()->name('empleados.historial');
     Route::get('/asignaciones/empleado/{empleado}', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->withTrashed()->name('asignaciones.historial');
-    Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class);
+    Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class)
+        ->except(['edit', 'update'])
+        ->parameters(['devoluciones' => 'devolucion']);
     Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->name('devoluciones.pdf');
-    Route::get('/devoluciones/buscar', [\App\Http\Controllers\DevolucionController::class, 'buscarAsignaciones'])->name('devoluciones.buscar');
 
     // APIs para formularios dinámicos y búsquedas ágiles
     Route::get('/api/buscar-empleados', function (\Illuminate\Http\Request $request) {

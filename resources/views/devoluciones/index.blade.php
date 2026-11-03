@@ -1,236 +1,421 @@
 <x-app-layout>
-    <style>
-        /* Estilos generales */
-        .devoluciones-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
-            color: #333;
-        }
-
-        .devoluciones-header {
-            margin-bottom: 1.5rem;
-        }
-
-        .devoluciones-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 0.25rem;
-        }
-
-        /* Barra de herramientas */
-        .toolbar {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 1.5rem;
-        }
-
-        @media (min-width: 768px) {
-            .toolbar {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1e3a8a;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Botones */
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            background-color: #2563eb;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Tabla */
-        .card-table {
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .data-table thead {
-            background-color: #f8fafc;
-        }
-
-        .data-table th {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .data-table td {
-            padding: 1rem;
-            font-size: 0.875rem;
-            border-bottom: 1px solid #e2e8f0;
-            vertical-align: middle;
-        }
-
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .data-table tr:hover {
-            background-color: #f8fafc;
-        }
-
-        /* Acciones */
-        .action-links {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-        }
-
-        .action-link {
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
-            white-space: nowrap;
-        }
-
-        .action-link:hover {
-            color: #1d4ed8;
-            text-decoration: underline;
-        }
-
-        .action-link.pdf {
-            color: #10b981;
-        }
-
-        .action-link.pdf:hover {
-            color: #059669;
-        }
-
-        /* Estado vacío */
-        .empty-state {
-            padding: 2rem;
-            text-align: center;
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .empty-state p {
-            color: #64748b;
-            font-size: 0.875rem;
-        }
-    </style>
-
-    <x-slot name="header">
-        <h2 class="devoluciones-title">Devoluciones Registradas</h2>
-    </x-slot>
-
-    <div class="devoluciones-container">
-        <div class="toolbar">
-            <h3 class="section-title">Listado de Actas de Devolución</h3>
-            <a href="{{ route('devoluciones.create') }}" class="btn-primary">
-                ➕ Nueva Devolución
-            </a>
+    <div class="py-6 space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {{-- Encabezado principal --}}
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Actas de Devolución</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-1">Control formal de recepciones, estado físico del bien y finiquito de responsabilidad</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('devoluciones.create') }}"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy hover:bg-brand-navy-800 text-white rounded-lg text-xs font-semibold shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                    Registrar Devolución
+                </a>
+            </div>
         </div>
 
-        <!-- Formulario de búsqueda -->
-        <form method="GET" action="{{ route('devoluciones.index') }}" class="mb-4">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <input type="text" name="buscar" placeholder="Buscar por empleado o etiqueta"
-                    value="{{ request('buscar') }}"
-                    class="w-full sm:w-72 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300">
-                <button type="submit"
-                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Buscar</button>
-                <a href="{{ route('devoluciones.index') }}" class="text-sm text-gray-500 hover:underline">Limpiar</a>
+        {{-- Alertas de sesión --}}
+        @if (session('success'))
+            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center justify-between shadow-2xs">
+                <div class="flex items-center gap-2.5">
+                    <i class="fas fa-check-circle text-emerald-600 text-base" aria-hidden="true"></i>
+                    <span>{{ session('success') }}</span>
+                </div>
             </div>
-        </form>
+        @endif
 
-        @if ($devoluciones->isEmpty())
-            <div class="empty-state">
-                <p>No hay devoluciones registradas.</p>
+        @if (session('error'))
+            <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm flex items-center justify-between shadow-2xs">
+                <div class="flex items-center gap-2.5">
+                    <i class="fas fa-exclamation-circle text-red-600 text-base" aria-hidden="true"></i>
+                    <span>{{ session('error') }}</span>
+                </div>
             </div>
-        @else
-            <div class="card-table">
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Empleado</th>
-                                <th>Tipo</th>
-                                <th>Elemento</th>
-                                <th>Etiqueta</th>
-                                <th>Fecha de Devolución</th>
-                                <th class="text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($devoluciones as $devolucion)
-                                @php
-                                    $asig = $devolucion->asignacion;
-                                    $item = $asig ? ($asig->tipo === 'mobiliario' ? $asig->mobiliario : $asig->dispositivo) : null;
-                                @endphp
+        @endif
 
-                                @if ($asig)
-                                    <tr>
-                                        <td>{{ $asig->empleado->nombre_completo ?? 'N/A' }}</td>
-                                        <td>{{ ucfirst($asig->tipo) }}</td>
-                                        <td>{{ $item->nombre ?? 'N/A' }}</td>
-                                        <td>{{ $item->etiqueta ?? 'N/A' }}</td>
-                                        <td>{{ $devolucion->fecha_devolucion }}</td>
-                                        <td>
-                                            <div class="action-links">
-                                                <a href="{{ route('devoluciones.show', $devolucion->id) }}"
-                                                    class="action-link">Ver</a>
-                                                <a href="{{ route('devoluciones.pdf', $devolucion->id) }}"
-                                                    target="_blank" class="action-link pdf">PDF</a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endif
-                            @endforeach
+        {{-- Tarjetas de Métricas ejecutivas --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {{-- Total Devoluciones --}}
+            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Devoluciones</p>
+                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($metricas['total']) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-brand-navy/10 text-brand-navy flex items-center justify-center">
+                        <i class="fas fa-file-invoice text-lg" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Actas de entrega formal emitidas</p>
+            </div>
 
-                        </tbody>
-                    </table>
+            {{-- Devoluciones Este Mes --}}
+            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Devoluciones del Mes</p>
+                        <p class="text-2xl font-bold text-blue-600 mt-1">{{ number_format($metricas['mes']) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                        <i class="fas fa-calendar-check text-lg" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Registradas durante el mes en curso</p>
+            </div>
+
+            {{-- Recibidos Operativos --}}
+            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Recibidos Operativos</p>
+                        <p class="text-2xl font-bold text-emerald-600 mt-1">{{ number_format($metricas['buen_estado']) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <i class="fas fa-check-double text-lg" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <div class="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Disponibles en inventario</span>
                 </div>
             </div>
 
-            <!-- Paginación -->
-            <div class="mt-6">
-                {{ $devoluciones->withQueryString()->links() }}
+            {{-- Dañados o En Revisión --}}
+            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dañados / En Revisión</p>
+                        <p class="text-2xl font-bold text-red-600 mt-1">{{ number_format($metricas['no_asignables']) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                        <i class="fas fa-tools text-lg" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-red-600 font-medium">No aplican para asignación</p>
             </div>
-        @endif
+        </div>
+
+        @php
+            $hayFiltros = request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin', 'estado']);
+        @endphp
+
+        {{-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) --}}
+        <div x-data="{ mostrarFiltros: @js((bool) $hayFiltros) }"
+            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <button type="button" @click="mostrarFiltros = !mostrarFiltros"
+                :aria-expanded="mostrarFiltros.toString()"
+                class="sm:hidden w-full flex items-center justify-between px-4 py-3 text-xs font-semibold text-brand-navy bg-gray-50/70 hover:bg-gray-100/70 transition">
+                <span class="inline-flex items-center gap-2">
+                    <i class="fas fa-sliders-h text-brand-gold text-xs" aria-hidden="true"></i>
+                    Filtros de búsqueda
+                    @if ($hayFiltros)
+                        <span class="px-2 py-0.5 text-[10px] rounded-full bg-brand-gold text-brand-navy font-bold">Activos</span>
+                    @endif
+                </span>
+                <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform duration-200"
+                    :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
+            </button>
+
+            <form method="GET" action="{{ route('devoluciones.index') }}"
+                :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
+                class="{{ $hayFiltros ? 'block' : 'hidden' }} sm:block p-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                    {{-- Buscador general --}}
+                    <div class="sm:col-span-2 lg:col-span-3">
+                        <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="fas fa-search text-xs" aria-hidden="true"></i>
+                            </div>
+                            <input type="text" name="buscar" id="buscar"
+                                value="{{ request('buscar') }}"
+                                placeholder="Colaborador, DNI, placa, bien o quien recibió..."
+                                class="block w-full pl-9 pr-3 py-2 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs placeholder-gray-400">
+                        </div>
+                    </div>
+
+                    {{-- Tipo de Bien --}}
+                    <div class="lg:col-span-2">
+                        <label for="tipo" class="block text-xs font-semibold text-gray-600 mb-1">Tipo de Bien</label>
+                        <select name="tipo" id="tipo"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            <option value="">Todos los tipos</option>
+                            <option value="dispositivo" {{ request('tipo') === 'dispositivo' ? 'selected' : '' }}>Dispositivos</option>
+                            <option value="mobiliario" {{ request('tipo') === 'mobiliario' ? 'selected' : '' }}>Mobiliario</option>
+                        </select>
+                    </div>
+
+                    {{-- Estado al Devolver --}}
+                    <div class="lg:col-span-2">
+                        <label for="estado" class="block text-xs font-semibold text-gray-600 mb-1">Estado al Recibir</label>
+                        <select name="estado" id="estado"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            <option value="">Todos los estados</option>
+                            @foreach (\App\Models\Devolucion::ESTADOS_DEVOLUCION as $est)
+                                <option value="{{ $est }}" {{ request('estado') === $est ? 'selected' : '' }}>
+                                    {{ \App\Models\Dispositivo::ESTADOS_CORTOS[$est] ?? $est }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Fecha Inicio --}}
+                    <div class="lg:col-span-2">
+                        <label for="fecha_inicio" class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
+                        <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                    </div>
+
+                    {{-- Fecha Fin --}}
+                    <div class="lg:col-span-2">
+                        <label for="fecha_fin" class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
+                        <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                    </div>
+
+                    {{-- Botones de acción --}}
+                    <div class="sm:col-span-2 lg:col-span-1 flex items-center gap-1.5">
+                        <button type="submit"
+                            class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition"
+                            title="Aplicar filtros">
+                            <i class="fas fa-filter text-[11px]" aria-hidden="true"></i>
+                            <span>Filtrar</span>
+                        </button>
+                        @if($hayFiltros)
+                            <a href="{{ route('devoluciones.index') }}"
+                                class="inline-flex items-center justify-center px-2.5 py-2 border border-gray-300 text-gray-600 hover:text-brand-navy hover:bg-gray-50 text-xs font-semibold rounded-lg shadow-xs transition"
+                                title="Limpiar filtros">
+                                <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {{-- Tabla de Actas de Devolución --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+                    <thead class="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider">
+                        <tr>
+                            <th scope="col" class="px-4 py-3.5 whitespace-nowrap">Correlativo</th>
+                            <th scope="col" class="px-4 py-3.5">Custodio Saliente</th>
+                            <th scope="col" class="px-4 py-3.5">Tipo</th>
+                            <th scope="col" class="px-4 py-3.5">Bien Devuelto</th>
+                            <th scope="col" class="px-4 py-3.5">Etiqueta</th>
+                            <th scope="col" class="px-4 py-3.5">Estado al Recibir</th>
+                            <th scope="col" class="px-4 py-3.5">Fecha</th>
+                            <th scope="col" class="px-4 py-3.5 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        @forelse ($devoluciones as $dev)
+                            @php
+                                $asig = $dev->asignacion;
+                                $item = $asig ? ($asig->tipo === \App\Models\Asignacion::TIPO_MOBILIARIO 
+                                    ? ($asig->mobiliario ?? \App\Models\Mobiliario::withTrashed()->find($asig->id_referencia)) 
+                                    : ($asig->dispositivo ?? \App\Models\Dispositivo::withTrashed()->find($asig->id_referencia))) : null;
+
+                                $correlativo = 'DEV-INV-' . ($dev->fecha_devolucion ? $dev->fecha_devolucion->format('Y') : date('Y')) . '-' . str_pad((string) $dev->id, 4, '0', STR_PAD_LEFT);
+                                $clasesEstado = \App\Models\Dispositivo::ESTADOS_CLASES[$dev->estado_devuelto] ?? 'bg-gray-50 text-gray-700 ring-gray-600/20';
+                            @endphp
+                            <tr class="hover:bg-brand-navy-50/30 transition">
+                                {{-- Correlativo --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="font-mono font-bold text-brand-navy">{{ $correlativo }}</div>
+                                    <div class="text-[11px] text-gray-400 mt-0.5">Acta #{{ $dev->id }}</div>
+                                </td>
+
+                                {{-- Custodio Saliente / Área --}}
+                                <td class="px-4 py-3">
+                                    @if ($asig && $asig->es_area_comun)
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-7 h-7 rounded-lg bg-amber-50 text-brand-gold-700 flex items-center justify-center shrink-0">
+                                                <i class="fas fa-building text-xs" aria-hidden="true"></i>
+                                            </span>
+                                            <div>
+                                                <p class="font-bold text-gray-900">Área Común</p>
+                                                <p class="text-[11px] text-gray-500">{{ $asig->area }}</p>
+                                            </div>
+                                        </div>
+                                    @elseif ($asig && $asig->empleado)
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-7 h-7 rounded-lg bg-brand-navy text-brand-gold flex items-center justify-center font-bold text-xs shrink-0">
+                                                {{ strtoupper(substr($asig->empleado->nombre_completo, 0, 1)) }}
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-brand-navy">
+                                                    {{ $asig->empleado->nombre_completo }}
+                                                </p>
+                                                <p class="text-[11px] text-gray-500">
+                                                    <span class="font-mono">{{ $asig->empleado->codigo }}</span> &bull; {{ $asig->area }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400 italic">Asignación no disponible</span>
+                                    @endif
+                                </td>
+
+                                {{-- Tipo --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    @if ($asig && $asig->tipo === 'dispositivo')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                                            <i class="fas fa-laptop text-[10px]" aria-hidden="true"></i>
+                                            Dispositivo
+                                        </span>
+                                    @elseif ($asig && $asig->tipo === 'mobiliario')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                                            <i class="fas fa-chair text-[10px]" aria-hidden="true"></i>
+                                            Mobiliario
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400">---</span>
+                                    @endif
+                                </td>
+
+                                {{-- Bien Devuelto --}}
+                                <td class="px-4 py-3">
+                                    <div class="font-medium text-gray-900">{{ $item->nombre ?? 'N/A' }}</div>
+                                    <div class="text-[11px] text-gray-500">
+                                        @if ($asig && $asig->tipo === 'dispositivo' && !empty($item?->marca))
+                                            <span>{{ $item->marca }} {{ $item->modelo ?? '' }}</span>
+                                        @else
+                                            <span>{{ $item->tipo ?? 'Bien CCISUR' }}</span>
+                                        @endif
+                                    </div>
+                                </td>
+
+                                {{-- Etiqueta / Placa --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="font-mono font-semibold text-brand-navy bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                                        {{ $item->etiqueta ?? 'Sin placa' }}
+                                    </span>
+                                </td>
+
+                                {{-- Estado al Recibir --}}
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset {{ $clasesEstado }}">
+                                        {{ $dev->estado_devuelto ?? 'No especificado' }}
+                                    </span>
+                                </td>
+
+                                {{-- Fecha Devolución --}}
+                                <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                                    {{ $dev->fecha_devolucion ? $dev->fecha_devolucion->format('d/m/Y') : '---' }}
+                                </td>
+
+                                {{-- Acciones --}}
+                                <td class="px-4 py-3 whitespace-nowrap text-center">
+                                    <div class="inline-flex items-center gap-1.5">
+                                        {{-- Ver Acta --}}
+                                        <a href="{{ route('devoluciones.show', $dev) }}"
+                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-gray-500 hover:text-brand-navy hover:bg-gray-100 transition"
+                                            title="Ver acta de devolución">
+                                            <i class="fas fa-eye text-xs" aria-hidden="true"></i>
+                                        </a>
+
+                                        {{-- Descargar PDF --}}
+                                        <a href="{{ route('devoluciones.pdf', $dev) }}"
+                                            target="_blank"
+                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-purple-600 hover:text-purple-900 hover:bg-purple-50 transition"
+                                            title="Descargar Acta en PDF">
+                                            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+                                        </a>
+
+                                        {{-- Anular Devolución con confirmación protegida --}}
+                                        <button type="button"
+                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
+                                            title="Anular acta de devolución"
+                                            data-id="{{ $dev->id }}"
+                                            data-correlativo="{{ $correlativo }}"
+                                            data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
+                                            data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}">
+                                            <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="px-6 py-12 text-center">
+                                    <div class="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+                                        <i class="fas fa-inbox text-xl" aria-hidden="true"></i>
+                                    </div>
+                                    <p class="text-sm font-semibold text-gray-700">No hay actas de devolución registradas</p>
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        {{ request('buscar') ? 'No se encontraron devoluciones con los filtros aplicados.' : 'Cuando un colaborador entregue un bien asignado, regístrelo para concluir la asignación.' }}
+                                    </p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Paginación --}}
+            @if ($devoluciones->hasPages())
+                <div class="px-4 py-3 border-t border-gray-200">
+                    {{ $devoluciones->links() }}
+                </div>
+            @endif
+        </div>
     </div>
+
+    {{-- Formulario oculto para anular devolución con contraseña --}}
+    <form id="form-anular-devolucion" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+        <input type="hidden" name="password" id="input-password-anulacion">
+    </form>
+
+    {{-- Script seguro contra XSS utilizando data attributes y SweetAlert2 --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const botonesAnular = document.querySelectorAll('.btn-anular');
+            const formAnular = document.getElementById('form-anular-devolucion');
+            const inputPassword = document.getElementById('input-password-anulacion');
+
+            botonesAnular.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = btn.getAttribute('data-id');
+                    const correlativo = btn.getAttribute('data-correlativo') || '';
+                    const bien = btn.getAttribute('data-bien') || 'Bien institucional';
+                    const etiqueta = btn.getAttribute('data-etiqueta') || '';
+
+                    Swal.fire({
+                        title: '¿Anular Acta de Devolución?',
+                        text: `Al anular el acta ${correlativo} (${bien} - ${etiqueta}), el bien volverá a estar asignado a su custodio anterior.`,
+                        icon: 'warning',
+                        input: 'password',
+                        inputLabel: 'Ingrese su contraseña para autorizar:',
+                        inputPlaceholder: 'Contraseña de usuario actual',
+                        inputAttributes: {
+                            autocapitalize: 'off',
+                            autocorrect: 'off'
+                        },
+                        showCancelButton: true,
+                        confirmButtonColor: '#002855',
+                        cancelButtonColor: '#6B7280',
+                        confirmButtonText: 'Sí, anular devolución',
+                        cancelButtonText: 'Cancelar',
+                        preConfirm: (password) => {
+                            if (!password) {
+                                Swal.showValidationMessage('Debe ingresar su contraseña.');
+                            }
+                            return password;
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed && result.value) {
+                            formAnular.action = `/devoluciones/${id}`;
+                            inputPassword.value = result.value;
+                            formAnular.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </x-app-layout>

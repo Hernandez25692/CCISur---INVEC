@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Acta de Devolución #{{ $devolucion->id }} - CCISUR</title>
+    <title>Acta de Devolución {{ $correlativo }} - CCISUR</title>
     @php
         $headerPath = public_path('Logo/membrete_header.jpg');
         $headerBase64 = file_exists($headerPath) ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($headerPath)) : null;
@@ -224,46 +224,70 @@
     </div>
 
     <div class="doc-header">
-        <h1 class="doc-title">Acta de Devolución y Recepción de Bienes</h1>
+        <h1 class="doc-title">Acta Formal de Devolución y Recepción de Bienes</h1>
         <h2 class="doc-subtitle">Cámara de Comercio e Industrias del Sur (CCISUR)</h2>
         <table class="doc-meta">
             <tr>
                 <td style="text-align: left;">
                     <strong>Correlativo:</strong> 
-                    <span class="code-badge">DEV-INV-{{ date('Y') }}-{{ str_pad($devolucion->id, 4, '0', STR_PAD_LEFT) }}</span>
+                    <span class="code-badge">{{ $correlativo }}</span>
                 </td>
                 <td style="text-align: center;">
                     <strong>Ciudad:</strong> Choluteca, Honduras
                 </td>
                 <td style="text-align: right;">
-                    <strong>Fecha:</strong> {{ \Carbon\Carbon::parse($devolucion->fecha_devolucion)->format('d/m/Y') }}
+                    <strong>Fecha:</strong> {{ $devolucion->fecha_devolucion ? $devolucion->fecha_devolucion->format('d/m/Y') : date('d/m/Y') }}
                 </td>
             </tr>
         </table>
     </div>
 
-    <div class="section-title">1. Información del Colaborador que Entrega</div>
-    <table class="info-table">
-        <tr>
-            <th>Nombre Completo:</th>
-            <td>{{ $devolucion->asignacion->empleado->nombre_completo ?? 'N/A' }}</td>
-            <th>Código de Empleado:</th>
-            <td>{{ $devolucion->asignacion->empleado->codigo ?? 'N/A' }}</td>
-        </tr>
-        <tr>
-            <th>Número de Identidad:</th>
-            <td>{{ $devolucion->asignacion->empleado->identidad ?? 'N/A' }}</td>
-            <th>Área / Gerencia:</th>
-            <td>{{ $devolucion->asignacion->area }}</td>
-        </tr>
-        <tr>
-            <th>Recibido Por:</th>
-            <td>{{ $devolucion->recibido_por }}</td>
-            <th>Fecha de Devolución:</th>
-            <td>{{ \Carbon\Carbon::parse($devolucion->fecha_devolucion)->format('d/m/Y') }}</td>
-        </tr>
-    </table>
+    <!-- 1. Información del Colaborador o Área Común -->
+    @if ($asignacion->es_area_comun)
+        <div class="section-title">1. Información del Espacio Institucional / Área Común</div>
+        <table class="info-table">
+            <tr>
+                <th>Origen:</th>
+                <td><strong>Área Común / Dependencia Institucional</strong></td>
+                <th>Área / Espacio:</th>
+                <td>{{ $asignacion->area }}</td>
+            </tr>
+            <tr>
+                <th>Tipo de Custodia:</th>
+                <td>Uso general institucional de CCISur (Sin colaborador exclusivo)</td>
+                <th>Fecha de Recepción:</th>
+                <td>{{ $devolucion->fecha_devolucion ? $devolucion->fecha_devolucion->format('d/m/Y') : date('d/m/Y') }}</td>
+            </tr>
+            <tr>
+                <th>Recibido Por:</th>
+                <td colspan="3">{{ $devolucion->recibido_por }} (Control de Bienes / Administración)</td>
+            </tr>
+        </table>
+    @else
+        <div class="section-title">1. Información del Colaborador que Entrega</div>
+        <table class="info-table">
+            <tr>
+                <th>Nombre Completo:</th>
+                <td>{{ $asignacion->empleado->nombre_completo ?? 'N/A' }}</td>
+                <th>Código de Empleado:</th>
+                <td>{{ $asignacion->empleado->codigo ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+                <th>Número de Identidad:</th>
+                <td>{{ $asignacion->empleado->identidad_formateada ?? $asignacion->empleado->identidad ?? 'N/A' }}</td>
+                <th>Área / Gerencia:</th>
+                <td>{{ $asignacion->empleado->gerencia ?? $asignacion->area }}</td>
+            </tr>
+            <tr>
+                <th>Recibido Por:</th>
+                <td>{{ $devolucion->recibido_por }}</td>
+                <th>Fecha de Devolución:</th>
+                <td>{{ $devolucion->fecha_devolucion ? $devolucion->fecha_devolucion->format('d/m/Y') : date('d/m/Y') }}</td>
+            </tr>
+        </table>
+    @endif
 
+    <!-- 2. Detalle del Bien Devuelto -->
     <div class="section-title">2. Detalle del Bien Devuelto</div>
     <table class="item-table">
         <thead>
@@ -271,22 +295,22 @@
                 <th style="width: 20%;">Código / Placa</th>
                 <th style="width: 30%;">Nombre / Descripción</th>
                 <th style="width: 20%;">Tipo / Categoría</th>
-                <th style="width: 15%;">Estado Actual</th>
-                <th style="width: 15%;">Ubicación</th>
+                <th style="width: 15%;">Estado al Recibir</th>
+                <th style="width: 15%;">Disponibilidad</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><strong>{{ $item->etiqueta ?? 'S/E' }}</strong></td>
                 <td>{{ $item->nombre ?? 'N/A' }}</td>
-                <td>{{ ucfirst($devolucion->asignacion->tipo) }} {{ isset($item->tipo) ? '('.$item->tipo.')' : '' }}</td>
-                <td>{{ $item->estado ?? 'Buen estado' }}</td>
-                <td>{{ $item->ubicacion ?? 'Bodega / Inventario' }}</td>
+                <td>{{ ucfirst($asignacion->tipo) }} {{ isset($item->tipo) ? '('.$item->tipo.')' : '' }}</td>
+                <td><strong>{{ $devolucion->estado_devuelto ?? $item->estado ?? 'Buen estado' }}</strong></td>
+                <td>{{ $item->disponibilidad ?? 'Disponible' }}</td>
             </tr>
         </tbody>
     </table>
 
-    @if ($devolucion->asignacion->tipo === 'dispositivo' && $item)
+    @if ($asignacion->tipo === 'dispositivo' && $item)
     <table class="info-table" style="margin-top: -5px;">
         <tr>
             <th style="width: 16%;">Marca:</th>
@@ -297,21 +321,35 @@
             <td style="width: 18%;">{{ $item->n_serie ?? '---' }}</td>
         </tr>
     </table>
+    @elseif ($asignacion->tipo === 'mobiliario' && $item)
+    <table class="info-table" style="margin-top: -5px;">
+        <tr>
+            <th style="width: 16%;">Material:</th>
+            <td style="width: 17%;">{{ $item->material ?? '---' }}</td>
+            <th style="width: 16%;">Color:</th>
+            <td style="width: 17%;">{{ $item->color ?? '---' }}</td>
+            <th style="width: 16%;">Ubicación Resguardo:</th>
+            <td style="width: 18%;">{{ $item->ubicacion ?? 'Bodega Central' }}</td>
+        </tr>
+    </table>
     @endif
 
-    <div class="section-title">3. Observaciones de la Devolución</div>
+    <!-- 3. Observaciones de Recepción -->
+    <div class="section-title">3. Observaciones y Evaluación de Entrega</div>
     <table class="info-table">
         <tr>
             <th style="width: 25%;">Observaciones:</th>
-            <td>{{ !empty($devolucion->observaciones) ? $devolucion->observaciones : 'El bien se recibe a satisfacción de la administración sin daños aparentes.' }}</td>
+            <td>{{ !empty($devolucion->observaciones) ? $devolucion->observaciones : 'El bien se recibe formalmente en las instalaciones de CCISUR a satisfacción de la administración sin novedades adicionales.' }}</td>
         </tr>
     </table>
 
+    <!-- 4. Constancia y Finiquito -->
     <div class="clause-box">
         <strong>Constancia de Recepción y Finiquito:</strong>
-        Por medio de la presente se hace constar que el colaborador ha entregado formalmente a la <strong>Cámara de Comercio e Industrias del Sur (CCISUR)</strong> el bien institucional antes descrito, quedando liberado de la custodia y responsabilidad material del mismo a partir de la fecha suscrita en este documento.
+        Por medio de la presente se hace constar que el custodio ha entregado formalmente a la <strong>Cámara de Comercio e Industrias del Sur (CCISUR)</strong> el bien institucional antes detallado, quedando plenamente liberado de la custodia material y responsabilidad directa sobre el mismo a partir de la fecha suscrita en este documento.
     </div>
 
+    <!-- Firmas -->
     <table class="signatures-table">
         <tr>
             <td>
@@ -322,9 +360,15 @@
             </td>
             <td>
                 <div class="signature-line"></div>
-                <p class="signature-name">{{ $devolucion->asignacion->empleado->nombre_completo ?? 'Colaborador' }}</p>
-                <p class="signature-role">Entregué Conforme / Colaborador</p>
-                <p class="signature-role">Identidad: {{ $devolucion->asignacion->empleado->identidad ?? '----------------' }}</p>
+                @if ($asignacion->es_area_comun)
+                    <p class="signature-name">Responsable de Gerencia / Área</p>
+                    <p class="signature-role">Entrega / {{ $asignacion->area }}</p>
+                    <p class="signature-role">CCISUR</p>
+                @else
+                    <p class="signature-name">{{ $asignacion->empleado->nombre_completo ?? 'Colaborador' }}</p>
+                    <p class="signature-role">Entregué Conforme / Colaborador</p>
+                    <p class="signature-role">DNI: {{ $asignacion->empleado->identidad_formateada ?? $asignacion->empleado->identidad ?? '----------------' }}</p>
+                @endif
             </td>
         </tr>
     </table>
