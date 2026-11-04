@@ -376,10 +376,6 @@
                         Iniciar Sesión
                     </button>
                 </form>
-
-                <div class="register-link">
-                    ¿No tienes cuenta? <a href="{{ route('register') }}">Registrarse</a>
-                </div>
             </div>
         </div>
     </div>
