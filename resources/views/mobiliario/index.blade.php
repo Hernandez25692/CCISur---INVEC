@@ -24,11 +24,13 @@
                         </span>
                     @endif
                 </a>
-                <a href="{{ route('mobiliario.create') }}"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                    <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                    Nuevo Mueble
-                </a>
+                @can('admin')
+                    <a href="{{ route('mobiliario.create') }}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                        Nuevo Mueble
+                    </a>
+                @endcan
             </div>
         </div>
 
@@ -245,49 +247,51 @@
                                                 <i class="fas fa-history text-xs text-brand-gold-600" aria-hidden="true"></i>
                                             </a>
 
-                                            <a href="{{ route('mobiliario.edit', $item->id) }}"
-                                                class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
-                                                title="Editar" aria-label="Editar {{ $item->nombre }}">
-                                                <i class="fas fa-pen text-xs" aria-hidden="true"></i>
-                                            </a>
+                                            @can('admin')
+                                                <a href="{{ route('mobiliario.edit', $item->id) }}"
+                                                    class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
+                                                    title="Editar" aria-label="Editar {{ $item->nombre }}">
+                                                    <i class="fas fa-pen text-xs" aria-hidden="true"></i>
+                                                </a>
 
-                                            @if ($item->puede_darse_de_baja)
-                                                <form action="{{ route('mobiliario.destroy', $item->id) }}" method="POST" class="inline"
-                                                    data-swal-confirm-baja-bien
-                                                    data-swal-nombre="{{ $item->nombre }}"
-                                                    data-swal-etiqueta="{{ $item->etiqueta }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
-                                                        title="Dar de baja mueble" aria-label="Dar de baja {{ $item->nombre }}">
+                                                @if ($item->puede_darse_de_baja)
+                                                    <form action="{{ route('mobiliario.destroy', $item->id) }}" method="POST" class="inline"
+                                                        data-swal-confirm-baja-bien
+                                                        data-swal-nombre="{{ $item->nombre }}"
+                                                        data-swal-etiqueta="{{ $item->etiqueta }}">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                            class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
+                                                            title="Dar de baja mueble" aria-label="Dar de baja {{ $item->nombre }}">
+                                                            <i class="fas fa-archive text-xs" aria-hidden="true"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <button type="button"
+                                                        data-swal-locked="{{ $item->motivo_no_baja }}"
+                                                        data-swal-title="No se puede dar de baja este mueble"
+                                                        class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                                                        title="{{ $item->motivo_no_baja }}"
+                                                        aria-label="Baja bloqueada para {{ $item->nombre }}">
                                                         <i class="fas fa-archive text-xs" aria-hidden="true"></i>
                                                     </button>
-                                                </form>
-                                            @else
-                                                <button type="button"
-                                                    data-swal-locked="{{ $item->motivo_no_baja }}"
-                                                    data-swal-title="No se puede dar de baja este mueble"
-                                                    class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-                                                    title="{{ $item->motivo_no_baja }}"
-                                                    aria-label="Baja bloqueada para {{ $item->nombre }}">
-                                                    <i class="fas fa-archive text-xs" aria-hidden="true"></i>
-                                                </button>
-                                            @endif
+                                                @endif
 
-                                            @if ($item->puede_asignarse)
-                                                <a href="{{ route('asignaciones.create', ['tipo' => 'mobiliario', 'id' => $item->id]) }}"
-                                                    class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                                    title="Asignar mueble" aria-label="Asignar {{ $item->nombre }}">
-                                                    <i class="fas fa-plus-circle text-sm" aria-hidden="true"></i>
-                                                </a>
-                                            @else
-                                                <span class="p-1.5 rounded-lg text-brand-gold-600"
-                                                    title="{{ $item->disponibilidad_real === \App\Models\Mobiliario::DISPONIBILIDAD_NO_APLICA ? 'No aplica para asignación' : 'Actualmente asignado' }}"
-                                                    aria-label="{{ $item->disponibilidad_real === \App\Models\Mobiliario::DISPONIBILIDAD_NO_APLICA ? 'No aplica para asignación' : 'Actualmente asignado' }}">
-                                                    <i class="fas fa-info-circle text-sm" aria-hidden="true"></i>
-                                                </span>
-                                            @endif
+                                                @if ($item->puede_asignarse)
+                                                    <a href="{{ route('asignaciones.create', ['tipo' => 'mobiliario', 'id' => $item->id]) }}"
+                                                        class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                                        title="Asignar mueble" aria-label="Asignar {{ $item->nombre }}">
+                                                        <i class="fas fa-plus-circle text-sm" aria-hidden="true"></i>
+                                                    </a>
+                                                @else
+                                                    <span class="p-1.5 rounded-lg text-brand-gold-600"
+                                                        title="{{ $item->disponibilidad_real === \App\Models\Mobiliario::DISPONIBILIDAD_NO_APLICA ? 'No aplica para asignación' : 'Actualmente asignado' }}"
+                                                        aria-label="{{ $item->disponibilidad_real === \App\Models\Mobiliario::DISPONIBILIDAD_NO_APLICA ? 'No aplica para asignación' : 'Actualmente asignado' }}">
+                                                        <i class="fas fa-info-circle text-sm" aria-hidden="true"></i>
+                                                    </span>
+                                                @endif
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>

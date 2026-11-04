@@ -175,17 +175,19 @@
                                                 <span>Expediente ({{ $e->asignaciones_count }})</span>
                                             </a>
 
-                                            <form action="{{ route('empleados.reactivar', $e->id) }}" method="POST" class="inline"
-                                                data-swal-confirm-reactivar
-                                                data-swal-nombre="{{ $e->nombre_completo }}">
-                                                @csrf
-                                                <button type="submit"
-                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition"
-                                                    title="Reactivar colaborador">
-                                                    <i class="fas fa-user-check text-xs" aria-hidden="true"></i>
-                                                    <span>Reactivar</span>
-                                                </button>
-                                            </form>
+                                            @can('admin')
+                                                <form action="{{ route('empleados.reactivar', $e->id) }}" method="POST" class="inline"
+                                                    data-swal-confirm-reactivar
+                                                    data-swal-nombre="{{ $e->nombre_completo }}">
+                                                    @csrf
+                                                    <button type="submit"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition"
+                                                        title="Reactivar colaborador">
+                                                        <i class="fas fa-user-check text-xs" aria-hidden="true"></i>
+                                                        <span>Reactivar</span>
+                                                    </button>
+                                                </form>
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
@@ -224,16 +226,18 @@
                                     Expediente ({{ $e->asignaciones_count }})
                                 </a>
 
-                                <form action="{{ route('empleados.reactivar', $e->id) }}" method="POST" class="inline"
-                                    data-swal-confirm-reactivar
-                                    data-swal-nombre="{{ $e->nombre_completo }}">
-                                    @csrf
-                                    <button type="submit"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition">
-                                        <i class="fas fa-user-check text-[11px]" aria-hidden="true"></i>
-                                        Reactivar
-                                    </button>
-                                </form>
+                                @can('admin')
+                                    <form action="{{ route('empleados.reactivar', $e->id) }}" method="POST" class="inline"
+                                        data-swal-confirm-reactivar
+                                        data-swal-nombre="{{ $e->nombre_completo }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition">
+                                            <i class="fas fa-user-check text-[11px]" aria-hidden="true"></i>
+                                            Reactivar
+                                        </button>
+                                    </form>
+                                @endcan
                             </div>
                         </div>
                     @endforeach

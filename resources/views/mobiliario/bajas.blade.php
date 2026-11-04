@@ -196,18 +196,20 @@
                                                 <span>Historial ({{ $m->asignaciones_count }})</span>
                                             </a>
 
-                                            <form action="{{ route('mobiliario.reactivar', $m->id) }}" method="POST" class="inline"
-                                                data-swal-confirm-reactivar-bien
-                                                data-swal-nombre="{{ $m->nombre }}"
-                                                data-swal-etiqueta="{{ $m->etiqueta }}">
-                                                @csrf
-                                                <button type="submit"
-                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition"
-                                                    title="Reactivar mueble">
-                                                    <i class="fas fa-undo text-xs" aria-hidden="true"></i>
-                                                    <span>Reactivar</span>
-                                                </button>
-                                            </form>
+                                            @can('admin')
+                                                <form action="{{ route('mobiliario.reactivar', $m->id) }}" method="POST" class="inline"
+                                                    data-swal-confirm-reactivar-bien
+                                                    data-swal-nombre="{{ $m->nombre }}"
+                                                    data-swal-etiqueta="{{ $m->etiqueta }}">
+                                                    @csrf
+                                                    <button type="submit"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition"
+                                                        title="Reactivar mueble">
+                                                        <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+                                                        <span>Reactivar</span>
+                                                    </button>
+                                                </form>
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
@@ -245,17 +247,19 @@
                                     Historial ({{ $m->asignaciones_count }})
                                 </a>
 
-                                <form action="{{ route('mobiliario.reactivar', $m->id) }}" method="POST" class="inline"
-                                    data-swal-confirm-reactivar-bien
-                                    data-swal-nombre="{{ $m->nombre }}"
-                                    data-swal-etiqueta="{{ $m->etiqueta }}">
-                                    @csrf
-                                    <button type="submit"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition">
-                                        <i class="fas fa-undo text-[11px]" aria-hidden="true"></i>
-                                        Reactivar
-                                    </button>
-                                </form>
+                                @can('admin')
+                                    <form action="{{ route('mobiliario.reactivar', $m->id) }}" method="POST" class="inline"
+                                        data-swal-confirm-reactivar-bien
+                                        data-swal-nombre="{{ $m->nombre }}"
+                                        data-swal-etiqueta="{{ $m->etiqueta }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition">
+                                            <i class="fas fa-undo text-[11px]" aria-hidden="true"></i>
+                                            Reactivar
+                                        </button>
+                                    </form>
+                                @endcan
                             </div>
                         </div>
                     @endforeach

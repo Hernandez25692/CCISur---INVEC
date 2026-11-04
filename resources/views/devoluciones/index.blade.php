@@ -14,11 +14,13 @@
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
-                <a href="{{ route('devoluciones.create') }}"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy hover:bg-brand-navy-800 text-white rounded-lg text-sm font-semibold shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
-                    <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                    <span>Registrar Devolución</span>
-                </a>
+                @can('admin')
+                    <a href="{{ route('devoluciones.create') }}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy hover:bg-brand-navy-800 text-white rounded-lg text-sm font-semibold shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                        <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                        <span>Registrar Devolución</span>
+                    </a>
+                @endcan
             </div>
         </div>
 
@@ -348,15 +350,17 @@
                                         </a>
 
                                         {{-- Anular Devolución con confirmación protegida --}}
-                                        <button type="button"
-                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
-                                            title="Anular acta de devolución"
-                                            data-id="{{ $dev->id }}"
-                                            data-correlativo="{{ $correlativo }}"
-                                            data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
-                                            data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}">
-                                            <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
-                                        </button>
+                                        @can('admin')
+                                            <button type="button"
+                                                class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
+                                                title="Anular acta de devolución"
+                                                data-id="{{ $dev->id }}"
+                                                data-correlativo="{{ $correlativo }}"
+                                                data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
+                                                data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}">
+                                                <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
+                                            </button>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

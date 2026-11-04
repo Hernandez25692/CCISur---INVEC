@@ -19,11 +19,13 @@
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
-                <a href="{{ route('asignaciones.create') }}"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                    <i class="fas fa-plus text-xs text-brand-gold" aria-hidden="true"></i>
-                    <span>Nueva Asignación</span>
-                </a>
+                @can('admin')
+                    <a href="{{ route('asignaciones.create') }}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        <i class="fas fa-plus text-xs text-brand-gold" aria-hidden="true"></i>
+                        <span>Nueva Asignación</span>
+                    </a>
+                @endcan
             </div>
         </div>
 
@@ -268,12 +270,14 @@
                                 <td class="px-4 py-3 whitespace-nowrap text-center">
                                     <div class="inline-flex items-center gap-1.5">
                                         {{-- Botón rápido: Devolver Bien --}}
-                                        <a href="{{ route('devoluciones.create', ['asignacion_id' => $item->id]) }}"
-                                            class="inline-flex items-center justify-center px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded hover:bg-emerald-600 hover:text-white text-xs font-semibold shadow-2xs transition"
-                                            title="Registrar Devolución de este bien">
-                                            <i class="fas fa-undo text-xs mr-1" aria-hidden="true"></i>
-                                            Devolver
-                                        </a>
+                                        @can('admin')
+                                            <a href="{{ route('devoluciones.create', ['asignacion_id' => $item->id]) }}"
+                                                class="inline-flex items-center justify-center px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded hover:bg-emerald-600 hover:text-white text-xs font-semibold shadow-2xs transition"
+                                                title="Registrar Devolución de este bien">
+                                                <i class="fas fa-undo text-xs mr-1" aria-hidden="true"></i>
+                                                Devolver
+                                            </a>
+                                        @endcan
 
                                         {{-- Ver Acta --}}
                                         <a href="{{ route('asignaciones.show', $item->id) }}"
@@ -291,14 +295,16 @@
                                         </a>
 
                                         {{-- Anular Asignación con contraseña (data-attributes seguros contra XSS) --}}
-                                        <button type="button"
-                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
-                                            title="Anular asignación por error"
-                                            data-id="{{ $item->id }}"
-                                            data-nombre="{{ $referencia->nombre ?? 'Bien' }}"
-                                            data-etiqueta="{{ $referencia->etiqueta ?? 'Sin etiqueta' }}">
-                                            <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
-                                        </button>
+                                        @can('admin')
+                                            <button type="button"
+                                                class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
+                                                title="Anular asignación por error"
+                                                data-id="{{ $item->id }}"
+                                                data-nombre="{{ $referencia->nombre ?? 'Bien' }}"
+                                                data-etiqueta="{{ $referencia->etiqueta ?? 'Sin etiqueta' }}">
+                                                <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
+                                            </button>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

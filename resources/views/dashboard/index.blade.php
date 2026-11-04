@@ -9,18 +9,20 @@
                 </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2.5">
-                <a href="{{ route('asignaciones.create') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                    <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                    Nueva Asignación
-                </a>
-                <a href="{{ route('devoluciones.create') }}"
-                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-brand-navy text-sm font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                    <i class="fas fa-undo text-xs text-brand-gold-600" aria-hidden="true"></i>
-                    Devolución
-                </a>
-            </div>
+            @can('admin')
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <a href="{{ route('asignaciones.create') }}"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                        Nueva Asignación
+                    </a>
+                    <a href="{{ route('devoluciones.create') }}"
+                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-gray-200 text-brand-navy text-sm font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        <i class="fas fa-undo text-xs text-brand-gold-600" aria-hidden="true"></i>
+                        Devolución
+                    </a>
+                </div>
+            @endcan
         </div>
 
         <!-- Tarjetas de métricas (KPIs interactivos) -->

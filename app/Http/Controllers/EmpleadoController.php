@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class EmpleadoController extends Controller
@@ -52,11 +53,15 @@ class EmpleadoController extends Controller
 
     public function create(): View
     {
+        Gate::authorize('admin');
+
         return view('empleados.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $request->merge([
             'identidad' => Empleado::normalizarIdentidad($request->input('identidad')),
             'nombre_completo' => trim((string) $request->input('nombre_completo')),
@@ -107,6 +112,8 @@ class EmpleadoController extends Controller
 
     public function edit(Empleado $empleado): View
     {
+        Gate::authorize('admin');
+
         $empleado->loadCount(['asignacionesActivas', 'asignaciones']);
 
         return view('empleados.edit', compact('empleado'));
@@ -114,6 +121,8 @@ class EmpleadoController extends Controller
 
     public function update(Request $request, Empleado $empleado): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $request->merge([
             'identidad' => Empleado::normalizarIdentidad($request->input('identidad')),
             'nombre_completo' => trim((string) $request->input('nombre_completo')),
@@ -145,6 +154,8 @@ class EmpleadoController extends Controller
 
     public function destroy(Empleado $empleado): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $empleado->loadCount(['asignacionesActivas']);
 
         if (! $empleado->puede_darse_de_baja) {
@@ -197,6 +208,8 @@ class EmpleadoController extends Controller
 
     public function reactivar(int $id): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $empleado = Empleado::onlyTrashed()->findOrFail($id);
         $empleado->restore();
 

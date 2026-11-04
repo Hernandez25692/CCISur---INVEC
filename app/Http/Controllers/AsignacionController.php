@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -99,6 +100,8 @@ class AsignacionController extends Controller
      */
     public function create(Request $request): View
     {
+        Gate::authorize('admin');
+
         $tipo = in_array($request->query('tipo'), [Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO], true)
             ? $request->query('tipo')
             : Asignacion::TIPO_DISPOSITIVO;
@@ -186,6 +189,8 @@ class AsignacionController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $validated = $request->validate([
             'tipo' => ['required', 'string', Rule::in([Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO])],
             'id_referencia' => ['required', 'integer', 'min:1'],
@@ -280,6 +285,8 @@ class AsignacionController extends Controller
      */
     public function destroy(Request $request, Asignacion $asignacion): RedirectResponse
     {
+        Gate::authorize('admin');
+
         // 1. Prohibir eliminación si ya cuenta con devolución
         if ($asignacion->devolucion()->exists()) {
             return redirect()->back()->with('error', 'Acción denegada: No se puede anular una asignación que ya cuenta con un acta de devolución formal registrada.');

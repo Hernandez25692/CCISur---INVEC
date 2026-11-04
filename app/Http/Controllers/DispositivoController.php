@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -99,12 +100,16 @@ class DispositivoController extends Controller
     // Mostrar formulario de creación
     public function create(): View
     {
+        Gate::authorize('admin');
+
         return view('dispositivos.create');
     }
 
     // Guardar nuevo dispositivo
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $request->merge([
             'n_serie' => Dispositivo::normalizarSerie($request->input('n_serie')),
         ]);
@@ -153,6 +158,8 @@ class DispositivoController extends Controller
     // Mostrar formulario de edición
     public function edit(Dispositivo $dispositivo): View
     {
+        Gate::authorize('admin');
+
         $dispositivo->loadCount('asignacionesActivas');
 
         return view('dispositivos.edit', compact('dispositivo'));
@@ -161,6 +168,8 @@ class DispositivoController extends Controller
     // Actualizar registro
     public function update(Request $request, Dispositivo $dispositivo): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $request->merge([
             'n_serie' => Dispositivo::normalizarSerie($request->input('n_serie')),
         ]);
@@ -215,6 +224,8 @@ class DispositivoController extends Controller
     // Dar de baja registro (Soft Delete)
     public function destroy(Dispositivo $dispositivo): RedirectResponse
     {
+        Gate::authorize('admin');
+
         return DB::transaction(function () use ($dispositivo): RedirectResponse {
             $dispositivoActualizado = Dispositivo::lockForUpdate()->find($dispositivo->id);
 
@@ -289,6 +300,8 @@ class DispositivoController extends Controller
     // Reactivar dispositivo dado de baja
     public function reactivar(int $id): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $dispositivo = Dispositivo::onlyTrashed()->findOrFail($id);
         $dispositivo->restore();
 

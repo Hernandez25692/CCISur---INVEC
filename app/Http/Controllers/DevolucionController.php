@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
@@ -151,6 +152,8 @@ class DevolucionController extends Controller
 
     public function create(Request $request)
     {
+        Gate::authorize('admin');
+
         $asignaciones = Asignacion::with(['empleado', 'mobiliario', 'dispositivo'])
             ->whereDoesntHave('devolucion')
             ->latest()
@@ -202,6 +205,8 @@ class DevolucionController extends Controller
 
     public function store(Request $request)
     {
+        Gate::authorize('admin');
+
         $validated = $request->validate([
             'asignacion_id' => ['required', 'exists:asignacions,id'],
             'fecha_devolucion' => ['required', 'date'],
@@ -293,6 +298,8 @@ class DevolucionController extends Controller
 
     public function destroy(Request $request, Devolucion $devolucion)
     {
+        Gate::authorize('admin');
+
         $request->validate([
             'password' => ['required', 'string'],
         ], [

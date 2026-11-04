@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -90,12 +91,16 @@ class MobiliarioController extends Controller
     // Mostrar formulario de creación
     public function create(): View
     {
+        Gate::authorize('admin');
+
         return view('mobiliario.create');
     }
 
     // Guardar nuevo mobiliario
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'tipo' => ['required', 'string', Rule::in(Mobiliario::TIPOS)],
@@ -126,6 +131,8 @@ class MobiliarioController extends Controller
     // Mostrar formulario de edición
     public function edit(Mobiliario $mobiliario): View
     {
+        Gate::authorize('admin');
+
         $mobiliario->loadCount('asignacionesActivas');
 
         return view('mobiliario.edit', compact('mobiliario'));
@@ -134,6 +141,8 @@ class MobiliarioController extends Controller
     // Actualizar registro
     public function update(Request $request, Mobiliario $mobiliario): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $tieneAsignacionActiva = $mobiliario->estaAsignado();
 
         $validated = $request->validate([
@@ -172,6 +181,8 @@ class MobiliarioController extends Controller
     // Dar de baja registro (Soft Delete)
     public function destroy(Mobiliario $mobiliario): RedirectResponse
     {
+        Gate::authorize('admin');
+
         return DB::transaction(function () use ($mobiliario): RedirectResponse {
             $mobiliarioActualizado = Mobiliario::lockForUpdate()->find($mobiliario->id);
 
@@ -237,6 +248,8 @@ class MobiliarioController extends Controller
     // Reactivar mobiliario dado de baja
     public function reactivar(int $id): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $mobiliario = Mobiliario::onlyTrashed()->findOrFail($id);
         $mobiliario->restore();
 
