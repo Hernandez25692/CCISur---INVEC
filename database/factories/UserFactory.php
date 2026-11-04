@@ -28,6 +28,8 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'rol' => \App\Models\User::ROL_ADMINISTRADOR,
+            'activo' => true,
             'remember_token' => Str::random(10),
         ];
     }
@@ -39,6 +41,26 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has the 'lectura' (read-only) role.
+     */
+    public function lectura(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'rol' => \App\Models\User::ROL_LECTURA,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is inactive.
+     */
+    public function inactivo(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'activo' => false,
         ]);
     }
 }

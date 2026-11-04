@@ -13,10 +13,12 @@ class UserSeeder extends Seeder
         // Verifica si ya existe
         if (!User::where('email', 'admin@ccisur.hn')->exists()) {
             User::create([
-                'name' => 'Administrador',
+                'name' => 'Super Administrador',
                 'email' => 'admin@ccisur.hn',
                 'password' => Hash::make('admin1234'),
-
+                'rol' => User::ROL_SUPERADMIN,
+                'activo' => true,
+                'debe_cambiar_password' => true, // Exige cambiar la clave por defecto al entrar por primera vez
             ]);
         }
     }
