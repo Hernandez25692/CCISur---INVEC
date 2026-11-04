@@ -28,6 +28,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Si la URL prevista era el perfil o rutas de contraseña/auth, enviar al dashboard
+        $intended = session()->get('url.intended');
+        if (! $intended || str_contains($intended, '/profile') || str_contains($intended, '/password')) {
+            session()->forget('url.intended');
+
+            return redirect()->route('dashboard');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

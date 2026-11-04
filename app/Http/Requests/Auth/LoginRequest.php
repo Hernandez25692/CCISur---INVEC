@@ -33,6 +33,20 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email' => 'Ingresa un correo electrónico válido.',
+            'password.required' => 'Debes ingresar tu contraseña.',
+        ];
+    }
+
+    /**
      * Attempt to authenticate the request's credentials.
      *
      * @throws \Illuminate\Validation\ValidationException
@@ -46,6 +60,17 @@ class LoginRequest extends FormRequest
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+
+        // Impedir el acceso a cuentas deshabilitadas
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (! $user->estaActivo()) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Esta cuenta se encuentra deshabilitada. Contacte al administrador del sistema.',
             ]);
         }
 

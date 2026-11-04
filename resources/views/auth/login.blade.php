@@ -256,15 +256,27 @@
 
         /* Alertas */
         .alert {
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
+            padding: 0.9rem 1.1rem;
+            border-radius: 10px;
             margin-bottom: 1.5rem;
-            font-size: 0.95rem;
+            font-size: 0.875rem;
+            line-height: 1.45;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
 
         .alert-success {
-            background-color: #d1fae5;
-            color: #065f46;
+            background-color: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-danger {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
 
         /* Responsive */
@@ -338,8 +350,26 @@
                 </div>
 
                 @if (session('status'))
-                    <div class="alert alert-success">
-                        {{ session('status') }}
+                    <div class="alert alert-success" role="status">
+                        <i class="fas fa-check-circle" style="font-size: 1.1rem; color: #16a34a; flex-shrink: 0; margin-top: 0.1rem;" aria-hidden="true"></i>
+                        <span>{{ session('status') }}</span>
+                    </div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="alert alert-danger" role="alert" aria-live="assertive">
+                        <i class="fas fa-circle-exclamation" style="font-size: 1.1rem; color: #dc2626; flex-shrink: 0; margin-top: 0.1rem;" aria-hidden="true"></i>
+                        <div style="flex: 1;">
+                            @if ($errors->count() === 1)
+                                <span>{{ $errors->first() }}</span>
+                            @else
+                                <ul style="margin: 0; padding-left: 1.25rem;">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
                     </div>
                 @endif
 
