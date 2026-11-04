@@ -21,6 +21,12 @@
                 ['devoluciones.index', 'devoluciones.*', 'fa-undo', 'Devoluciones'],
             ],
         ];
+
+        if (Auth::user()?->esSuperAdmin()) {
+            $menu['Seguridad'] = [
+                ['usuarios.index', 'usuarios.*', 'fa-user-shield', 'Usuarios'],
+            ];
+        }
     @endphp
 
     <!-- Barra superior (solo móvil/tablet) -->
@@ -78,12 +84,12 @@
         <!-- Área de usuario -->
         <div class="inv-user">
             <div class="inv-user-profile">
-                <div class="inv-user-avatar">
-                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                </div>
+                <a href="{{ route('profile.edit') }}" class="inv-user-avatar" title="Ver mi perfil" aria-hidden="true">
+                    {{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1, 'UTF-8'), 'UTF-8') }}
+                </a>
                 <div class="inv-user-info">
-                    <span class="inv-user-name" title="{{ Auth::user()->email }}">{{ Auth::user()->name }}</span>
-                    <span class="inv-user-role">Administrador</span>
+                    <a href="{{ route('profile.edit') }}" class="inv-user-name" title="{{ Auth::user()->email }}">{{ Auth::user()->name }}</a>
+                    <span class="inv-user-role">{{ Auth::user()->rol_nombre ?? 'Usuario' }}</span>
                 </div>
             </div>
             <form method="POST" action="{{ route('logout') }}">

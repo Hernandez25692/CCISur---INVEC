@@ -66,7 +66,7 @@
     @endif
 
     @if ($errors->any())
-        <div role="alert"
+        <div id="flash-errors" role="alert"
             class="fixed bottom-6 left-6 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-xl shadow-md z-50 max-w-md">
             <strong class="font-semibold text-sm">¡Revisá los datos ingresados!</strong>
             <ul class="mt-1.5 list-disc list-inside text-xs space-y-0.5">
@@ -298,6 +298,123 @@
                 });
             });
 
+            // Confirmación SweetAlert2 para habilitar/deshabilitar usuario
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('form[data-swal-toggle-usuario]');
+                if (!form || form.dataset.swalConfirmed === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const nombre = form.dataset.swalNombre || 'este usuario';
+                const accion = form.dataset.swalAccion || 'deshabilitar';
+                const esDeshabilitar = accion === 'deshabilitar';
+                const esSuperadmin = form.dataset.swalEsSuperadmin === 'true';
+
+                if (esSuperadmin) {
+                    const tituloSuper = esDeshabilitar ? '¿Desactivar Superadministrador?' : '¿Activar Superadministrador?';
+                    const htmlSuper = `
+                        <p class="text-sm text-gray-600 mb-3">
+                            Estás a punto de ${esDeshabilitar ? 'desactivar' : 'activar'} la cuenta con privilegios de Superadministrador de <strong>«${nombre}»</strong>.
+                        </p>
+                        <p class="text-xs text-purple-900 bg-purple-50 p-3 rounded-lg border border-purple-200 text-left font-medium">
+                            <i class="fas fa-crown text-amber-500 mr-1.5"></i> <strong>Autorización requerida:</strong> Por seguridad institucional, ingresa tu contraseña actual de Superadministrador para autorizar esta acción.
+                        </p>
+                    `;
+
+                    if (typeof window.Swal === 'undefined') {
+                        const pwd = window.prompt(`${tituloSuper}\n\nIngresa tu contraseña actual de Superadministrador para autorizar:`);
+                        if (pwd) {
+                            let inputPwd = form.querySelector('input[name="superadmin_password"]');
+                            if (!inputPwd) {
+                                inputPwd = document.createElement('input');
+                                inputPwd.type = 'hidden';
+                                inputPwd.name = 'superadmin_password';
+                                form.appendChild(inputPwd);
+                            }
+                            inputPwd.value = pwd;
+                            form.dataset.swalConfirmed = 'true';
+                            form.submit();
+                        }
+                        return;
+                    }
+
+                    window.Swal.fire({
+                        icon: 'warning',
+                        title: tituloSuper,
+                        html: htmlSuper,
+                        input: 'password',
+                        inputPlaceholder: 'Tu contraseña actual de Superadministrador',
+                        inputAttributes: {
+                            autocapitalize: 'off',
+                            autocorrect: 'off',
+                            autocomplete: 'current-password'
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: esDeshabilitar ? 'Sí, desactivar' : 'Sí, activar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: esDeshabilitar ? '#dc2626' : '#059669',
+                        cancelButtonColor: '#031940',
+                        reverseButtons: true,
+                        focusCancel: true,
+                        preConfirm: (password) => {
+                            if (!password) {
+                                window.Swal.showValidationMessage('Debes ingresar tu contraseña para autorizar.');
+                            }
+                            return password;
+                        }
+                    }).then(function (result) {
+                        if (result.isConfirmed && result.value) {
+                            let inputPwd = form.querySelector('input[name="superadmin_password"]');
+                            if (!inputPwd) {
+                                inputPwd = document.createElement('input');
+                                inputPwd.type = 'hidden';
+                                inputPwd.name = 'superadmin_password';
+                                form.appendChild(inputPwd);
+                            }
+                            inputPwd.value = result.value;
+                            form.dataset.swalConfirmed = 'true';
+                            form.submit();
+                        }
+                    });
+                    return;
+                }
+
+                const titulo = esDeshabilitar ? '¿Deshabilitar cuenta de usuario?' : '¿Habilitar cuenta de usuario?';
+                const texto = esDeshabilitar
+                    ? `«${nombre}» ya no podrá iniciar sesión en INVEC y sus sesiones activas serán cerradas de inmediato.`
+                    : `«${nombre}» volverá a tener acceso al sistema con sus credenciales habituales.`;
+                const confirmText = esDeshabilitar ? 'Sí, deshabilitar' : 'Sí, habilitar';
+                const confirmColor = esDeshabilitar ? '#dc2626' : '#059669';
+
+                if (typeof window.Swal === 'undefined') {
+                    if (window.confirm(`${titulo}\n\n${texto}`)) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                    return;
+                }
+
+                window.Swal.fire({
+                    icon: esDeshabilitar ? 'warning' : 'question',
+                    title: titulo,
+                    text: texto,
+                    showCancelButton: true,
+                    confirmButtonText: confirmText,
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: confirmColor,
+                    cancelButtonColor: '#031940',
+                    reverseButtons: true,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+            });
+
             // Mostrar alertas de sesión con SweetAlert2
             @if (session('success'))
                 if (typeof window.Swal !== 'undefined') {
@@ -321,8 +438,22 @@
                     if (fallbackError) fallbackError.classList.add('sr-only');
                     window.Swal.fire({
                         icon: 'error',
-                        title: 'Acción no permitida',
+                        title: 'Error de Autorización',
                         text: @json(session('error')),
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#031940'
+                    });
+                }
+            @endif
+
+            @if ($errors->any() && !session('error'))
+                if (typeof window.Swal !== 'undefined') {
+                    const fallbackErrors = document.getElementById('flash-errors');
+                    if (fallbackErrors) fallbackErrors.classList.add('sr-only');
+                    window.Swal.fire({
+                        icon: 'error',
+                        title: '¡Revisá los datos ingresados!',
+                        html: `{!! '<ul class="text-left text-sm text-gray-700 list-disc list-inside space-y-1.5 my-2">' . implode('', array_map(fn($e) => '<li>' . e($e) . '</li>', $errors->all())) . '</ul>' !!}`,
                         confirmButtonText: 'Entendido',
                         confirmButtonColor: '#031940'
                     });
@@ -330,6 +461,10 @@
             @endif
         });
     </script>
+
+    @if (auth()->check() && auth()->user()->debeCambiarPassword())
+        @include('auth.partials.primer-cambio-password-modal')
+    @endif
 
     @stack('scripts')
 </body>

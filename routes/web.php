@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DispositivoController;
 use App\Http\Controllers\MobiliarioController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Página de inicio pública
@@ -15,15 +16,23 @@ Route::get('/', function () {
 // Dashboard (requiere login)
 Route::get('/dashboard', DashboardController::class)->middleware(['auth'])->name('dashboard');
 
-// Perfil de usuario (editar, actualizar, eliminar)
+// Perfil de usuario (editar, actualizar)
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 // Rutas protegidas (solo autenticados)
 Route::middleware(['auth'])->group(function () {
+    // Establecer contraseña obligatoria de primer inicio de sesión
+    Route::post('/primer-cambio-password', [\App\Http\Controllers\Auth\PasswordController::class, 'primerCambioPassword'])->name('primer-cambio-password');
+
+    // Gestión de usuarios del sistema (exclusivo para el Superadministrador)
+    Route::middleware(['can:superadmin'])->group(function () {
+        Route::patch('/usuarios/{usuario}/toggle-activo', [UserController::class, 'toggleActivo'])->name('usuarios.toggle-activo');
+        Route::resource('usuarios', UserController::class)->except(['show', 'destroy']);
+    });
+
     // CRUD de recursos
     Route::get('/mobiliario/bajas/exportar', [\App\Http\Controllers\MobiliarioController::class, 'exportarBajas'])->name('mobiliario.bajas.exportar');
     Route::get('/mobiliario/bajas', [\App\Http\Controllers\MobiliarioController::class, 'bajas'])->name('mobiliario.bajas');
