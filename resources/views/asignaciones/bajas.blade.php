@@ -51,7 +51,7 @@
         @endphp
 
         {{-- Filtros de búsqueda (colapsables en móvil) --}}
-        <div x-data="{ mostrarFiltros: @js((bool) $hayFiltros) }"
+        <div x-data="{ mostrarFiltros: @js((bool) $hayFiltros), fechaInicio: '{{ request('fecha_inicio') }}', fechaFin: '{{ request('fecha_fin') }}' }"
             class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <button type="button" @click="mostrarFiltros = !mostrarFiltros"
                 :aria-expanded="mostrarFiltros.toString()"
@@ -96,16 +96,23 @@
                         <label for="filtro_fecha_inicio" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
                             Anulada Desde
                         </label>
-                        <input type="date" id="filtro_fecha_inicio" name="fecha_inicio" value="{{ request('fecha_inicio') }}"
-                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                        <input type="date" id="filtro_fecha_inicio" name="fecha_inicio"
+                            x-model="fechaInicio"
+                            :max="fechaFin || '{{ date('Y-m-d') }}'"
+                            value="{{ request('fecha_inicio') }}"
+                            class="block w-full min-w-[130px] rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
                     </div>
 
                     <div>
                         <label for="filtro_fecha_fin" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
                             Anulada Hasta
                         </label>
-                        <input type="date" id="filtro_fecha_fin" name="fecha_fin" value="{{ request('fecha_fin') }}"
-                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                        <input type="date" id="filtro_fecha_fin" name="fecha_fin"
+                            x-model="fechaFin"
+                            :min="fechaInicio || undefined"
+                            max="{{ date('Y-m-d') }}"
+                            value="{{ request('fecha_fin') }}"
+                            class="block w-full min-w-[130px] rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
                     </div>
                 </div>
 

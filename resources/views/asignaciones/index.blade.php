@@ -98,71 +98,81 @@
 
         {{-- Formulario de búsqueda y filtros --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <form id="filtroAsignacionesForm" method="GET" action="{{ route('asignaciones.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-                {{-- Buscador general --}}
-                <div class="sm:col-span-2 lg:col-span-3">
-                    <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                            <i class="fas fa-search text-xs" aria-hidden="true"></i>
+            <form id="filtroAsignacionesForm" method="GET" action="{{ route('asignaciones.index') }}"
+                x-data="{ fechaInicio: '{{ request('fecha_inicio') }}', fechaFin: '{{ request('fecha_fin') }}' }"
+                class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                    {{-- Buscador general --}}
+                    <div class="sm:col-span-2 lg:col-span-4">
+                        <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <i class="fas fa-search text-xs" aria-hidden="true"></i>
+                            </div>
+                            <input type="text" name="buscar" id="buscar"
+                                value="{{ $buscar }}"
+                                placeholder="Colaborador, DNI, etiqueta o bien..."
+                                class="block w-full pl-9 pr-3 py-2 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs placeholder-gray-400">
                         </div>
-                        <input type="text" name="buscar" id="buscar"
-                            value="{{ $buscar }}"
-                            placeholder="Colaborador, DNI, etiqueta o bien..."
-                            class="block w-full pl-9 pr-3 py-2 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs placeholder-gray-400">
+                    </div>
+
+                    {{-- Tipo de Bien --}}
+                    <div class="sm:col-span-1 lg:col-span-2">
+                        <label for="tipo" class="block text-xs font-semibold text-gray-600 mb-1">Tipo de Bien</label>
+                        <select name="tipo" id="tipo"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            <option value="">Todos los tipos</option>
+                            <option value="dispositivo" {{ $tipo === 'dispositivo' ? 'selected' : '' }}>Dispositivos</option>
+                            <option value="mobiliario" {{ $tipo === 'mobiliario' ? 'selected' : '' }}>Mobiliario</option>
+                        </select>
+                    </div>
+
+                    {{-- Estado de Acta --}}
+                    <div class="sm:col-span-1 lg:col-span-2">
+                        <label for="estado_acta" class="block text-xs font-semibold text-gray-600 mb-1">Estado de Acta</label>
+                        <select name="estado_acta" id="estado_acta"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            <option value="activas" {{ ($estadoActa ?? 'activas') === 'activas' ? 'selected' : '' }}>Activas en Custodia</option>
+                            <option value="todas" {{ ($estadoActa ?? '') === 'todas' ? 'selected' : '' }}>Todas (Historial completo)</option>
+                        </select>
+                    </div>
+
+                    {{-- Fecha Inicio --}}
+                    <div class="sm:col-span-1 lg:col-span-2">
+                        <label for="fecha_inicio" class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
+                        <input type="date" name="fecha_inicio" id="fecha_inicio"
+                            x-model="fechaInicio"
+                            :max="fechaFin || '{{ date('Y-m-d') }}'"
+                            value="{{ request('fecha_inicio') }}"
+                            class="block w-full min-w-[130px] py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                    </div>
+
+                    {{-- Fecha Fin --}}
+                    <div class="sm:col-span-1 lg:col-span-2">
+                        <label for="fecha_fin" class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
+                        <input type="date" name="fecha_fin" id="fecha_fin"
+                            x-model="fechaFin"
+                            :min="fechaInicio || undefined"
+                            max="{{ date('Y-m-d') }}"
+                            value="{{ request('fecha_fin') }}"
+                            class="block w-full min-w-[130px] py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
                     </div>
                 </div>
 
-                {{-- Tipo de Bien --}}
-                <div class="lg:col-span-2">
-                    <label for="tipo" class="block text-xs font-semibold text-gray-600 mb-1">Tipo de Bien</label>
-                    <select name="tipo" id="tipo"
-                        class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
-                        <option value="">Todos los tipos</option>
-                        <option value="dispositivo" {{ $tipo === 'dispositivo' ? 'selected' : '' }}>Dispositivos</option>
-                        <option value="mobiliario" {{ $tipo === 'mobiliario' ? 'selected' : '' }}>Mobiliario</option>
-                    </select>
-                </div>
-
-                {{-- Estado de Acta --}}
-                <div class="lg:col-span-2">
-                    <label for="estado_acta" class="block text-xs font-semibold text-gray-600 mb-1">Estado de Acta</label>
-                    <select name="estado_acta" id="estado_acta"
-                        class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
-                        <option value="activas" {{ ($estadoActa ?? 'activas') === 'activas' ? 'selected' : '' }}>Activas en Custodia</option>
-                        <option value="anuladas" {{ ($estadoActa ?? '') === 'anuladas' ? 'selected' : '' }}>Anuladas (Bajas)</option>
-                        <option value="todas" {{ ($estadoActa ?? '') === 'todas' ? 'selected' : '' }}>Todas (Historial)</option>
-                    </select>
-                </div>
-
-                {{-- Fecha Inicio --}}
-                <div class="lg:col-span-2">
-                    <label for="fecha_inicio" class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
-                    <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
-                        class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
-                </div>
-
-                {{-- Fecha Fin --}}
-                <div class="lg:col-span-1">
-                    <label for="fecha_fin" class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
-                    <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
-                        class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
-                </div>
-
-                {{-- Botones de acción --}}
-                <div class="sm:col-span-2 lg:col-span-2 flex items-center gap-2">
+                {{-- Botones de acción claramente visibles --}}
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                    <a href="{{ route('asignaciones.index') }}"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition shadow-2xs"
+                        title="Restablecer todos los filtros">
+                        <i class="fas fa-undo text-[11px] text-gray-500" aria-hidden="true"></i>
+                        <span>Limpiar</span>
+                    </a>
                     <button type="submit"
-                        class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition cursor-pointer">
+                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition cursor-pointer"
+                        title="Aplicar filtros de búsqueda">
                         <i class="fas fa-filter text-[11px]" aria-hidden="true"></i>
                         <span>Filtrar</span>
                     </button>
-                    @if(request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']))
-                        <a href="{{ route('asignaciones.index') }}"
-                            class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-gray-600 hover:text-brand-navy hover:bg-gray-50 text-xs font-semibold rounded-lg shadow-xs transition"
-                            title="Limpiar filtros">
-                            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
-                        </a>
-                    @endif
                 </div>
             </form>
         </div>
@@ -174,9 +184,9 @@
                     <p>
                         Mostrando <span class="font-semibold text-brand-navy">{{ $asignaciones->firstItem() }}–{{ $asignaciones->lastItem() }}</span>
                         de <span class="font-semibold text-brand-navy">{{ $asignaciones->total() }}</span>
-                        {{ $asignaciones->total() === 1 ? 'asignación activa' : 'asignaciones activas' }}
+                        {{ ($estadoActa ?? 'activas') === 'todas' ? ($asignaciones->total() === 1 ? 'acta en historial' : 'actas en historial') : ($asignaciones->total() === 1 ? 'asignación activa' : 'asignaciones activas') }}
                     </p>
-                    @if (request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']))
+                    @if (request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']) || request('estado_acta', 'activas') !== 'activas')
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-gold-50 text-brand-navy font-medium">
                             <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
                             Filtros aplicados

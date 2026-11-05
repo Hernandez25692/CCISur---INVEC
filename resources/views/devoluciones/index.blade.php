@@ -120,7 +120,7 @@
         @endphp
 
         {{-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) --}}
-        <div x-data="{ mostrarFiltros: @js((bool) $hayFiltros) }"
+        <div x-data="{ mostrarFiltros: @js((bool) $hayFiltros), fechaInicio: '{{ request('fecha_inicio') }}', fechaFin: '{{ request('fecha_fin') }}' }"
             class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <button type="button" @click="mostrarFiltros = !mostrarFiltros"
                 :aria-expanded="mostrarFiltros.toString()"
@@ -139,9 +139,9 @@
             <form id="filtroDevolucionesForm" method="GET" action="{{ route('devoluciones.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ $hayFiltros ? 'block' : 'hidden' }} sm:block p-4 space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-end">
                     {{-- Buscador general --}}
-                    <div class="sm:col-span-2 lg:col-span-3">
+                    <div>
                         <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -155,7 +155,7 @@
                     </div>
 
                     {{-- Tipo de Bien --}}
-                    <div class="lg:col-span-2">
+                    <div>
                         <label for="tipo" class="block text-xs font-semibold text-gray-600 mb-1">Tipo de Bien</label>
                         <select name="tipo" id="tipo"
                             class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
@@ -166,7 +166,7 @@
                     </div>
 
                     {{-- Estado al Devolver --}}
-                    <div class="lg:col-span-2">
+                    <div>
                         <label for="estado" class="block text-xs font-semibold text-gray-600 mb-1">Estado al Recibir</label>
                         <select name="estado" id="estado"
                             class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
@@ -180,28 +180,34 @@
                     </div>
 
                     {{-- Estado del Acta --}}
-                    <div class="lg:col-span-2">
+                    <div>
                         <label for="estado_acta" class="block text-xs font-semibold text-gray-600 mb-1">Estado de Acta</label>
                         <select name="estado_acta" id="estado_acta"
                             class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
                             <option value="activas" {{ ($estadoActa ?? 'activas') === 'activas' ? 'selected' : '' }}>Activas / Válidas</option>
-                            <option value="anuladas" {{ ($estadoActa ?? '') === 'anuladas' ? 'selected' : '' }}>Anuladas (Bajas)</option>
-                            <option value="todas" {{ ($estadoActa ?? '') === 'todas' ? 'selected' : '' }}>Todas (Historial)</option>
+                            <option value="todas" {{ ($estadoActa ?? '') === 'todas' ? 'selected' : '' }}>Todas (Historial completo)</option>
                         </select>
                     </div>
 
                     {{-- Fecha Inicio --}}
-                    <div class="lg:col-span-1 sm:col-span-1">
+                    <div>
                         <label for="fecha_inicio" class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
-                        <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
-                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                        <input type="date" name="fecha_inicio" id="fecha_inicio"
+                            x-model="fechaInicio"
+                            :max="fechaFin || '{{ date('Y-m-d') }}'"
+                            value="{{ request('fecha_inicio') }}"
+                            class="block w-full min-w-[130px] py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
                     </div>
 
                     {{-- Fecha Fin --}}
-                    <div class="lg:col-span-2 sm:col-span-1">
+                    <div>
                         <label for="fecha_fin" class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
-                        <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
-                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                        <input type="date" name="fecha_fin" id="fecha_fin"
+                            x-model="fechaFin"
+                            :min="fechaInicio || undefined"
+                            max="{{ date('Y-m-d') }}"
+                            value="{{ request('fecha_fin') }}"
+                            class="block w-full min-w-[130px] py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
                     </div>
                 </div>
 

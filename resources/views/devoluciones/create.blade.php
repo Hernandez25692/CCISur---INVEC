@@ -215,8 +215,13 @@
                                    name="fecha_devolucion" 
                                    id="fecha_devolucion" 
                                    value="{{ old('fecha_devolucion', date('Y-m-d')) }}" 
+                                   :min="asignacionSeleccionada ? asignacionSeleccionada.fecha_asignacion_raw : null"
+                                   max="{{ date('Y-m-d') }}"
                                    required 
                                    class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            <p x-show="asignacionSeleccionada?.fecha_asignacion_raw" class="text-[11px] text-gray-500 mt-1">
+                                No puede ser anterior a la entrega (<span class="font-semibold text-brand-navy" x-text="asignacionSeleccionada?.fecha_asignacion"></span>) ni posterior a hoy.
+                            </p>
                         </div>
 
                         <div>
