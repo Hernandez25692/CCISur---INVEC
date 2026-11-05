@@ -239,7 +239,7 @@
             <tr>
                 <td style="text-align: left;">
                     <strong>Correlativo:</strong> 
-                    <span class="code-badge">ACT-INV-{{ date('Y') }}-{{ str_pad($asignacion->id, 4, '0', STR_PAD_LEFT) }}</span>
+                    <span class="code-badge">ACT-INV-{{ $asignacion->fecha_entrega ? $asignacion->fecha_entrega->format('Y') : date('Y') }}-{{ str_pad($asignacion->id, 4, '0', STR_PAD_LEFT) }}</span>
                 </td>
                 <td style="text-align: center;">
                     <strong>Ciudad:</strong> Choluteca, Honduras
