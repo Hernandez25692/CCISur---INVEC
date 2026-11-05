@@ -25,6 +25,7 @@ class Devolucion extends Model
         'asignacion_id',
         'fecha_devolucion',
         'estado_devuelto',
+        'estado_anterior',
         'recibido_por',
         'observaciones',
         'anulado_por_user_id',

@@ -304,7 +304,12 @@
                 <td><strong>{{ $item->etiqueta ?? 'S/E' }}</strong></td>
                 <td>{{ $item->nombre ?? 'N/A' }}</td>
                 <td>{{ ucfirst($asignacion->tipo) }} {{ isset($item->tipo) ? '('.$item->tipo.')' : '' }}</td>
-                <td><strong>{{ $devolucion->estado_devuelto ?? $item->estado ?? 'Buen estado' }}</strong></td>
+                <td>
+                    <strong>{{ $devolucion->estado_devuelto ?? $item->estado ?? 'Buen estado' }}</strong>
+                    @if (! empty($devolucion->estado_anterior))
+                        <br><span style="font-size: 8px; color: #64748b;">(Previo: {{ $devolucion->estado_anterior }})</span>
+                    @endif
+                </td>
                 <td>{{ $item->disponibilidad ?? 'Disponible' }}</td>
             </tr>
         </tbody>

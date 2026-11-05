@@ -358,6 +358,9 @@ class DevolucionController extends Controller
                     ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
                     : Dispositivo::withTrashed()->find($asignacion->id_referencia);
 
+                // Capturar el estado físico previo antes de registrar la devolución
+                $estadoAnterior = $item?->estado ?? $asignacion->estado_al_asignar ?? null;
+
                 if ($item) {
                     // Actualizar estado físico del bien recibido
                     $item->estado = $validated['estado_devuelto'];
@@ -370,6 +373,7 @@ class DevolucionController extends Controller
                     'asignacion_id' => $asignacion->id,
                     'fecha_devolucion' => $validated['fecha_devolucion'],
                     'estado_devuelto' => $validated['estado_devuelto'],
+                    'estado_anterior' => $estadoAnterior,
                     'recibido_por' => $validated['recibido_por'],
                     'observaciones' => $validated['observaciones'] ?? null,
                 ]);
@@ -454,6 +458,13 @@ class DevolucionController extends Controller
                     : Dispositivo::withTrashed()->find($asignacion->id_referencia);
 
                 if ($item) {
+                    // Restaurar el estado físico original que tenía el bien antes de registrar la devolución
+                    if (! empty($devolucion->estado_anterior)) {
+                        $item->estado = $devolucion->estado_anterior;
+                    } elseif (! empty($asignacion->estado_al_asignar)) {
+                        $item->estado = $asignacion->estado_al_asignar;
+                    }
+
                     // Al anular la devolución, el bien regresa a estar Asignado a su custodio anterior
                     $item->disponibilidad = $item::DISPONIBILIDAD_ASIGNADO;
                     $item->save();

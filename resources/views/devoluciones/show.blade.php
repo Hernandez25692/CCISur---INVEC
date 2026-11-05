@@ -176,6 +176,11 @@
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold mt-0.5 ring-1 ring-inset {{ \App\Models\Dispositivo::ESTADOS_CLASES[$devolucion->estado_devuelto] ?? 'bg-gray-100 text-gray-700' }}">
                                         {{ $devolucion->estado_devuelto ?? $item->estado }}
                                     </span>
+                                    @if (! empty($devolucion->estado_anterior))
+                                        <div class="text-[11px] text-gray-400 mt-1">
+                                            <span>Estado previo:</span> <span class="text-gray-600 font-medium">{{ $devolucion->estado_anterior }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div>
                                     <span class="text-gray-500 block">Disponibilidad Actual en Inventario:</span>
