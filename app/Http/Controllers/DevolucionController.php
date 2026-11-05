@@ -35,6 +35,7 @@ class DevolucionController extends Controller
 
         if ($buscar !== '') {
             $busquedaEscapada = addcslashes($buscar, '%_\\');
+            $busquedaIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($buscar), '%_\\');
 
             // Extraer ID numérico si la búsqueda corresponde a correlativos (DEV-INV-YYYY-XXXX, ACT-INV-YYYY-XXXX, INV-DIS-YYYY-XXXX, etc.)
             $idDevolucion = null;
@@ -56,7 +57,7 @@ class DevolucionController extends Controller
                 $idBien = (int) $buscar;
             }
 
-            $query->where(function (Builder $q) use ($busquedaEscapada, $idDevolucion, $idAsignacion, $idBien): void {
+            $query->where(function (Builder $q) use ($busquedaEscapada, $busquedaIdentidad, $idDevolucion, $idAsignacion, $idBien): void {
                 $q->where('recibido_por', 'like', "%{$busquedaEscapada}%")
                     ->orWhere('observaciones', 'like', "%{$busquedaEscapada}%");
 
@@ -64,7 +65,7 @@ class DevolucionController extends Controller
                     $q->orWhere('id', $idDevolucion);
                 }
 
-                $q->orWhereHas('asignacion', function (Builder $sub) use ($busquedaEscapada, $idAsignacion, $idBien): void {
+                $q->orWhereHas('asignacion', function (Builder $sub) use ($busquedaEscapada, $busquedaIdentidad, $idAsignacion, $idBien): void {
                     $sub->where('area', 'like', "%{$busquedaEscapada}%");
 
                     if ($idAsignacion !== null) {
@@ -74,8 +75,6 @@ class DevolucionController extends Controller
                     if ($idBien !== null) {
                         $sub->orWhere('id_referencia', $idBien);
                     }
-
-                    $busquedaIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($busqueda), '%_\\');
 
                     $sub->orWhereHas('empleado', function (Builder $emp) use ($busquedaEscapada, $busquedaIdentidad): void {
                         $emp->where('nombre_completo', 'like', "%{$busquedaEscapada}%")
@@ -214,7 +213,11 @@ class DevolucionController extends Controller
         Gate::authorize('admin');
 
         $validated = $request->validate([
-            'asignacion_id' => ['required', 'exists:asignacions,id'],
+            'asignacion_id' => [
+                'required',
+                'exists:asignacions,id',
+                Rule::unique('devoluciones', 'asignacion_id'),
+            ],
             'fecha_devolucion' => ['required', 'date'],
             'estado_devuelto' => ['required', 'string', Rule::in(Devolucion::ESTADOS_DEVOLUCION)],
             'recibido_por' => ['required', 'string', 'max:255'],
@@ -222,43 +225,49 @@ class DevolucionController extends Controller
         ], [
             'asignacion_id.required' => 'Debe seleccionar una asignación para registrar la devolución.',
             'asignacion_id.exists' => 'La asignación seleccionada no es válida.',
+            'asignacion_id.unique' => 'Esta asignación ya cuenta con un acta de devolución registrada.',
             'fecha_devolucion.required' => 'La fecha de devolución es obligatoria.',
             'estado_devuelto.required' => 'Debe evaluar el estado físico en que se recibe el bien.',
             'estado_devuelto.in' => 'El estado físico seleccionado no es válido para devolución (un bien devuelto ya no puede recibirse como nuevo).',
             'recibido_por.required' => 'El nombre de quien recibe es obligatorio.',
         ]);
 
-        // Verificar si ya fue devuelto previamente
-        $yaDevuelto = Devolucion::where('asignacion_id', $validated['asignacion_id'])->exists();
-        if ($yaDevuelto) {
+        try {
+            $devolucion = DB::transaction(function () use ($validated) {
+                $asignacion = Asignacion::where('id', $validated['asignacion_id'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                // Verificación atómica dentro del bloqueo por si hubo concurrencia
+                if ($asignacion->devolucion()->exists()) {
+                    throw new \RuntimeException('Esta asignación ya cuenta con un acta de devolución registrada.');
+                }
+
+                $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+                    ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
+                    : Dispositivo::withTrashed()->find($asignacion->id_referencia);
+
+                if ($item) {
+                    // Actualizar estado físico del bien recibido
+                    $item->estado = $validated['estado_devuelto'];
+                    // Recalcular disponibilidad automáticamente (si viene dañado/en reparación queda No Aplica; si era de área común conserva su condición)
+                    $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacion->es_area_comun, false);
+                    $item->save();
+                }
+
+                return Devolucion::create([
+                    'asignacion_id' => $asignacion->id,
+                    'fecha_devolucion' => $validated['fecha_devolucion'],
+                    'estado_devuelto' => $validated['estado_devuelto'],
+                    'recibido_por' => $validated['recibido_por'],
+                    'observaciones' => $validated['observaciones'] ?? null,
+                ]);
+            });
+        } catch (\Throwable $e) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Esta asignación ya cuenta con un acta de devolución registrada.');
+                ->with('error', $e instanceof \RuntimeException ? $e->getMessage() : 'No se pudo registrar la devolución debido a un conflicto de concurrencia.');
         }
-
-        $devolucion = DB::transaction(function () use ($validated) {
-            $asignacion = Asignacion::findOrFail($validated['asignacion_id']);
-
-            $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
-                ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
-                : Dispositivo::withTrashed()->find($asignacion->id_referencia);
-
-            if ($item) {
-                // Actualizar estado físico del bien recibido
-                $item->estado = $validated['estado_devuelto'];
-                // Recalcular disponibilidad automáticamente (si viene dañado/en reparación queda No Aplica; si era de área común conserva su condición)
-                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacion->es_area_comun, false);
-                $item->save();
-            }
-
-            return Devolucion::create([
-                'asignacion_id' => $asignacion->id,
-                'fecha_devolucion' => $validated['fecha_devolucion'],
-                'estado_devuelto' => $validated['estado_devuelto'],
-                'recibido_por' => $validated['recibido_por'],
-                'observaciones' => $validated['observaciones'] ?? null,
-            ]);
-        });
 
         return redirect()->route('devoluciones.show', $devolucion)
             ->with('success', 'Devolución registrada exitosamente. El inventario ha sido actualizado.');

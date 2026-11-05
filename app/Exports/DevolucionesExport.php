@@ -40,6 +40,7 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
         $buscar = trim((string) $this->request->input('buscar'));
         if ($buscar !== '') {
             $busquedaEscapada = addcslashes($buscar, '%_\\');
+            $busquedaIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($buscar), '%_\\');
 
             $idDevolucion = null;
             if (preg_match('/(?:DEV[-_]?INV[-_]?(?:\d{4})?[-_]?0*|^0*)(\d+)/i', $buscar, $m)) {
@@ -60,7 +61,7 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
                 $idBien = (int) $buscar;
             }
 
-            $query->where(function (Builder $q) use ($busquedaEscapada, $idDevolucion, $idAsignacion, $idBien): void {
+            $query->where(function (Builder $q) use ($busquedaEscapada, $busquedaIdentidad, $idDevolucion, $idAsignacion, $idBien): void {
                 $q->where('recibido_por', 'like', "%{$busquedaEscapada}%")
                     ->orWhere('observaciones', 'like', "%{$busquedaEscapada}%");
 
@@ -68,7 +69,7 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
                     $q->orWhere('id', $idDevolucion);
                 }
 
-                $q->orWhereHas('asignacion', function (Builder $sub) use ($busquedaEscapada, $idAsignacion, $idBien): void {
+                $q->orWhereHas('asignacion', function (Builder $sub) use ($busquedaEscapada, $busquedaIdentidad, $idAsignacion, $idBien): void {
                     $sub->where('area', 'like', "%{$busquedaEscapada}%");
 
                     if ($idAsignacion !== null) {
@@ -79,10 +80,14 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
                         $sub->orWhere('id_referencia', $idBien);
                     }
 
-                    $sub->orWhereHas('empleado', function (Builder $emp) use ($busquedaEscapada): void {
+                    $sub->orWhereHas('empleado', function (Builder $emp) use ($busquedaEscapada, $busquedaIdentidad): void {
                         $emp->where('nombre_completo', 'like', "%{$busquedaEscapada}%")
                             ->orWhere('codigo', 'like', "%{$busquedaEscapada}%")
                             ->orWhere('identidad', 'like', "%{$busquedaEscapada}%");
+
+                        if ($busquedaIdentidad !== '' && $busquedaIdentidad !== $busquedaEscapada) {
+                            $emp->orWhere('identidad', 'like', "%{$busquedaIdentidad}%");
+                        }
                     })
                         ->orWhereHas('mobiliario', function (Builder $mob) use ($busquedaEscapada): void {
                             $mob->where('etiqueta', 'like', "%{$busquedaEscapada}%")
