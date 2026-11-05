@@ -44,11 +44,16 @@ class AsignacionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
         }
 
         $fechaInicio = rescue(fn () => $this->request->filled('fecha_inicio') ? $this->request->date('fecha_inicio') : null);
+        $fechaFin = rescue(fn () => $this->request->filled('fecha_fin') ? $this->request->date('fecha_fin') : null);
+
+        if ($fechaInicio && $fechaFin && $fechaInicio->gt($fechaFin)) {
+            [$fechaInicio, $fechaFin] = [$fechaFin, $fechaInicio];
+        }
+
         if ($fechaInicio) {
             $query->whereDate('fecha_entrega', '>=', $fechaInicio);
         }
 
-        $fechaFin = rescue(fn () => $this->request->filled('fecha_fin') ? $this->request->date('fecha_fin') : null);
         if ($fechaFin) {
             $query->whereDate('fecha_entrega', '<=', $fechaFin);
         }

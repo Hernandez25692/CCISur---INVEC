@@ -131,18 +131,19 @@ class DevolucionController extends Controller
             });
         }
 
-        if ($fechaInicio) {
-            $parsedInicio = rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false);
-            if ($parsedInicio) {
-                $query->whereDate('fecha_devolucion', '>=', $parsedInicio);
-            }
+        $parsedInicio = $fechaInicio ? rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false) : null;
+        $parsedFin = $fechaFin ? rescue(fn () => Carbon::parse($fechaFin)->endOfDay(), null, false) : null;
+
+        if ($parsedInicio && $parsedFin && $parsedInicio->gt($parsedFin)) {
+            [$parsedInicio, $parsedFin] = [$parsedFin->copy()->startOfDay(), $parsedInicio->copy()->endOfDay()];
         }
 
-        if ($fechaFin) {
-            $parsedFin = rescue(fn () => Carbon::parse($fechaFin)->endOfDay(), null, false);
-            if ($parsedFin) {
-                $query->whereDate('fecha_devolucion', '<=', $parsedFin);
-            }
+        if ($parsedInicio) {
+            $query->whereDate('fecha_devolucion', '>=', $parsedInicio);
+        }
+
+        if ($parsedFin) {
+            $query->whereDate('fecha_devolucion', '<=', $parsedFin);
         }
 
         if ($estadoFiltro) {
@@ -229,18 +230,19 @@ class DevolucionController extends Controller
             });
         }
 
-        if ($fechaInicio) {
-            $parsedInicio = rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false);
-            if ($parsedInicio) {
-                $query->whereDate('deleted_at', '>=', $parsedInicio);
-            }
+        $parsedInicio = $fechaInicio ? rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false) : null;
+        $parsedFin = $fechaFin ? rescue(fn () => Carbon::parse($fechaFin)->endOfDay(), null, false) : null;
+
+        if ($parsedInicio && $parsedFin && $parsedInicio->gt($parsedFin)) {
+            [$parsedInicio, $parsedFin] = [$parsedFin->copy()->startOfDay(), $parsedInicio->copy()->endOfDay()];
         }
 
-        if ($fechaFin) {
-            $parsedFin = rescue(fn () => Carbon::parse($fechaFin)->endOfDay(), null, false);
-            if ($parsedFin) {
-                $query->whereDate('deleted_at', '<=', $parsedFin);
-            }
+        if ($parsedInicio) {
+            $query->whereDate('deleted_at', '>=', $parsedInicio);
+        }
+
+        if ($parsedFin) {
+            $query->whereDate('deleted_at', '<=', $parsedFin);
         }
 
         $devoluciones = $query->latest('deleted_at')->paginate(10)->withQueryString();
@@ -304,6 +306,7 @@ class DevolucionController extends Controller
                 'bien_serie' => $bien?->n_serie ?? null,
                 'bien_estado' => $bienEstadoSugerido,
                 'fecha_asignacion' => $a->fecha_entrega ? Carbon::parse($a->fecha_entrega)->format('d/m/Y') : 'N/A',
+                'fecha_asignacion_raw' => $a->fecha_entrega ? Carbon::parse($a->fecha_entrega)->format('Y-m-d') : null,
             ];
         });
 
@@ -323,13 +326,22 @@ class DevolucionController extends Controller
     {
         Gate::authorize('admin');
 
+        $asignacionPrevia = Asignacion::find($request->input('asignacion_id'));
+        $fechaEntregaRaw = $asignacionPrevia?->fecha_entrega?->format('Y-m-d');
+        $fechaEntregaFormateada = $asignacionPrevia?->fecha_entrega?->format('d/m/Y');
+
+        $reglasFecha = ['required', 'date', 'before_or_equal:today'];
+        if ($fechaEntregaRaw) {
+            $reglasFecha[] = 'after_or_equal:' . $fechaEntregaRaw;
+        }
+
         $validated = $request->validate([
             'asignacion_id' => [
                 'required',
                 'exists:asignacions,id',
                 Rule::unique('devoluciones', 'asignacion_id')->withoutTrashed(),
             ],
-            'fecha_devolucion' => ['required', 'date'],
+            'fecha_devolucion' => $reglasFecha,
             'estado_devuelto' => ['required', 'string', Rule::in(Devolucion::ESTADOS_DEVOLUCION)],
             'recibido_por' => ['required', 'string', 'max:255'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
@@ -338,6 +350,11 @@ class DevolucionController extends Controller
             'asignacion_id.exists' => 'La asignación seleccionada no es válida.',
             'asignacion_id.unique' => 'Esta asignación ya cuenta con un acta de devolución registrada.',
             'fecha_devolucion.required' => 'La fecha de devolución es obligatoria.',
+            'fecha_devolucion.date' => 'La fecha de devolución debe ser una fecha válida.',
+            'fecha_devolucion.before_or_equal' => 'La fecha de devolución no puede ser una fecha futura.',
+            'fecha_devolucion.after_or_equal' => $fechaEntregaFormateada
+                ? "La fecha de devolución no puede ser anterior a la fecha en que se entregó el bien ({$fechaEntregaFormateada})."
+                : 'La fecha de devolución no puede ser anterior a la fecha de entrega del bien.',
             'estado_devuelto.required' => 'Debe evaluar el estado físico en que se recibe el bien.',
             'estado_devuelto.in' => 'El estado físico seleccionado no es válido para devolución (un bien devuelto ya no puede recibirse como nuevo).',
             'recibido_por.required' => 'El nombre de quien recibe es obligatorio.',

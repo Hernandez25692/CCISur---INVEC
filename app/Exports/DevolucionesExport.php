@@ -132,19 +132,20 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
         }
 
         $fechaInicio = $this->request->input('fecha_inicio');
-        if ($fechaInicio) {
-            $parsedInicio = rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false);
-            if ($parsedInicio) {
-                $query->whereDate('fecha_devolucion', '>=', $parsedInicio);
-            }
+        $fechaFin = $this->request->input('fecha_fin');
+        $parsedInicio = $fechaInicio ? rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false) : null;
+        $parsedFin = $fechaFin ? rescue(fn () => Carbon::parse($fechaFin)->endOfDay(), null, false) : null;
+
+        if ($parsedInicio && $parsedFin && $parsedInicio->gt($parsedFin)) {
+            [$parsedInicio, $parsedFin] = [$parsedFin->copy()->startOfDay(), $parsedInicio->copy()->endOfDay()];
         }
 
-        $fechaFin = $this->request->input('fecha_fin');
-        if ($fechaFin) {
-            $parsedFin = rescue(fn () => Carbon::parse($fechaFin)->endOfDay(), null, false);
-            if ($parsedFin) {
-                $query->whereDate('fecha_devolucion', '<=', $parsedFin);
-            }
+        if ($parsedInicio) {
+            $query->whereDate('fecha_devolucion', '>=', $parsedInicio);
+        }
+
+        if ($parsedFin) {
+            $query->whereDate('fecha_devolucion', '<=', $parsedFin);
         }
 
         $estadoFiltro = $this->request->input('estado');

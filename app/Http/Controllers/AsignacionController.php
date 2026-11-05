@@ -51,11 +51,16 @@ class AsignacionController extends Controller
 
         // Filtro por rango de fechas válidas de forma segura (sin errores 500 por manipulación)
         $fechaInicio = rescue(fn () => $request->filled('fecha_inicio') ? $request->date('fecha_inicio') : null);
+        $fechaFin = rescue(fn () => $request->filled('fecha_fin') ? $request->date('fecha_fin') : null);
+
+        if ($fechaInicio && $fechaFin && $fechaInicio->gt($fechaFin)) {
+            [$fechaInicio, $fechaFin] = [$fechaFin, $fechaInicio];
+        }
+
         if ($fechaInicio) {
             $query->whereDate('fecha_entrega', '>=', $fechaInicio);
         }
 
-        $fechaFin = rescue(fn () => $request->filled('fecha_fin') ? $request->date('fecha_fin') : null);
         if ($fechaFin) {
             $query->whereDate('fecha_entrega', '<=', $fechaFin);
         }
@@ -120,11 +125,16 @@ class AsignacionController extends Controller
         }
 
         $fechaInicio = rescue(fn () => $request->filled('fecha_inicio') ? $request->date('fecha_inicio') : null);
+        $fechaFin = rescue(fn () => $request->filled('fecha_fin') ? $request->date('fecha_fin') : null);
+
+        if ($fechaInicio && $fechaFin && $fechaInicio->gt($fechaFin)) {
+            [$fechaInicio, $fechaFin] = [$fechaFin, $fechaInicio];
+        }
+
         if ($fechaInicio) {
             $query->whereDate('deleted_at', '>=', $fechaInicio);
         }
 
-        $fechaFin = rescue(fn () => $request->filled('fecha_fin') ? $request->date('fecha_fin') : null);
         if ($fechaFin) {
             $query->whereDate('deleted_at', '<=', $fechaFin);
         }
