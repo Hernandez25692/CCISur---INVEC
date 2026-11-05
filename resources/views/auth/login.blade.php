@@ -373,7 +373,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login') }}" class="login-form">
+                <form method="POST" action="{{ route('login', [], false) }}" class="login-form">
                     @csrf
 
                     <!-- Correo -->
