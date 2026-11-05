@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Devolucion extends Model
 {
+    use SoftDeletes;
+
     public const ESTADOS_DEVOLUCION = [
         'Con pequeños detalles / Imperfecciones leves',
         'Usado / Segunda mano',
@@ -24,6 +27,8 @@ class Devolucion extends Model
         'estado_devuelto',
         'recibido_por',
         'observaciones',
+        'anulado_por_user_id',
+        'motivo_anulacion',
     ];
 
     protected $casts = [
@@ -32,6 +37,11 @@ class Devolucion extends Model
 
     public function asignacion(): BelongsTo
     {
-        return $this->belongsTo(Asignacion::class);
+        return $this->belongsTo(Asignacion::class)->withTrashed();
+    }
+
+    public function anuladoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'anulado_por_user_id');
     }
 }

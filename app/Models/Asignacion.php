@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Asignacion extends Model
 {
+    use SoftDeletes;
+
     public const TIPO_MOBILIARIO = 'mobiliario';
 
     public const TIPO_DISPOSITIVO = 'dispositivo';
@@ -25,6 +28,8 @@ class Asignacion extends Model
         'observaciones',
         'fecha_entrega',
         'entregado_por',
+        'anulado_por_user_id',
+        'motivo_anulacion',
     ];
 
     protected $casts = [
@@ -69,6 +74,11 @@ class Asignacion extends Model
     public function empleado(): BelongsTo
     {
         return $this->belongsTo(Empleado::class)->withTrashed();
+    }
+
+    public function anuladoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'anulado_por_user_id');
     }
 
     public function getNombreBienAttribute(): string
