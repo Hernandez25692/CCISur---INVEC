@@ -1,24 +1,34 @@
 <x-app-layout>
-    <div class="py-6 space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {{-- Encabezado principal --}}
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="py-4 space-y-6">
+        <!-- Encabezado -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Actas de Devolución</h1>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">Control formal de recepciones, estado físico del bien y finiquito de responsabilidad</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Actas de Devolución</h1>
+                <p class="mt-1 text-sm text-gray-500">Control formal de recepciones, estado físico del bien y finiquito de responsabilidad</p>
             </div>
             <div class="flex flex-wrap items-center gap-2.5">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroDevolucionesForm'); if (f) { const oldAction = f.action; f.action = '{{ route('devoluciones.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('devoluciones.exportar', request()->query()) }}'; }"
                     class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
-                    title="Exportar actas de devolución a Excel con los filtros aplicados">
+                    title="Exportar listado a Excel con los filtros aplicados">
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
+                <a href="{{ route('devoluciones.bajas') }}"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
+                    <span>Dados de baja</span>
+                    @if (($totalAnuladas ?? 0) > 0)
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-800 font-bold">
+                            {{ $totalAnuladas }}
+                        </span>
+                    @endif
+                </a>
                 @can('admin')
                     <a href="{{ route('devoluciones.create') }}"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy hover:bg-brand-navy-800 text-white rounded-lg text-sm font-semibold shadow-xs focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
                         <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                        <span>Registrar Devolución</span>
+                        Registrar Devolución
                     </a>
                 @endcan
             </div>
@@ -106,7 +116,7 @@
         </div>
 
         @php
-            $hayFiltros = request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin', 'estado']);
+            $hayFiltros = request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin', 'estado']) || request('estado_acta', 'activas') !== 'activas';
         @endphp
 
         {{-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) --}}
@@ -131,7 +141,7 @@
                 class="{{ $hayFiltros ? 'block' : 'hidden' }} sm:block p-4 space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
                     {{-- Buscador general --}}
-                    <div class="sm:col-span-2 lg:col-span-4">
+                    <div class="sm:col-span-2 lg:col-span-3">
                         <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -139,7 +149,7 @@
                             </div>
                             <input type="text" name="buscar" id="buscar"
                                 value="{{ request('buscar') }}"
-                                placeholder="Correlativo (DEV-0001, INV-DIS-0001), bien, colaborador..."
+                                placeholder="Correlativo, bien, custodio..."
                                 class="block w-full pl-9 pr-3 py-2 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs placeholder-gray-400">
                         </div>
                     </div>
@@ -169,15 +179,26 @@
                         </select>
                     </div>
 
-                    {{-- Fecha Inicio --}}
+                    {{-- Estado del Acta --}}
                     <div class="lg:col-span-2">
+                        <label for="estado_acta" class="block text-xs font-semibold text-gray-600 mb-1">Estado de Acta</label>
+                        <select name="estado_acta" id="estado_acta"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            <option value="activas" {{ ($estadoActa ?? 'activas') === 'activas' ? 'selected' : '' }}>Activas / Válidas</option>
+                            <option value="anuladas" {{ ($estadoActa ?? '') === 'anuladas' ? 'selected' : '' }}>Anuladas (Bajas)</option>
+                            <option value="todas" {{ ($estadoActa ?? '') === 'todas' ? 'selected' : '' }}>Todas (Historial)</option>
+                        </select>
+                    </div>
+
+                    {{-- Fecha Inicio --}}
+                    <div class="lg:col-span-1 sm:col-span-1">
                         <label for="fecha_inicio" class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
                         <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
                             class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
                     </div>
 
                     {{-- Fecha Fin --}}
-                    <div class="lg:col-span-2">
+                    <div class="lg:col-span-2 sm:col-span-1">
                         <label for="fecha_fin" class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
                         <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
                             class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
@@ -333,35 +354,49 @@
 
                                 {{-- Acciones --}}
                                 <td class="px-4 py-3 whitespace-nowrap text-center">
-                                    <div class="inline-flex items-center gap-1.5">
-                                        {{-- Ver Acta --}}
-                                        <a href="{{ route('devoluciones.show', $dev) }}"
-                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-gray-500 hover:text-brand-navy hover:bg-gray-100 transition"
-                                            title="Ver acta de devolución">
-                                            <i class="fas fa-eye text-xs" aria-hidden="true"></i>
-                                        </a>
+                                    @if ($dev->trashed())
+                                        <div class="inline-flex items-center gap-1.5">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                                                <i class="fas fa-ban text-[9px]" aria-hidden="true"></i>
+                                                Anulada
+                                            </span>
+                                            <a href="{{ route('devoluciones.show', $dev->id) }}"
+                                                class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-semibold transition"
+                                                title="Ver acta y auditoría">
+                                                <i class="fas fa-eye text-[11px]"></i> Ver
+                                            </a>
+                                        </div>
+                                    @else
+                                        <div class="inline-flex items-center gap-1.5">
+                                            {{-- Ver Acta --}}
+                                            <a href="{{ route('devoluciones.show', $dev->id) }}"
+                                                class="w-7 h-7 rounded inline-flex items-center justify-center text-gray-500 hover:text-brand-navy hover:bg-gray-100 transition"
+                                                title="Ver acta de devolución">
+                                                <i class="fas fa-eye text-xs" aria-hidden="true"></i>
+                                            </a>
 
-                                        {{-- Descargar PDF --}}
-                                        <a href="{{ route('devoluciones.pdf', $dev) }}"
-                                            target="_blank"
-                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-purple-600 hover:text-purple-900 hover:bg-purple-50 transition"
-                                            title="Descargar Acta en PDF">
-                                            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
-                                        </a>
+                                            {{-- Descargar PDF --}}
+                                            <a href="{{ route('devoluciones.pdf', $dev->id) }}"
+                                                target="_blank"
+                                                class="w-7 h-7 rounded inline-flex items-center justify-center text-purple-600 hover:text-purple-900 hover:bg-purple-50 transition"
+                                                title="Descargar Acta en PDF">
+                                                <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+                                            </a>
 
-                                        {{-- Anular Devolución con confirmación protegida --}}
-                                        @can('admin')
-                                            <button type="button"
-                                                class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
-                                                title="Anular acta de devolución"
-                                                data-id="{{ $dev->id }}"
-                                                data-correlativo="{{ $correlativo }}"
-                                                data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
-                                                data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}">
-                                                <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
-                                            </button>
-                                        @endcan
-                                    </div>
+                                            {{-- Anular Devolución con confirmación protegida --}}
+                                            @can('admin')
+                                                <button type="button"
+                                                    class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
+                                                    title="Anular acta de devolución"
+                                                    data-id="{{ $dev->id }}"
+                                                    data-correlativo="{{ $correlativo }}"
+                                                    data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
+                                                    data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}">
+                                                    <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
+                                                </button>
+                                            @endcan
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -398,53 +433,86 @@
         </div>
     </div>
 
-    {{-- Formulario oculto para anular devolución con contraseña --}}
+    {{-- Formulario oculto para anular devolución con contraseña y motivo --}}
     <form id="form-anular-devolucion" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
         <input type="hidden" name="password" id="input-password-anulacion">
+        <input type="hidden" name="motivo_anulacion" id="input-motivo-anulacion">
     </form>
 
     {{-- Script seguro contra XSS utilizando data attributes y SweetAlert2 --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str || '';
+                return div.innerHTML;
+            }
+
             const botonesAnular = document.querySelectorAll('.btn-anular');
             const formAnular = document.getElementById('form-anular-devolucion');
             const inputPassword = document.getElementById('input-password-anulacion');
+            const inputMotivo = document.getElementById('input-motivo-anulacion');
 
             botonesAnular.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
-                    const correlativo = btn.getAttribute('data-correlativo') || '';
-                    const bien = btn.getAttribute('data-bien') || 'Bien institucional';
-                    const etiqueta = btn.getAttribute('data-etiqueta') || '';
+                    const correlativo = escapeHtml(btn.getAttribute('data-correlativo') || '');
+                    const bien = escapeHtml(btn.getAttribute('data-bien') || 'Bien institucional');
+                    const etiqueta = escapeHtml(btn.getAttribute('data-etiqueta') || '');
 
                     Swal.fire({
                         title: '¿Anular Acta de Devolución?',
-                        text: `Al anular el acta ${correlativo} (${bien} - ${etiqueta}), el bien volverá a estar asignado a su custodio anterior.`,
+                        html: `
+                            <p class="text-sm text-gray-600 mb-3">
+                                Al anular el acta <strong>${correlativo}</strong> (${bien} - ${etiqueta}), el bien volverá a estar asignado a su custodio anterior en el inventario.
+                            </p>
+                            <div class="text-left space-y-3 mt-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        Motivo de anulación <span class="text-red-500">*</span>:
+                                    </label>
+                                    <textarea id="swal-motivo" class="w-full text-xs p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-gold focus:border-brand-navy" rows="2" placeholder="Ej: Error al registrar el estado físico o fecha"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        Ingrese su contraseña para autorizar <span class="text-red-500">*</span>:
+                                    </label>
+                                    <input type="password" id="swal-password" class="w-full text-xs p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-gold focus:border-brand-navy" placeholder="Su contraseña actual de sesión...">
+                                </div>
+                            </div>
+                        `,
                         icon: 'warning',
-                        input: 'password',
-                        inputLabel: 'Ingrese su contraseña para autorizar:',
-                        inputPlaceholder: 'Contraseña de usuario actual',
-                        inputAttributes: {
-                            autocapitalize: 'off',
-                            autocorrect: 'off'
-                        },
                         showCancelButton: true,
                         confirmButtonColor: '#002855',
                         cancelButtonColor: '#6B7280',
                         confirmButtonText: 'Sí, anular devolución',
                         cancelButtonText: 'Cancelar',
-                        preConfirm: (password) => {
+                        focusConfirm: false,
+                        preConfirm: () => {
+                            const motivo = document.getElementById('swal-motivo')?.value.trim();
+                            const password = document.getElementById('swal-password')?.value;
+                            if (!motivo || motivo.length < 5) {
+                                Swal.showValidationMessage('Debe ingresar un motivo de anulación válido (mínimo 5 caracteres).');
+                                return false;
+                            }
                             if (!password) {
                                 Swal.showValidationMessage('Debe ingresar su contraseña.');
+                                return false;
                             }
-                            return password;
+                            return { motivo, password };
+                        },
+                        customClass: {
+                            popup: 'rounded-xl text-left',
+                            confirmButton: 'rounded-lg text-xs font-semibold px-4 py-2',
+                            cancelButton: 'rounded-lg text-xs font-semibold px-4 py-2'
                         }
                     }).then((result) => {
                         if (result.isConfirmed && result.value) {
                             formAnular.action = `/devoluciones/${id}`;
-                            inputPassword.value = result.value;
+                            inputPassword.value = result.value.password;
+                            inputMotivo.value = result.value.motivo;
                             formAnular.submit();
                         }
                     });

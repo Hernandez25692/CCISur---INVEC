@@ -12,12 +12,19 @@
                 </nav>
                 <div class="flex items-center gap-3">
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Acta de Devolución de Bien</h1>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        Devolución Registrada (Finiquito)
-                    </span>
+                    @if ($devolucion->trashed())
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                            <i class="fas fa-ban text-xs text-rose-500" aria-hidden="true"></i>
+                            Devolución Anulada
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            Devolución Registrada (Finiquito)
+                        </span>
+                    @endif
                 </div>
             </div>
 
@@ -38,6 +45,34 @@
                 </a>
             </div>
         </div>
+
+        @if ($devolucion->trashed())
+            <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 sm:p-5 text-rose-900 shadow-sm">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-start gap-3">
+                        <div class="p-2 rounded-lg bg-rose-100 text-rose-600 shrink-0">
+                            <i class="fas fa-ban text-base"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-rose-950">Acta de Devolución Anulada (Dada de Baja)</h3>
+                            <p class="text-xs text-rose-800 mt-0.5">
+                                Anulada el <strong>{{ $devolucion->deleted_at->format('d/m/Y h:i A') }}</strong> por <strong>{{ $devolucion->anuladoPor?->name ?? 'Administración' }}</strong>.
+                            </p>
+                            @if ($devolucion->motivo_anulacion)
+                                <p class="text-xs text-rose-900 mt-1.5 bg-rose-100/70 p-2 rounded-md font-medium">
+                                    <strong>Motivo:</strong> {{ $devolucion->motivo_anulacion }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                    @can('admin')
+                        <button type="button" id="btn-reactivar-devolucion" class="shrink-0 px-3 py-2 bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                            <i class="fas fa-redo-alt mr-1"></i> Reactivar Devolución
+                        </button>
+                    @endcan
+                </div>
+            </div>
+        @endif
 
         {{-- Tarjeta Principal del Acta --}}
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -188,4 +223,45 @@
             </div>
         </div>
     </div>
+
+    @if ($devolucion->trashed())
+        <form id="form-reactivar-devolucion" action="{{ route('devoluciones.restore', $devolucion->id) }}" method="POST" style="display: none;">
+            @csrf
+            <input type="hidden" name="password" id="input-password-reactivar-dev">
+        </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('btn-reactivar-devolucion');
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        Swal.fire({
+                            title: '¿Reactivar esta Devolución?',
+                            text: 'Al reactivar el acta, la devolución volverá a ser válida y el bien actualizará su estado en el inventario.',
+                            icon: 'question',
+                            input: 'password',
+                            inputPlaceholder: 'Ingrese su contraseña de administrador...',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sí, Reactivar Devolución',
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#002855',
+                            cancelButtonColor: '#6B7280',
+                            preConfirm: (password) => {
+                                if (!password) {
+                                    Swal.showValidationMessage('Debe ingresar su contraseña para autorizar la reactivación.');
+                                    return false;
+                                }
+                                return password;
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed && result.value) {
+                                document.getElementById('input-password-reactivar-dev').value = result.value;
+                                document.getElementById('form-reactivar-devolucion').submit();
+                            }
+                        });
+                    });
+                }
+            });
+        </script>
+    @endif
 </x-app-layout>

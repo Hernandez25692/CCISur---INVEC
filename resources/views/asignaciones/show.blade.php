@@ -16,7 +16,12 @@
                 </nav>
                 <div class="flex items-center gap-3">
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Acta de Entrega de Bienes</h1>
-                    @if ($asignacion->devolucion)
+                    @if ($asignacion->trashed())
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                            <i class="fas fa-ban text-xs text-rose-500" aria-hidden="true"></i>
+                            Asignación Anulada
+                        </span>
+                    @elseif ($asignacion->devolucion)
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
                             <i class="fas fa-check text-xs text-gray-500" aria-hidden="true"></i>
                             Devuelto (Concluido)
@@ -47,6 +52,34 @@
                 @endif
             </div>
         </div>
+
+        @if ($asignacion->trashed())
+            <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 sm:p-5 text-rose-900 shadow-sm">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-start gap-3">
+                        <div class="p-2 rounded-lg bg-rose-100 text-rose-600 shrink-0">
+                            <i class="fas fa-ban text-base"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-rose-950">Acta de Asignación Anulada (Dada de Baja)</h3>
+                            <p class="text-xs text-rose-800 mt-0.5">
+                                Anulada el <strong>{{ $asignacion->deleted_at->format('d/m/Y h:i A') }}</strong> por <strong>{{ $asignacion->anuladoPor?->name ?? 'Administración' }}</strong>.
+                            </p>
+                            @if ($asignacion->motivo_anulacion)
+                                <p class="text-xs text-rose-900 mt-1.5 bg-rose-100/70 p-2 rounded-md font-medium">
+                                    <strong>Motivo:</strong> {{ $asignacion->motivo_anulacion }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                    @can('admin')
+                        <button type="button" id="btn-reactivar-asignacion" class="shrink-0 px-3 py-2 bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                            <i class="fas fa-redo-alt mr-1"></i> Reactivar Asignación
+                        </button>
+                    @endcan
+                </div>
+            </div>
+        @endif
 
         {{-- Tarjeta Principal del Acta --}}
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -184,4 +217,45 @@
             </div>
         </div>
     </div>
+
+    @if ($asignacion->trashed())
+        <form id="form-reactivar-asignacion" action="{{ route('asignaciones.restore', $asignacion->id) }}" method="POST" style="display: none;">
+            @csrf
+            <input type="hidden" name="password" id="input-password-reactivar">
+        </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('btn-reactivar-asignacion');
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        Swal.fire({
+                            title: '¿Reactivar esta Asignación?',
+                            text: 'Al reactivar el acta, el bien asociado volverá a quedar Asignado a su custodio anterior.',
+                            icon: 'question',
+                            input: 'password',
+                            inputPlaceholder: 'Ingrese su contraseña de usuario...',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sí, Reactivar Asignación',
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#002855',
+                            cancelButtonColor: '#6B7280',
+                            preConfirm: (password) => {
+                                if (!password) {
+                                    Swal.showValidationMessage('Debe ingresar su contraseña para autorizar la reactivación.');
+                                    return false;
+                                }
+                                return password;
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed && result.value) {
+                                document.getElementById('input-password-reactivar').value = result.value;
+                                document.getElementById('form-reactivar-asignacion').submit();
+                            }
+                        });
+                    });
+                }
+            });
+        </script>
+    @endif
 </x-app-layout>

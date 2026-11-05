@@ -1,29 +1,34 @@
 <x-app-layout>
-    <div class="py-6 space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {{-- Encabezado principal --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="py-4 space-y-6">
+        <!-- Encabezado -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <nav class="flex items-center gap-2 text-xs text-gray-500 mb-1" aria-label="Breadcrumb">
-                    <a href="{{ route('dashboard') }}" class="hover:text-brand-navy">Inicio</a>
-                    <span>/</span>
-                    <span class="text-brand-navy font-semibold">Asignaciones</span>
-                </nav>
-                <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Gestión de Asignaciones</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Control de bienes institucionales actualmente en uso y custodia</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Gestión de Asignaciones</h1>
+                <p class="mt-1 text-sm text-gray-500">Control de bienes institucionales actualmente en uso y custodia</p>
             </div>
             <div class="flex flex-wrap items-center gap-2.5">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroAsignacionesForm'); if (f) { const oldAction = f.action; f.action = '{{ route('asignaciones.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('asignaciones.exportar', request()->query()) }}'; }"
                     class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
-                    title="Exportar asignaciones a Excel con los filtros aplicados">
+                    title="Exportar listado a Excel con los filtros aplicados">
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
+                <a href="{{ route('asignaciones.bajas') }}"
+                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
+                    <span>Dados de baja</span>
+                    @if (($totalAnuladas ?? 0) > 0)
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-800 font-bold">
+                            {{ $totalAnuladas }}
+                        </span>
+                    @endif
+                </a>
                 @can('admin')
                     <a href="{{ route('asignaciones.create') }}"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-navy text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                        <i class="fas fa-plus text-xs text-brand-gold" aria-hidden="true"></i>
-                        <span>Nueva Asignación</span>
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                        Nueva Asignación
                     </a>
                 @endcan
             </div>
@@ -95,7 +100,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <form id="filtroAsignacionesForm" method="GET" action="{{ route('asignaciones.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
                 {{-- Buscador general --}}
-                <div class="sm:col-span-2 lg:col-span-4">
+                <div class="sm:col-span-2 lg:col-span-3">
                     <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -119,6 +124,17 @@
                     </select>
                 </div>
 
+                {{-- Estado de Acta --}}
+                <div class="lg:col-span-2">
+                    <label for="estado_acta" class="block text-xs font-semibold text-gray-600 mb-1">Estado de Acta</label>
+                    <select name="estado_acta" id="estado_acta"
+                        class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                        <option value="activas" {{ ($estadoActa ?? 'activas') === 'activas' ? 'selected' : '' }}>Activas en Custodia</option>
+                        <option value="anuladas" {{ ($estadoActa ?? '') === 'anuladas' ? 'selected' : '' }}>Anuladas (Bajas)</option>
+                        <option value="todas" {{ ($estadoActa ?? '') === 'todas' ? 'selected' : '' }}>Todas (Historial)</option>
+                    </select>
+                </div>
+
                 {{-- Fecha Inicio --}}
                 <div class="lg:col-span-2">
                     <label for="fecha_inicio" class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
@@ -127,7 +143,7 @@
                 </div>
 
                 {{-- Fecha Fin --}}
-                <div class="lg:col-span-2">
+                <div class="lg:col-span-1">
                     <label for="fecha_fin" class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
                     <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
                         class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
@@ -268,44 +284,58 @@
 
                                 {{-- Acciones --}}
                                 <td class="px-4 py-3 whitespace-nowrap text-center">
-                                    <div class="inline-flex items-center gap-1.5">
-                                        {{-- Botón rápido: Devolver Bien --}}
-                                        @can('admin')
-                                            <a href="{{ route('devoluciones.create', ['asignacion_id' => $item->id]) }}"
-                                                class="inline-flex items-center justify-center px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded hover:bg-emerald-600 hover:text-white text-xs font-semibold shadow-2xs transition"
-                                                title="Registrar Devolución de este bien">
-                                                <i class="fas fa-undo text-xs mr-1" aria-hidden="true"></i>
-                                                Devolver
+                                    @if ($item->trashed())
+                                        <div class="inline-flex items-center gap-1.5">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                                                <i class="fas fa-ban text-[9px]" aria-hidden="true"></i>
+                                                Anulada
+                                            </span>
+                                            <a href="{{ route('asignaciones.show', $item->id) }}"
+                                                class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-semibold transition"
+                                                title="Ver acta y auditoría">
+                                                <i class="fas fa-eye text-[11px]"></i> Ver
                                             </a>
-                                        @endcan
+                                        </div>
+                                    @else
+                                        <div class="inline-flex items-center gap-1.5">
+                                            {{-- Botón rápido: Devolver Bien --}}
+                                            @can('admin')
+                                                <a href="{{ route('devoluciones.create', ['asignacion_id' => $item->id]) }}"
+                                                    class="inline-flex items-center justify-center px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded hover:bg-emerald-600 hover:text-white text-xs font-semibold shadow-2xs transition"
+                                                    title="Registrar Devolución de este bien">
+                                                    <i class="fas fa-undo text-xs mr-1" aria-hidden="true"></i>
+                                                    Devolver
+                                                </a>
+                                            @endcan
 
-                                        {{-- Ver Acta --}}
-                                        <a href="{{ route('asignaciones.show', $item->id) }}"
-                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-gray-500 hover:text-brand-navy hover:bg-gray-100 transition"
-                                            title="Ver acta de entrega">
-                                            <i class="fas fa-eye text-xs" aria-hidden="true"></i>
-                                        </a>
+                                            {{-- Ver Acta --}}
+                                            <a href="{{ route('asignaciones.show', $item->id) }}"
+                                                class="w-7 h-7 rounded inline-flex items-center justify-center text-gray-500 hover:text-brand-navy hover:bg-gray-100 transition"
+                                                title="Ver acta de entrega">
+                                                <i class="fas fa-eye text-xs" aria-hidden="true"></i>
+                                            </a>
 
-                                        {{-- Descargar PDF --}}
-                                        <a href="{{ route('asignaciones.pdf', $item->id) }}"
-                                            target="_blank"
-                                            class="w-7 h-7 rounded inline-flex items-center justify-center text-purple-600 hover:text-purple-900 hover:bg-purple-50 transition"
-                                            title="Descargar Acta en PDF">
-                                            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
-                                        </a>
+                                            {{-- Descargar PDF --}}
+                                            <a href="{{ route('asignaciones.pdf', $item->id) }}"
+                                                target="_blank"
+                                                class="w-7 h-7 rounded inline-flex items-center justify-center text-purple-600 hover:text-purple-900 hover:bg-purple-50 transition"
+                                                title="Descargar Acta en PDF">
+                                                <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+                                            </a>
 
-                                        {{-- Anular Asignación con contraseña (data-attributes seguros contra XSS) --}}
-                                        @can('admin')
-                                            <button type="button"
-                                                class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
-                                                title="Anular asignación por error"
-                                                data-id="{{ $item->id }}"
-                                                data-nombre="{{ $referencia->nombre ?? 'Bien' }}"
-                                                data-etiqueta="{{ $referencia->etiqueta ?? 'Sin etiqueta' }}">
-                                                <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
-                                            </button>
-                                        @endcan
-                                    </div>
+                                            {{-- Anular Asignación con contraseña (data-attributes seguros contra XSS) --}}
+                                            @can('admin')
+                                                <button type="button"
+                                                    class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
+                                                    title="Anular asignación por error"
+                                                    data-id="{{ $item->id }}"
+                                                    data-nombre="{{ $referencia->nombre ?? 'Bien' }}"
+                                                    data-etiqueta="{{ $referencia->etiqueta ?? 'Sin etiqueta' }}">
+                                                    <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
+                                                </button>
+                                            @endcan
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -342,11 +372,12 @@
         </div>
     </div>
 
-    {{-- Formulario oculto para anular asignación con contraseña --}}
+    {{-- Formulario oculto para anular asignación con contraseña y motivo --}}
     <form id="form-anular-asignacion" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
         <input type="hidden" name="password" id="input-password-anulacion">
+        <input type="hidden" name="motivo_anulacion" id="input-motivo-anulacion">
     </form>
 
     {{-- Script seguro contra XSS utilizando data attributes y escape nativo --}}
@@ -371,30 +402,39 @@
                                 Esta acción debe realizarse <strong>únicamente en caso de equivocación</strong> al registrar.
                                 El bien <strong>${nombre}</strong> (${etiqueta}) será liberado inmediatamente y quedará disponible para ser asignado.
                             </p>
-                            <div class="text-left mt-3">
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">
-                                    Ingrese su contraseña de usuario para autorizar:
-                                </label>
+                            <div class="text-left space-y-3 mt-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        Motivo de la anulación <span class="text-red-500">*</span>:
+                                    </label>
+                                    <textarea id="swal-motivo" class="w-full text-xs p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-gold focus:border-brand-navy" rows="2" placeholder="Ej: Error al seleccionar el custodio o bien"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        Ingrese su contraseña para autorizar <span class="text-red-500">*</span>:
+                                    </label>
+                                    <input type="password" id="swal-password" class="w-full text-xs p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-gold focus:border-brand-navy" placeholder="Su contraseña actual de sesión...">
+                                </div>
                             </div>
                         `,
-                        input: 'password',
-                        inputPlaceholder: 'Su contraseña actual de sesión...',
-                        inputAttributes: {
-                            autocapitalize: 'off',
-                            autocorrect: 'off',
-                            required: 'true'
-                        },
                         showCancelButton: true,
                         confirmButtonText: 'Sí, Anular y Liberar Bien',
                         cancelButtonText: 'Cancelar',
                         confirmButtonColor: '#DC2626',
                         cancelButtonColor: '#6B7280',
                         focusConfirm: false,
-                        preConfirm: (password) => {
-                            if (!password) {
-                                Swal.showValidationMessage('Debe ingresar su contraseña para proceder.');
+                        preConfirm: () => {
+                            const motivo = document.getElementById('swal-motivo')?.value.trim();
+                            const password = document.getElementById('swal-password')?.value;
+                            if (!motivo || motivo.length < 5) {
+                                Swal.showValidationMessage('Debe ingresar un motivo de anulación válido (mínimo 5 caracteres).');
+                                return false;
                             }
-                            return password;
+                            if (!password) {
+                                Swal.showValidationMessage('Debe ingresar su contraseña para autorizar.');
+                                return false;
+                            }
+                            return { motivo, password };
                         },
                         customClass: {
                             popup: 'rounded-xl text-left',
@@ -405,7 +445,8 @@
                         if (result.isConfirmed && result.value) {
                             const form = document.getElementById('form-anular-asignacion');
                             form.action = `/asignaciones/${id}`;
-                            document.getElementById('input-password-anulacion').value = result.value;
+                            document.getElementById('input-password-anulacion').value = result.value.password;
+                            document.getElementById('input-motivo-anulacion').value = result.value.motivo;
                             form.submit();
                         }
                     });
