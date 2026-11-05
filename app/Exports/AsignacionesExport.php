@@ -29,7 +29,14 @@ class AsignacionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
 
     public function query(): Builder
     {
-        $query = Asignacion::activas()->with(['empleado', 'mobiliario', 'dispositivo']);
+        $estadoActa = $this->request->input('estado_acta');
+        if ($estadoActa === 'anuladas' || $this->request->boolean('bajas_solamente')) {
+            $query = Asignacion::onlyTrashed()->with(['anuladoPor', 'empleado', 'mobiliario', 'dispositivo']);
+        } elseif ($estadoActa === 'todas') {
+            $query = Asignacion::withTrashed()->with(['anuladoPor', 'empleado', 'mobiliario', 'dispositivo']);
+        } else {
+            $query = Asignacion::activas()->with(['empleado', 'mobiliario', 'dispositivo']);
+        }
 
         $tipo = $this->request->input('tipo');
         if ($tipo && in_array($tipo, [Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO], true)) {
@@ -49,13 +56,23 @@ class AsignacionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
         $buscar = trim((string) $this->request->input('buscar', $this->request->input('elemento', $this->request->input('empleado', ''))));
         if ($buscar !== '') {
             $buscarSafe = addcslashes($buscar, '%_\\');
-            $query->where(function (Builder $q) use ($buscarSafe): void {
-                $q->whereHas('empleado', function (Builder $sub) use ($buscarSafe): void {
+            $buscarIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($buscar), '%_\\');
+
+            $query->where(function (Builder $q) use ($buscarSafe, $buscarIdentidad): void {
+                $q->whereHas('empleado', function (Builder $sub) use ($buscarSafe, $buscarIdentidad): void {
                     $sub->where('nombre_completo', 'like', "%{$buscarSafe}%")
                         ->orWhere('identidad', 'like', "%{$buscarSafe}%")
                         ->orWhere('codigo', 'like', "%{$buscarSafe}%");
+
+                    if ($buscarIdentidad !== '' && $buscarIdentidad !== $buscarSafe) {
+                        $sub->orWhere('identidad', 'like', "%{$buscarIdentidad}%");
+                    }
                 })
                     ->orWhere('area', 'like', "%{$buscarSafe}%")
+                    ->orWhere('motivo_anulacion', 'like', "%{$buscarSafe}%")
+                    ->orWhereHas('anuladoPor', function (Builder $sub) use ($buscarSafe): void {
+                        $sub->where('name', 'like', "%{$buscarSafe}%");
+                    })
                     ->orWhereHas('mobiliario', function (Builder $sub) use ($buscarSafe): void {
                         $sub->where('etiqueta', 'like', "%{$buscarSafe}%")
                             ->orWhere('nombre', 'like', "%{$buscarSafe}%");
@@ -75,6 +92,7 @@ class AsignacionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
     {
         return [
             'Correlativo Acta',
+            'Estado del Acta',
             'Destino',
             'Custodio / Responsable',
             'DNI / Código',
@@ -84,6 +102,9 @@ class AsignacionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'Etiqueta / Placa',
             'Fecha de Entrega',
             'Entregado Por',
+            'Fecha de Anulación',
+            'Anulado Por',
+            'Motivo de Anulación',
         ];
     }
 
@@ -101,8 +122,13 @@ class AsignacionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             ? 'N/A'
             : ($asignacion->empleado ? "{$asignacion->empleado->codigo} - {$asignacion->empleado->identidad_formateada}" : 'N/A');
 
+        $estadoTexto = $asignacion->trashed()
+            ? 'Anulada (Dada de Baja)'
+            : ($asignacion->devolucion ? 'Devuelta / Concluida' : 'Activa en Custodia');
+
         return [
             $correlativo,
+            $estadoTexto,
             $destino,
             $custodio,
             $dniCodigo,
@@ -112,6 +138,9 @@ class AsignacionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $asignacion->etiqueta_bien,
             $asignacion->fecha_entrega?->format('d/m/Y') ?? 'N/A',
             $asignacion->entregado_por,
+            $asignacion->deleted_at?->format('d/m/Y H:i') ?? 'N/A',
+            $asignacion->anuladoPor?->name ?? 'N/A',
+            $asignacion->motivo_anulacion ?? 'N/A',
         ];
     }
 

@@ -31,11 +31,29 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
 
     public function query(): Builder
     {
-        $query = Devolucion::query()->with([
-            'asignacion.empleado',
-            'asignacion.mobiliario',
-            'asignacion.dispositivo',
-        ]);
+        $estadoActa = $this->request->input('estado_acta');
+        if ($estadoActa === 'anuladas' || $this->request->boolean('bajas_solamente')) {
+            $query = Devolucion::onlyTrashed()->with([
+                'anuladoPor',
+                'asignacion.empleado',
+                'asignacion.mobiliario',
+                'asignacion.dispositivo',
+            ]);
+        } elseif ($estadoActa === 'todas') {
+            $query = Devolucion::withTrashed()->with([
+                'anuladoPor',
+                'asignacion.empleado',
+                'asignacion.mobiliario',
+                'asignacion.dispositivo',
+            ]);
+        } else {
+            $query = Devolucion::query()->with([
+                'anuladoPor',
+                'asignacion.empleado',
+                'asignacion.mobiliario',
+                'asignacion.dispositivo',
+            ]);
+        }
 
         $buscar = trim((string) $this->request->input('buscar'));
         if ($buscar !== '') {
@@ -141,6 +159,7 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
     {
         return [
             'Correlativo Acta',
+            'Estado del Acta',
             'Fecha de Devolución',
             'Custodio Saliente / Área',
             'Tipo de Bien',
@@ -149,6 +168,9 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'Estado al Recibir',
             'Recibido Por',
             'Observaciones',
+            'Fecha de Anulación',
+            'Anulado Por',
+            'Motivo de Anulación',
         ];
     }
 
@@ -163,8 +185,13 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             ? 'Área Común: '.$asig->area
             : ($asig?->empleado?->nombre_completo ?? 'N/A');
 
+        $estadoTexto = $devolucion->trashed()
+            ? 'Anulada (Dada de Baja)'
+            : 'Vigente (Finiquitada)';
+
         return [
             $correlativo,
+            $estadoTexto,
             $devolucion->fecha_devolucion?->format('d/m/Y') ?? 'N/A',
             $custodio,
             $asig?->tipo === Asignacion::TIPO_MOBILIARIO ? 'Mobiliario' : 'Dispositivo',
@@ -173,6 +200,9 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $devolucion->estado_devuelto,
             $devolucion->recibido_por,
             $devolucion->observaciones ?? 'Sin observaciones',
+            $devolucion->deleted_at?->format('d/m/Y H:i') ?? 'N/A',
+            $devolucion->anuladoPor?->name ?? 'N/A',
+            $devolucion->motivo_anulacion ?? 'N/A',
         ];
     }
 
