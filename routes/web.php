@@ -52,13 +52,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/empleados/{id}/reactivar', [\App\Http\Controllers\EmpleadoController::class, 'reactivar'])->name('empleados.reactivar');
     Route::resource('empleados', \App\Http\Controllers\EmpleadoController::class);
 
+    Route::get('/asignaciones/bajas/exportar', [AsignacionController::class, 'exportarBajas'])->name('asignaciones.bajas.exportar');
+    Route::get('/asignaciones/bajas', [AsignacionController::class, 'bajas'])->name('asignaciones.bajas');
     Route::get('/asignaciones/exportar', [AsignacionController::class, 'exportar'])->name('asignaciones.exportar');
+    Route::post('/asignaciones/{id}/restore', [AsignacionController::class, 'restore'])->name('asignaciones.restore');
     Route::resource('asignaciones', AsignacionController::class)->except(['edit', 'update'])->parameters([
         'asignaciones' => 'asignacion',
     ]);
 
-    // PDF de acta de asignación
-    Route::get('asignaciones/{asignacion}/pdf', [AsignacionController::class, 'pdf'])->name('asignaciones.pdf');
+    // PDF de acta de asignación y detalle con soporte para registros dados de baja
+    Route::get('asignaciones/{asignacion}/pdf', [AsignacionController::class, 'pdf'])->withTrashed()->name('asignaciones.pdf');
+    Route::get('asignaciones/{asignacion}', [AsignacionController::class, 'show'])->withTrashed()->name('asignaciones.show');
 
     // Reportes (Redirección para compatibilidad)
     Route::get('/reportes/asignados', fn () => redirect()->route('asignaciones.index', request()->query()))->name('reportes.asignados');
@@ -69,11 +73,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/empleados/{empleado}/historial', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->withTrashed()->name('empleados.historial');
     Route::get('/asignaciones/empleado/{empleado}', [\App\Http\Controllers\EmpleadoController::class, 'historial'])->withTrashed()->name('asignaciones.historial');
 
+    Route::get('/devoluciones/bajas/exportar', [\App\Http\Controllers\DevolucionController::class, 'exportarBajas'])->name('devoluciones.bajas.exportar');
+    Route::get('/devoluciones/bajas', [\App\Http\Controllers\DevolucionController::class, 'bajas'])->name('devoluciones.bajas');
     Route::get('/devoluciones/exportar', [\App\Http\Controllers\DevolucionController::class, 'exportar'])->name('devoluciones.exportar');
+    Route::post('/devoluciones/{id}/restore', [\App\Http\Controllers\DevolucionController::class, 'restore'])->name('devoluciones.restore');
     Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class)
         ->except(['edit', 'update'])
         ->parameters(['devoluciones' => 'devolucion']);
-    Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->name('devoluciones.pdf');
+    Route::get('devoluciones/{devolucion}/pdf', [\App\Http\Controllers\DevolucionController::class, 'pdf'])->withTrashed()->name('devoluciones.pdf');
+    Route::get('devoluciones/{devolucion}', [\App\Http\Controllers\DevolucionController::class, 'show'])->withTrashed()->name('devoluciones.show');
 
     // APIs para formularios dinámicos y búsquedas ágiles
     Route::get('/api/buscar-empleados', function (\Illuminate\Http\Request $request) {

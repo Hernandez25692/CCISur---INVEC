@@ -9,7 +9,9 @@ use App\Models\Dispositivo;
 use App\Models\Mobiliario;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -26,12 +28,33 @@ class DevolucionController extends Controller
         $fechaInicio = $request->input('fecha_inicio');
         $fechaFin = $request->input('fecha_fin');
         $estadoFiltro = $request->input('estado');
+        $estadoActa = $request->input('estado_acta', 'activas');
 
-        $query = Devolucion::with([
-            'asignacion.empleado',
-            'asignacion.mobiliario',
-            'asignacion.dispositivo',
-        ]);
+        $totalAnuladas = Devolucion::onlyTrashed()->count();
+
+        // Determinar alcance según el filtro de actas
+        if ($estadoActa === 'anuladas') {
+            $query = Devolucion::onlyTrashed()->with([
+                'anuladoPor',
+                'asignacion.empleado',
+                'asignacion.mobiliario',
+                'asignacion.dispositivo',
+            ]);
+        } elseif ($estadoActa === 'todas') {
+            $query = Devolucion::withTrashed()->with([
+                'anuladoPor',
+                'asignacion.empleado',
+                'asignacion.mobiliario',
+                'asignacion.dispositivo',
+            ]);
+        } else {
+            $query = Devolucion::with([
+                'anuladoPor',
+                'asignacion.empleado',
+                'asignacion.mobiliario',
+                'asignacion.dispositivo',
+            ]);
+        }
 
         if ($buscar !== '') {
             $busquedaEscapada = addcslashes($buscar, '%_\\');
@@ -144,7 +167,85 @@ class DevolucionController extends Controller
             'no_asignables' => Devolucion::whereIn('estado_devuelto', Dispositivo::ESTADOS_NO_ASIGNABLES)->count(),
         ];
 
-        return view('devoluciones.index', compact('devoluciones', 'metricas'));
+        return view('devoluciones.index', compact('devoluciones', 'metricas', 'totalAnuladas', 'estadoActa'));
+    }
+
+    /**
+     * Listar archivo histórico exclusivo de devoluciones anuladas.
+     */
+    public function bajas(Request $request): View
+    {
+        $buscar = trim((string) $request->input('buscar'));
+        $tipo = $request->input('tipo');
+        $fechaInicio = $request->input('fecha_inicio');
+        $fechaFin = $request->input('fecha_fin');
+        $totalAnuladas = Devolucion::onlyTrashed()->count();
+
+        $query = Devolucion::onlyTrashed()->with([
+            'anuladoPor',
+            'asignacion.empleado',
+            'asignacion.mobiliario',
+            'asignacion.dispositivo',
+        ]);
+
+        if ($buscar !== '') {
+            $busquedaEscapada = addcslashes($buscar, '%_\\');
+            $busquedaIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($buscar), '%_\\');
+
+            $query->where(function (Builder $q) use ($busquedaEscapada, $busquedaIdentidad): void {
+                $q->where('recibido_por', 'like', "%{$busquedaEscapada}%")
+                    ->orWhere('observaciones', 'like', "%{$busquedaEscapada}%")
+                    ->orWhere('motivo_anulacion', 'like', "%{$busquedaEscapada}%")
+                    ->orWhereHas('anuladoPor', function (Builder $user) use ($busquedaEscapada): void {
+                        $user->where('name', 'like', "%{$busquedaEscapada}%");
+                    })
+                    ->orWhereHas('asignacion', function (Builder $sub) use ($busquedaEscapada, $busquedaIdentidad): void {
+                        $sub->where('area', 'like', "%{$busquedaEscapada}%")
+                            ->orWhereHas('empleado', function (Builder $emp) use ($busquedaEscapada, $busquedaIdentidad): void {
+                                $emp->where('nombre_completo', 'like', "%{$busquedaEscapada}%")
+                                    ->orWhere('codigo', 'like', "%{$busquedaEscapada}%")
+                                    ->orWhere('identidad', 'like', "%{$busquedaEscapada}%");
+
+                                if ($busquedaIdentidad !== '' && $busquedaIdentidad !== $busquedaEscapada) {
+                                    $emp->orWhere('identidad', 'like', "%{$busquedaIdentidad}%");
+                                }
+                            })
+                            ->orWhereHas('mobiliario', function (Builder $mob) use ($busquedaEscapada): void {
+                                $mob->where('etiqueta', 'like', "%{$busquedaEscapada}%")
+                                    ->orWhere('nombre', 'like', "%{$busquedaEscapada}%");
+                            })
+                            ->orWhereHas('dispositivo', function (Builder $disp) use ($busquedaEscapada): void {
+                                $disp->where('etiqueta', 'like', "%{$busquedaEscapada}%")
+                                    ->orWhere('nombre', 'like', "%{$busquedaEscapada}%")
+                                    ->orWhere('n_serie', 'like', "%{$busquedaEscapada}%");
+                            });
+                    });
+            });
+        }
+
+        if ($tipo && in_array($tipo, [Asignacion::TIPO_DISPOSITIVO, Asignacion::TIPO_MOBILIARIO], true)) {
+            $query->whereHas('asignacion', function ($sub) use ($tipo): void {
+                $sub->where('tipo', $tipo);
+            });
+        }
+
+        if ($fechaInicio) {
+            $parsedInicio = rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false);
+            if ($parsedInicio) {
+                $query->whereDate('deleted_at', '>=', $parsedInicio);
+            }
+        }
+
+        if ($fechaFin) {
+            $parsedFin = rescue(fn () => Carbon::parse($fechaFin)->endOfDay(), null, false);
+            if ($parsedFin) {
+                $query->whereDate('deleted_at', '<=', $parsedFin);
+            }
+        }
+
+        $devoluciones = $query->latest('deleted_at')->paginate(10)->withQueryString();
+
+        return view('devoluciones.bajas', compact('devoluciones', 'totalAnuladas', 'buscar', 'tipo'));
     }
 
     /**
@@ -153,6 +254,16 @@ class DevolucionController extends Controller
     public function exportar(Request $request)
     {
         return Excel::download(new DevolucionesExport($request), 'reporte_devoluciones.xlsx');
+    }
+
+    /**
+     * Exportar archivo exclusivo de devoluciones anuladas a Excel.
+     */
+    public function exportarBajas(Request $request)
+    {
+        $request->merge(['estado_acta' => 'anuladas']);
+
+        return Excel::download(new DevolucionesExport($request), 'devoluciones_anuladas.xlsx');
     }
 
     public function create(Request $request)
@@ -216,7 +327,7 @@ class DevolucionController extends Controller
             'asignacion_id' => [
                 'required',
                 'exists:asignacions,id',
-                Rule::unique('devoluciones', 'asignacion_id'),
+                Rule::unique('devoluciones', 'asignacion_id')->withoutTrashed(),
             ],
             'fecha_devolucion' => ['required', 'date'],
             'estado_devuelto' => ['required', 'string', Rule::in(Devolucion::ESTADOS_DEVOLUCION)],
@@ -276,6 +387,7 @@ class DevolucionController extends Controller
     public function show(Devolucion $devolucion)
     {
         $devolucion->load([
+            'anuladoPor',
             'asignacion.empleado',
             'asignacion.mobiliario',
             'asignacion.dispositivo',
@@ -315,18 +427,25 @@ class DevolucionController extends Controller
     {
         Gate::authorize('admin');
 
-        $request->validate([
+        $validated = $request->validate([
             'password' => ['required', 'string'],
+            'motivo_anulacion' => ['required', 'string', 'min:5', 'max:500'],
         ], [
             'password.required' => 'Debe ingresar su contraseña de administrador para anular esta devolución.',
+            'motivo_anulacion.required' => 'Debe ingresar el motivo de anulación de la devolución.',
+            'motivo_anulacion.min' => 'El motivo de anulación debe contener al menos 5 caracteres.',
         ]);
 
-        if (! Hash::check($request->password, $request->user()->password)) {
+        if (! Hash::check($validated['password'], $request->user()->password)) {
             return back()->with('error', 'Contraseña incorrecta. No se pudo anular la devolución.');
         }
 
-        DB::transaction(function () use ($devolucion): void {
+        DB::transaction(function () use ($devolucion, $request, $validated): void {
             $asignacion = $devolucion->asignacion;
+
+            $devolucion->motivo_anulacion = $validated['motivo_anulacion'];
+            $devolucion->anulado_por_user_id = $request->user()->id;
+            $devolucion->save();
             $devolucion->delete();
 
             if ($asignacion) {
@@ -344,5 +463,54 @@ class DevolucionController extends Controller
 
         return redirect()->route('devoluciones.index')
             ->with('success', 'Acta de devolución anulada. El bien ha retornado a su estado asignado anterior.');
+    }
+
+    /**
+     * Reactivar una devolución anulada por error previo.
+     */
+    public function restore(Request $request, int $id): RedirectResponse
+    {
+        Gate::authorize('admin');
+
+        $request->validate([
+            'password' => ['required', 'string'],
+        ], [
+            'password.required' => 'Debe ingresar su contraseña de administrador para reactivar esta devolución.',
+        ]);
+
+        if (! Hash::check($request->password, $request->user()->password)) {
+            return back()->with('error', 'Contraseña incorrecta. No se pudo reactivar la devolución.');
+        }
+
+        $devolucion = Devolucion::onlyTrashed()->findOrFail($id);
+        $asignacion = Asignacion::withTrashed()->findOrFail($devolucion->asignacion_id);
+
+        if ($asignacion->trashed()) {
+            return back()->with('error', 'No se puede reactivar: la asignación asociada se encuentra anulada. Primero debe reactivar la asignación.');
+        }
+
+        if ($asignacion->devolucion()->exists()) {
+            return back()->with('error', 'No se puede reactivar: esta asignación ya cuenta con otra acta de devolución activa.');
+        }
+
+        DB::transaction(function () use ($devolucion, $asignacion): void {
+            $devolucion->motivo_anulacion = null;
+            $devolucion->anulado_por_user_id = null;
+            $devolucion->save();
+            $devolucion->restore();
+
+            $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
+                : Dispositivo::withTrashed()->find($asignacion->id_referencia);
+
+            if ($item) {
+                $item->estado = $devolucion->estado_devuelto;
+                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacion->es_area_comun, false);
+                $item->save();
+            }
+        });
+
+        return redirect()->route('devoluciones.show', $devolucion->id)
+            ->with('success', 'Acta de devolución reactivada exitosamente. El inventario ha sido actualizado.');
     }
 }
