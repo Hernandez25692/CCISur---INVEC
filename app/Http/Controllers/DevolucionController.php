@@ -75,10 +75,16 @@ class DevolucionController extends Controller
                         $sub->orWhere('id_referencia', $idBien);
                     }
 
-                    $sub->orWhereHas('empleado', function (Builder $emp) use ($busquedaEscapada): void {
+                    $busquedaIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($busqueda), '%_\\');
+
+                    $sub->orWhereHas('empleado', function (Builder $emp) use ($busquedaEscapada, $busquedaIdentidad): void {
                         $emp->where('nombre_completo', 'like', "%{$busquedaEscapada}%")
                             ->orWhere('codigo', 'like', "%{$busquedaEscapada}%")
                             ->orWhere('identidad', 'like', "%{$busquedaEscapada}%");
+
+                        if ($busquedaIdentidad !== '' && $busquedaIdentidad !== $busquedaEscapada) {
+                            $emp->orWhere('identidad', 'like', "%{$busquedaIdentidad}%");
+                        }
                     })
                         ->orWhereHas('mobiliario', function (Builder $mob) use ($busquedaEscapada): void {
                             $mob->where('etiqueta', 'like', "%{$busquedaEscapada}%")

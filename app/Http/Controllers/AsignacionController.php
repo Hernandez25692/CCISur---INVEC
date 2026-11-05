@@ -55,11 +55,17 @@ class AsignacionController extends Controller
         // Búsqueda inteligente con escape de comodines
         if ($buscar !== '') {
             $buscarSafe = addcslashes($buscar, '%_\\');
-            $query->where(function ($q) use ($buscarSafe): void {
-                $q->whereHas('empleado', function ($sub) use ($buscarSafe): void {
+            $buscarIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($buscar), '%_\\');
+
+            $query->where(function ($q) use ($buscarSafe, $buscarIdentidad): void {
+                $q->whereHas('empleado', function ($sub) use ($buscarSafe, $buscarIdentidad): void {
                     $sub->where('nombre_completo', 'like', "%{$buscarSafe}%")
                         ->orWhere('identidad', 'like', "%{$buscarSafe}%")
                         ->orWhere('codigo', 'like', "%{$buscarSafe}%");
+
+                    if ($buscarIdentidad !== '' && $buscarIdentidad !== $buscarSafe) {
+                        $sub->orWhere('identidad', 'like', "%{$buscarIdentidad}%");
+                    }
                 })
                     ->orWhere('area', 'like', "%{$buscarSafe}%")
                     ->orWhereHas('mobiliario', function ($sub) use ($buscarSafe): void {

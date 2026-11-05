@@ -81,14 +81,21 @@ Route::middleware(['auth'])->group(function () {
         $query = \App\Models\Empleado::query();
 
         if ($q !== '') {
-            $query->where(function ($sub) use ($q): void {
-                $sub->where('nombre_completo', 'like', "%{$q}%")
-                    ->orWhere('identidad', 'like', "%{$q}%")
-                    ->orWhere('codigo', 'like', "%{$q}%");
+            $qSafe = addcslashes($q, '%_\\');
+            $qClean = addcslashes(\App\Models\Empleado::normalizarIdentidad($q), '%_\\');
+
+            $query->where(function ($sub) use ($qSafe, $qClean): void {
+                $sub->where('nombre_completo', 'like', "%{$qSafe}%")
+                    ->orWhere('identidad', 'like', "%{$qSafe}%")
+                    ->orWhere('codigo', 'like', "%{$qSafe}%");
+
+                if ($qClean !== '' && $qClean !== $qSafe) {
+                    $sub->orWhere('identidad', 'like', "%{$qClean}%");
+                }
             });
         }
 
-        return $query->select(['id', 'codigo', 'nombre_completo', 'identidad', 'gerencia', 'cargo'])
+        return $query->select(['id', 'codigo', 'nombre_completo', 'identidad', 'gerencia', 'ubicacion'])
             ->orderBy('nombre_completo')
             ->limit(20)
             ->get();

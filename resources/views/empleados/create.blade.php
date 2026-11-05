@@ -23,7 +23,9 @@
             <!-- Identidad (DNI) -->
             <div>
                 <label for="identidad" class="block text-sm font-medium text-brand-navy">Número de Identidad (DNI)</label>
-                <input type="text" name="identidad" id="identidad" value="{{ old('identidad') }}" required
+                <input type="text" name="identidad" id="identidad"
+                    value="{{ $errors->has('identidad') ? '' : old('identidad') }}" required
+                    @if ($errors->has('identidad')) autofocus @endif
                     inputmode="numeric" maxlength="15"
                     placeholder="Ej. 0601199801234 (13 dígitos)"
                     class="mt-1 block w-full rounded-lg border-gray-300 font-mono text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('identidad') border-red-500 @enderror">

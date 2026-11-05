@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -40,6 +41,16 @@ class Empleado extends Model
     public static function normalizarIdentidad(?string $identidad): string
     {
         return (string) preg_replace('/[\s\-]+/', '', trim((string) $identidad));
+    }
+
+    /**
+     * Mutator para garantizar que la identidad siempre se persista normalizada a dígitos limpios.
+     */
+    protected function identidad(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => self::normalizarIdentidad($value),
+        );
     }
 
     public function asignaciones(): HasMany

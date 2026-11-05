@@ -49,7 +49,8 @@
             <div>
                 <label for="identidad" class="block text-sm font-medium text-brand-navy">Número de Identidad (DNI)</label>
                 <input type="text" name="identidad" id="identidad"
-                    value="{{ old('identidad', $empleado->identidad) }}" required
+                    value="{{ $errors->has('identidad') ? '' : old('identidad', $empleado->identidad_formateada) }}" required
+                    @if ($errors->has('identidad')) autofocus @endif
                     inputmode="numeric" maxlength="15"
                     class="mt-1 block w-full rounded-lg border-gray-300 font-mono text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('identidad') border-red-500 @enderror">
                 <p class="mt-1 text-xs text-gray-500">

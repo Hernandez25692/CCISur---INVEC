@@ -67,6 +67,18 @@ class EmpleadoController extends Controller
             'nombre_completo' => trim((string) $request->input('nombre_completo')),
         ]);
 
+        $identidadLimpia = Empleado::normalizarIdentidad($request->input('identidad'));
+        $empleadoExistente = Empleado::withTrashed()->where('identidad', $identidadLimpia)->first();
+
+        $mensajeUnique = 'Este número de identidad ya se encuentra registrado en el sistema.';
+        if ($empleadoExistente) {
+            if ($empleadoExistente->trashed()) {
+                $mensajeUnique = "Este número de identidad pertenece a «{$empleadoExistente->nombre_completo}», quien fue dado de baja. Puedes reactivarlo desde el listado de bajas.";
+            } else {
+                $mensajeUnique = "Este número de identidad ya está registrado en el colaborador «{$empleadoExistente->nombre_completo}» ({$empleadoExistente->codigo}).";
+            }
+        }
+
         $validated = $request->validate([
             'identidad' => ['required', 'string', 'regex:/^\d{13}$/', Rule::unique('empleados', 'identidad')],
             'nombre_completo' => ['required', 'string', 'max:255'],
@@ -75,7 +87,7 @@ class EmpleadoController extends Controller
         ], [
             'identidad.required' => 'El número de identidad (DNI) es obligatorio.',
             'identidad.regex' => 'El número de identidad debe contener exactamente 13 dígitos numéricos.',
-            'identidad.unique' => 'Este número de identidad ya se encuentra registrado en otro colaborador.',
+            'identidad.unique' => $mensajeUnique,
             'nombre_completo.required' => 'El nombre completo del colaborador es obligatorio.',
             'gerencia.required' => 'Debe seleccionar una gerencia.',
             'ubicacion.required' => 'Debe seleccionar una sede o ubicación.',
@@ -128,6 +140,21 @@ class EmpleadoController extends Controller
             'nombre_completo' => trim((string) $request->input('nombre_completo')),
         ]);
 
+        $identidadLimpia = Empleado::normalizarIdentidad($request->input('identidad'));
+        $empleadoExistente = Empleado::withTrashed()
+            ->where('identidad', $identidadLimpia)
+            ->where('id', '!=', $empleado->id)
+            ->first();
+
+        $mensajeUnique = 'Este número de identidad ya pertenece a otro colaborador registrado.';
+        if ($empleadoExistente) {
+            if ($empleadoExistente->trashed()) {
+                $mensajeUnique = "Este número de identidad pertenece a «{$empleadoExistente->nombre_completo}», quien fue dado de baja. Puedes reactivarlo desde el listado de bajas.";
+            } else {
+                $mensajeUnique = "Este número de identidad ya está registrado en el colaborador «{$empleadoExistente->nombre_completo}» ({$empleadoExistente->codigo}).";
+            }
+        }
+
         $validated = $request->validate([
             'identidad' => [
                 'required',
@@ -141,7 +168,7 @@ class EmpleadoController extends Controller
         ], [
             'identidad.required' => 'El número de identidad (DNI) es obligatorio.',
             'identidad.regex' => 'El número de identidad debe contener exactamente 13 dígitos numéricos.',
-            'identidad.unique' => 'Este número de identidad ya pertenece a otro colaborador registrado.',
+            'identidad.unique' => $mensajeUnique,
             'nombre_completo.required' => 'El nombre completo del colaborador es obligatorio.',
             'gerencia.required' => 'Debe seleccionar una gerencia.',
             'ubicacion.required' => 'Debe seleccionar una sede o ubicación.',
