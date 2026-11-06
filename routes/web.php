@@ -13,6 +13,11 @@ Route::get('/', function () {
     return view('inicio');
 });
 
+// Pantalla institucional de bloqueo por inactividad
+Route::get('/bloqueado', function () {
+    return view('auth.bloqueado');
+})->name('session.locked');
+
 // Dashboard (requiere login)
 Route::get('/dashboard', DashboardController::class)->middleware(['auth'])->name('dashboard');
 

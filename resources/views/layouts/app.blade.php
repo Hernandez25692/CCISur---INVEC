@@ -466,6 +466,8 @@
         @include('auth.partials.primer-cambio-password-modal')
     @endif
 
+    @include('auth.partials.inactivity-monitor')
+
     @stack('scripts')
 </body>
 
