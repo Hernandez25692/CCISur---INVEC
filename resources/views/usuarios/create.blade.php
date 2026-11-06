@@ -98,18 +98,70 @@
             </div>
 
             <!-- Contraseña Inicial Provisional -->
-            <div class="space-y-4 pt-2 border-t border-gray-100">
+            <div x-data="{
+                showPass: false,
+                showConfirmPass: false,
+                pass: '',
+                confirmPass: '',
+                get hasMin() { return this.pass.length >= 8 && this.pass.length <= 72; },
+                get hasLetter() { return /[a-zA-Z]/.test(this.pass); },
+                get hasNum() { return /[0-9]/.test(this.pass); },
+                get passwordsMatch() { return this.confirmPass.length > 0 && this.confirmPass === this.pass; },
+                get passwordsMismatch() { return this.confirmPass.length > 0 && this.confirmPass !== this.pass; }
+            }" class="space-y-4 pt-2 border-t border-gray-100">
                 <div class="rounded-lg bg-brand-gold-50 border border-brand-gold-200 p-3.5 text-xs text-brand-gold-900 flex items-start gap-2.5">
                     <i class="fas fa-info-circle text-brand-gold-700 text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
                     <span><strong>Contraseña Inicial Provisional:</strong> Al iniciar sesión por primera vez con esta clave, el sistema le exigirá automáticamente establecer su contraseña personal definitiva antes de acceder.</span>
                 </div>
 
+                <!-- Requisitos de Contraseña Institucional -->
+                <div class="rounded-lg bg-gray-50 border border-gray-200 p-3 text-xs text-gray-700">
+                    <p class="font-semibold text-brand-navy flex items-center gap-1.5 mb-1.5">
+                        <i class="fas fa-shield-alt text-brand-gold text-xs" aria-hidden="true"></i>
+                        Requisitos de la contraseña:
+                    </p>
+                    <ul class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        <li class="flex items-center gap-1.5 transition-colors duration-150"
+                            :class="pass.length === 0 ? 'text-gray-500' : (hasMin ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                            <i class="fas text-xs shrink-0"
+                               :class="pass.length === 0 ? 'fa-circle text-gray-300' : (hasMin ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                            <span>Mínimo 8 caracteres (máx. 72)</span>
+                        </li>
+                        <li class="flex items-center gap-1.5 transition-colors duration-150"
+                            :class="pass.length === 0 ? 'text-gray-500' : (hasLetter ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                            <i class="fas text-xs shrink-0"
+                               :class="pass.length === 0 ? 'fa-circle text-gray-300' : (hasLetter ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                            <span>Al menos una letra (a-z)</span>
+                        </li>
+                        <li class="flex items-center gap-1.5 transition-colors duration-150"
+                            :class="pass.length === 0 ? 'text-gray-500' : (hasNum ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                            <i class="fas text-xs shrink-0"
+                               :class="pass.length === 0 ? 'fa-circle text-gray-300' : (hasNum ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                            <span>Al menos un número (0-9)</span>
+                        </li>
+                    </ul>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="password" class="block text-sm font-semibold text-brand-navy">Contraseña Provisional</label>
-                        <input type="password" name="password" id="password" required autocomplete="new-password"
-                            placeholder="Mínimo 8 caracteres"
-                            class="mt-1.5 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('password') border-red-500 @enderror">
+                        <div class="relative mt-1.5">
+                            <input :type="showPass ? 'text' : 'password'"
+                                name="password"
+                                id="password"
+                                required
+                                x-model="pass"
+                                @copy.prevent
+                                @cut.prevent
+                                autocomplete="new-password"
+                                placeholder="Mínimo 8 caracteres (letras y números)"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm pr-10 focus:border-brand-gold focus:ring-brand-gold @error('password') border-red-500 @enderror">
+                            <button type="button"
+                                @click="showPass = !showPass"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                                <i class="fas text-xs" :class="showPass ? 'fa-eye' : 'fa-eye-slash'" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         @error('password')
                             <p class="text-red-600 text-xs mt-1 font-medium">{{ $message }}</p>
                         @enderror
@@ -117,9 +169,34 @@
 
                     <div>
                         <label for="password_confirmation" class="block text-sm font-semibold text-brand-navy">Confirmar Contraseña</label>
-                        <input type="password" name="password_confirmation" id="password_confirmation" required autocomplete="new-password"
-                            placeholder="Repita la contraseña"
-                            class="mt-1.5 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                        <div class="relative mt-1.5">
+                            <input :type="showConfirmPass ? 'text' : 'password'"
+                                name="password_confirmation"
+                                id="password_confirmation"
+                                required
+                                x-model="confirmPass"
+                                @paste.prevent
+                                autocomplete="new-password"
+                                placeholder="Repita la contraseña a mano"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm pr-10 focus:border-brand-gold focus:ring-brand-gold">
+                            <button type="button"
+                                @click="showConfirmPass = !showConfirmPass"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                                <i class="fas text-xs" :class="showConfirmPass ? 'fa-eye' : 'fa-eye-slash'" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <template x-if="passwordsMatch">
+                            <p class="text-emerald-600 text-xs mt-1 font-medium flex items-center gap-1">
+                                <i class="fas fa-check-circle text-emerald-500"></i>
+                                <span>Las contraseñas coinciden</span>
+                            </p>
+                        </template>
+                        <template x-if="passwordsMismatch">
+                            <p class="text-rose-600 text-xs mt-1 font-medium flex items-center gap-1">
+                                <i class="fas fa-times-circle text-rose-500"></i>
+                                <span>Las contraseñas no coinciden</span>
+                            </p>
+                        </template>
                     </div>
                 </div>
             </div>

@@ -23,6 +23,34 @@
         <form method="POST" action="{{ route('primer-cambio-password') }}" @submit.prevent="submitForm($event)" class="space-y-4">
             @csrf
 
+            <!-- Requisitos de Contraseña Institucional -->
+            <div class="rounded-lg bg-gray-50 border border-gray-200 p-3 text-xs text-gray-700">
+                <p class="font-semibold text-brand-navy flex items-center gap-1.5 mb-1.5">
+                    <i class="fas fa-shield-alt text-brand-gold text-xs" aria-hidden="true"></i>
+                    Requisitos de la nueva contraseña:
+                </p>
+                <ul class="space-y-1.5 text-xs">
+                    <li class="flex items-center gap-1.5 transition-colors duration-150"
+                        :class="newPassword.length === 0 ? 'text-gray-500' : (hasMinLength ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                        <i class="fas text-xs shrink-0"
+                           :class="newPassword.length === 0 ? 'fa-circle text-gray-300' : (hasMinLength ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                        <span>Mínimo 8 caracteres (máx. 72)</span>
+                    </li>
+                    <li class="flex items-center gap-1.5 transition-colors duration-150"
+                        :class="newPassword.length === 0 ? 'text-gray-500' : (hasLetter ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                        <i class="fas text-xs shrink-0"
+                           :class="newPassword.length === 0 ? 'fa-circle text-gray-300' : (hasLetter ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                        <span>Al menos una letra (a-z, A-Z)</span>
+                    </li>
+                    <li class="flex items-center gap-1.5 transition-colors duration-150"
+                        :class="newPassword.length === 0 ? 'text-gray-500' : (hasNumber ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                        <i class="fas text-xs shrink-0"
+                           :class="newPassword.length === 0 ? 'fa-circle text-gray-300' : (hasNumber ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                        <span>Al menos un número (0-9)</span>
+                    </li>
+                </ul>
+            </div>
+
             <!-- Nueva Contraseña -->
             <div>
                 <label for="primer_password" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider">
@@ -33,14 +61,17 @@
                            name="password" 
                            id="primer_password" 
                            required 
+                           x-model="newPassword"
+                           @copy.prevent
+                           @cut.prevent
                            autocomplete="new-password"
-                           placeholder="Mínimo 8 caracteres"
+                           placeholder="Mínimo 8 caracteres (letras y números)"
                            :class="errors.password ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'"
                            class="block w-full rounded-lg text-sm shadow-sm pr-10 focus:border-brand-gold focus:ring-brand-gold">
                     <button type="button" 
                             @click="showPass = !showPass" 
                             class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
-                        <i class="fas text-xs" :class="showPass ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
+                        <i class="fas text-xs" :class="showPass ? 'fa-eye' : 'fa-eye-slash'" aria-hidden="true"></i>
                     </button>
                 </div>
                 <template x-if="errors.password">
@@ -58,15 +89,29 @@
                            name="password_confirmation" 
                            id="primer_password_confirmation" 
                            required 
+                           x-model="confirmPassword"
+                           @paste.prevent
                            autocomplete="new-password"
-                           placeholder="Repite tu nueva contraseña"
+                           placeholder="Repite tu nueva contraseña a mano"
                            class="block w-full rounded-lg text-sm border-gray-300 shadow-sm pr-10 focus:border-brand-gold focus:ring-brand-gold">
                     <button type="button" 
                             @click="showPassConfirm = !showPassConfirm" 
                             class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
-                        <i class="fas text-xs" :class="showPassConfirm ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i>
+                        <i class="fas text-xs" :class="showPassConfirm ? 'fa-eye' : 'fa-eye-slash'" aria-hidden="true"></i>
                     </button>
                 </div>
+                <template x-if="passwordsMatch">
+                    <p class="text-emerald-600 text-xs mt-1 font-medium flex items-center gap-1">
+                        <i class="fas fa-check-circle text-emerald-500"></i>
+                        <span>Las contraseñas coinciden</span>
+                    </p>
+                </template>
+                <template x-if="passwordsMismatch">
+                    <p class="text-rose-600 text-xs mt-1 font-medium flex items-center gap-1">
+                        <i class="fas fa-times-circle text-rose-500"></i>
+                        <span>Las contraseñas no coinciden</span>
+                    </p>
+                </template>
             </div>
 
             <div class="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 flex items-start gap-2">
@@ -103,6 +148,24 @@
             errors: {},
             showPass: false,
             showPassConfirm: false,
+            newPassword: '',
+            confirmPassword: '',
+
+            get hasMinLength() {
+                return this.newPassword.length >= 8 && this.newPassword.length <= 72;
+            },
+            get hasLetter() {
+                return /[a-zA-Z]/.test(this.newPassword);
+            },
+            get hasNumber() {
+                return /[0-9]/.test(this.newPassword);
+            },
+            get passwordsMatch() {
+                return this.confirmPassword.length > 0 && this.confirmPassword === this.newPassword;
+            },
+            get passwordsMismatch() {
+                return this.confirmPassword.length > 0 && this.confirmPassword !== this.newPassword;
+            },
 
             async submitForm(event) {
                 this.loading = true;

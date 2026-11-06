@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,5 +38,13 @@ class AppServiceProvider extends ServiceProvider
         // Puertas de autorización institucional
         Gate::define('admin', fn (User $user): bool => $user->esAdministrador());
         Gate::define('superadmin', fn (User $user): bool => $user->esSuperAdmin());
+
+        // Política de contraseñas institucional (mínimo 8 caracteres, máximo 72 para bcrypt, al menos letras y números)
+        Password::defaults(function () {
+            return Password::min(8)
+                ->max(72)
+                ->letters()
+                ->numbers();
+        });
     }
 }

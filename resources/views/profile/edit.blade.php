@@ -130,10 +130,21 @@
                     <!-- Contraseña Actual -->
                     <div>
                         <label for="current_password" class="block text-sm font-semibold text-brand-navy">Contraseña Actual</label>
-                        <input type="password" name="current_password" id="current_password" required autocomplete="current-password"
-                            placeholder="Ingresa tu contraseña actual"
-                            :class="errors.current_password ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'"
-                            class="mt-1.5 block w-full sm:w-2/3 rounded-lg shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('current_password', 'updatePassword') border-red-500 @enderror">
+                        <div class="relative mt-1.5 w-full sm:w-2/3">
+                            <input :type="showCurrentPass ? 'text' : 'password'"
+                                name="current_password"
+                                id="current_password"
+                                required
+                                autocomplete="current-password"
+                                placeholder="Ingresa tu contraseña actual"
+                                :class="errors.current_password ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'"
+                                class="block w-full rounded-lg shadow-sm pr-10 focus:border-brand-gold focus:ring-brand-gold @error('current_password', 'updatePassword') border-red-500 @enderror">
+                            <button type="button"
+                                @click="showCurrentPass = !showCurrentPass"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                                <i class="fas text-xs" :class="showCurrentPass ? 'fa-eye' : 'fa-eye-slash'" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         <template x-if="errors.current_password">
                             <p class="text-red-600 text-xs mt-1 font-medium" x-text="errors.current_password[0]"></p>
                         </template>
@@ -142,14 +153,56 @@
                         @enderror
                     </div>
 
+                    <!-- Requisitos de Contraseña Institucional -->
+                    <div class="rounded-lg bg-gray-50 border border-gray-200 p-3.5 text-xs text-gray-700">
+                        <p class="font-semibold text-brand-navy flex items-center gap-1.5 mb-2">
+                            <i class="fas fa-shield-alt text-brand-gold text-sm" aria-hidden="true"></i>
+                            Requisitos de la nueva contraseña:
+                        </p>
+                        <ul class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <li class="flex items-center gap-1.5 transition-colors duration-150"
+                                :class="newPassword.length === 0 ? 'text-gray-500' : (hasMinLength ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                                <i class="fas text-xs shrink-0"
+                                   :class="newPassword.length === 0 ? 'fa-circle text-gray-300' : (hasMinLength ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                                <span>Mínimo 8 caracteres (máx. 72)</span>
+                            </li>
+                            <li class="flex items-center gap-1.5 transition-colors duration-150"
+                                :class="newPassword.length === 0 ? 'text-gray-500' : (hasLetter ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                                <i class="fas text-xs shrink-0"
+                                   :class="newPassword.length === 0 ? 'fa-circle text-gray-300' : (hasLetter ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                                <span>Al menos una letra (a-z, A-Z)</span>
+                            </li>
+                            <li class="flex items-center gap-1.5 transition-colors duration-150"
+                                :class="newPassword.length === 0 ? 'text-gray-500' : (hasNumber ? 'text-emerald-700 font-medium' : 'text-rose-600 font-medium')">
+                                <i class="fas text-xs shrink-0"
+                                   :class="newPassword.length === 0 ? 'fa-circle text-gray-300' : (hasNumber ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500')"></i>
+                                <span>Al menos un número (0-9)</span>
+                            </li>
+                        </ul>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2 border-t border-gray-100">
                         <!-- Nueva Contraseña -->
                         <div>
                             <label for="password" class="block text-sm font-semibold text-brand-navy">Nueva Contraseña</label>
-                            <input type="password" name="password" id="password" required autocomplete="new-password"
-                                placeholder="Mínimo 8 caracteres"
-                                :class="errors.password ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'"
-                                class="mt-1.5 block w-full rounded-lg shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('password', 'updatePassword') border-red-500 @enderror">
+                            <div class="relative mt-1.5">
+                                <input :type="showNewPass ? 'text' : 'password'"
+                                    name="password"
+                                    id="password"
+                                    required
+                                    x-model="newPassword"
+                                    @copy.prevent
+                                    @cut.prevent
+                                    autocomplete="new-password"
+                                    placeholder="Mínimo 8 caracteres (letras y números)"
+                                    :class="errors.password ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'"
+                                    class="block w-full rounded-lg shadow-sm pr-10 focus:border-brand-gold focus:ring-brand-gold @error('password', 'updatePassword') border-red-500 @enderror">
+                                <button type="button"
+                                    @click="showNewPass = !showNewPass"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                                    <i class="fas text-xs" :class="showNewPass ? 'fa-eye' : 'fa-eye-slash'" aria-hidden="true"></i>
+                                </button>
+                            </div>
                             <template x-if="errors.password">
                                 <p class="text-red-600 text-xs mt-1 font-medium" x-text="errors.password[0]"></p>
                             </template>
@@ -161,9 +214,34 @@
                         <!-- Confirmar Nueva Contraseña -->
                         <div>
                             <label for="password_confirmation" class="block text-sm font-semibold text-brand-navy">Confirmar Nueva Contraseña</label>
-                            <input type="password" name="password_confirmation" id="password_confirmation" required autocomplete="new-password"
-                                placeholder="Repite la nueva contraseña"
-                                class="mt-1.5 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <div class="relative mt-1.5">
+                                <input :type="showConfirmPass ? 'text' : 'password'"
+                                    name="password_confirmation"
+                                    id="password_confirmation"
+                                    required
+                                    x-model="confirmPassword"
+                                    @paste.prevent
+                                    autocomplete="new-password"
+                                    placeholder="Repite la nueva contraseña a mano"
+                                    class="block w-full rounded-lg border-gray-300 shadow-sm pr-10 focus:border-brand-gold focus:ring-brand-gold">
+                                <button type="button"
+                                    @click="showConfirmPass = !showConfirmPass"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                                    <i class="fas text-xs" :class="showConfirmPass ? 'fa-eye' : 'fa-eye-slash'" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <template x-if="passwordsMatch">
+                                <p class="text-emerald-600 text-xs mt-1 font-medium flex items-center gap-1">
+                                    <i class="fas fa-check-circle text-emerald-500"></i>
+                                    <span>Las contraseñas coinciden</span>
+                                </p>
+                            </template>
+                            <template x-if="passwordsMismatch">
+                                <p class="text-rose-600 text-xs mt-1 font-medium flex items-center gap-1">
+                                    <i class="fas fa-times-circle text-rose-500"></i>
+                                    <span>Las contraseñas no coinciden</span>
+                                </p>
+                            </template>
                         </div>
                     </div>
 
@@ -243,6 +321,27 @@
                 countdown: 3,
                 timer: null,
                 redirectUrl: '{{ route('login') }}',
+                showCurrentPass: false,
+                showNewPass: false,
+                showConfirmPass: false,
+                newPassword: '',
+                confirmPassword: '',
+
+                get hasMinLength() {
+                    return this.newPassword.length >= 8 && this.newPassword.length <= 72;
+                },
+                get hasLetter() {
+                    return /[a-zA-Z]/.test(this.newPassword);
+                },
+                get hasNumber() {
+                    return /[0-9]/.test(this.newPassword);
+                },
+                get passwordsMatch() {
+                    return this.confirmPassword.length > 0 && this.confirmPassword === this.newPassword;
+                },
+                get passwordsMismatch() {
+                    return this.confirmPassword.length > 0 && this.confirmPassword !== this.newPassword;
+                },
 
                 async submitForm(event) {
                     this.loading = true;
