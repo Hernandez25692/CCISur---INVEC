@@ -43,7 +43,7 @@
             </div>
         @endif
 
-        <form action="{{ route('asignaciones.store') }}" method="POST" class="space-y-6" @submit="return validarEnvio($event)">
+        <form action="{{ route('asignaciones.store') }}" method="POST" class="space-y-6" @submit="validarEnvio($event)">
             @csrf
 
             {{-- Inputs ocultos para sincronizar estado con Laravel --}}
@@ -124,7 +124,8 @@
                                             <p class="text-[11px] text-gray-500">
                                                 <span class="font-mono font-semibold text-brand-navy" x-text="emp.codigo"></span> &bull;
                                                 <span x-text="emp.identidad || 'Sin DNI'"></span> &bull;
-                                                <span class="text-gray-400" x-text="emp.gerencia"></span>
+                                                <span class="text-gray-400" x-text="emp.gerencia"></span> &bull;
+                                                <span class="font-semibold text-brand-navy" x-text="'Sede ' + (emp.ubicacion || 'Choluteca')"></span>
                                             </p>
                                         </div>
                                     </div>
@@ -154,6 +155,7 @@
                                 </div>
                                 <p class="text-xs text-gray-600 mt-0.5">
                                     <strong>DNI:</strong> <span x-text="empleadoSeleccionado ? (empleadoSeleccionado.identidad || 'N/A') : ''"></span> &bull;
+                                    <strong>Sede:</strong> <span class="font-semibold text-brand-navy" x-text="empleadoSeleccionado ? ('Sede ' + (empleadoSeleccionado.ubicacion || 'Choluteca')) : ''"></span> &bull;
                                     <strong>Área / Gerencia:</strong> <span class="font-semibold text-brand-navy" x-text="empleadoSeleccionado ? (empleadoSeleccionado.gerencia || 'N/A') : ''"></span>
                                 </p>
                             </div>
@@ -254,6 +256,15 @@
                         </div>
                     </div>
 
+                    {{-- Aviso de Sede activa al asignar a colaborador --}}
+                    <div x-show="destino === 'empleado' && empleadoSeleccionado" class="p-2.5 rounded-lg bg-blue-50/80 border border-blue-200 text-xs text-blue-900 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5 font-medium">
+                            <i class="fas fa-location-dot text-brand-navy"></i>
+                            <span>Bienes disponibles en <strong class="text-brand-navy">Sede <span x-text="empleadoSeleccionado ? empleadoSeleccionado.ubicacion : ''"></span></strong></span>
+                        </span>
+                        <span class="text-[11px] font-bold text-brand-navy bg-white px-2 py-0.5 rounded border border-blue-200 shadow-2xs" x-text="itemsFiltrados.length + (itemsFiltrados.length === 1 ? ' bien' : ' bienes')"></span>
+                    </div>
+
                     {{-- Buscador del bien --}}
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -273,6 +284,10 @@
                                     <div class="flex items-center justify-between gap-2">
                                         <div class="flex items-center gap-1.5 flex-wrap">
                                             <span class="font-mono text-[11px] font-bold text-brand-navy bg-gray-100 px-2 py-0.5 rounded border border-gray-200" x-text="item.etiqueta"></span>
+                                            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-brand-navy border border-blue-200 inline-flex items-center gap-1">
+                                                <i class="fas fa-location-dot text-[9px]" aria-hidden="true"></i>
+                                                <span x-text="'Sede ' + (item.ubicacion || 'Choluteca')"></span>
+                                            </span>
                                             <template x-if="item.es_area_comun">
                                                 <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
                                                     <i class="fas fa-building text-[9px]" aria-hidden="true"></i> Área Común
@@ -301,7 +316,15 @@
 
                         <div x-show="itemsFiltrados.length === 0" class="col-span-full py-8 text-center text-gray-400">
                             <i class="fas fa-boxes text-2xl mb-1" aria-hidden="true"></i>
-                            <p class="text-xs font-semibold">No se encontraron artículos disponibles en esta categoría.</p>
+                            <template x-if="destino === 'empleado' && !empleadoSeleccionado">
+                                <p class="text-xs font-semibold text-gray-500">Seleccione primero a un colaborador en el Paso 1 para cargar los bienes de su sede.</p>
+                            </template>
+                            <template x-if="destino === 'empleado' && empleadoSeleccionado">
+                                <p class="text-xs font-semibold text-gray-500">No hay bienes disponibles en Sede <span x-text="empleadoSeleccionado.ubicacion"></span> para esta categoría o búsqueda.</p>
+                            </template>
+                            <template x-if="destino === 'area_comun'">
+                                <p class="text-xs font-semibold text-gray-500">No se encontraron artículos disponibles en esta categoría.</p>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -369,9 +392,13 @@
                         <input type="text"
                             name="entregado_por"
                             id="entregado_por"
-                            value="{{ old('entregado_por', Auth::user()->name) }}"
-                            required
-                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            value="{{ Auth::user()?->name }}"
+                            readonly
+                            tabindex="-1"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 bg-gray-100 text-gray-700 cursor-not-allowed select-none shadow-xs focus:ring-0 focus:border-gray-300">
+                        <p class="text-[11px] text-gray-500 mt-1">
+                            <i class="fas fa-lock text-gray-400 mr-0.5"></i> Bloqueado automáticamente al usuario en sesión.
+                        </p>
                     </div>
 
                     {{-- Observaciones --}}
@@ -464,17 +491,26 @@
                     const qLimpia = q.replace(/[\s\-]+/g, '');
 
                     return this.empleados.filter(e => {
+                        // Si ya hay un bien seleccionado (ej. preseleccionado por URL), restringir a colaboradores de su misma sede
+                        if (this.itemSeleccionado && this.itemSeleccionado.ubicacion && e.ubicacion) {
+                            if (e.ubicacion !== this.itemSeleccionado.ubicacion) {
+                                return false;
+                            }
+                        }
+
                         const nombre = (e.nombre_completo || '').toLowerCase();
                         const identidad = (e.identidad || '').toLowerCase();
                         const identidadRaw = (e.identidad_raw || '').toLowerCase();
                         const codigo = (e.codigo || '').toLowerCase();
                         const gerencia = (e.gerencia || '').toLowerCase();
+                        const ubicacion = (e.ubicacion || '').toLowerCase();
 
                         return nombre.includes(q)
                             || identidad.includes(q)
                             || (qLimpia.length > 0 && identidadRaw.includes(qLimpia))
                             || codigo.includes(q)
-                            || gerencia.includes(q);
+                            || gerencia.includes(q)
+                            || ubicacion.includes(q);
                     }).slice(0, 20);
                 },
 
@@ -483,10 +519,22 @@
                     const cat = this.categoria.trim().toLowerCase();
                     const q = this.busquedaItem.trim().toLowerCase();
 
+                    // Si es a un colaborador pero aún no se ha seleccionado, no listar para exigir contexto de sede
+                    if (this.destino === 'empleado' && !this.empleadoSeleccionado) {
+                        return [];
+                    }
+
                     return items.filter(item => {
                         // Si la asignación es a un empleado individual, excluir bienes exclusivos de infraestructura / área común
                         if (this.destino === 'empleado' && item.es_area_comun) {
                             return false;
+                        }
+
+                        // Si hay un empleado seleccionado, mostrar ÚNICAMENTE bienes de su misma sede física
+                        if (this.destino === 'empleado' && this.empleadoSeleccionado && this.empleadoSeleccionado.ubicacion) {
+                            if (item.ubicacion !== this.empleadoSeleccionado.ubicacion) {
+                                return false;
+                            }
                         }
 
                         if (cat && (item.tipo || '').toLowerCase() !== cat) {
@@ -545,12 +593,30 @@
                     this.empleadoId = emp.id;
                     this.busquedaEmpleado = '';
                     this.area = emp.gerencia || '';
+
+                    // Si ya había un bien seleccionado de otra sede, alertar y deseleccionar
+                    if (this.itemSeleccionado && this.itemSeleccionado.ubicacion && emp.ubicacion && this.itemSeleccionado.ubicacion !== emp.ubicacion) {
+                        const sedeBien = this.itemSeleccionado.ubicacion;
+                        this.deseleccionarItem();
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Sedes no coincidentes',
+                                text: `El bien seleccionado pertenece a Sede ${sedeBien} y no puede asignarse a un colaborador de Sede ${emp.ubicacion}. Debe seleccionar un bien de su misma sede.`,
+                                confirmButtonColor: '#002855'
+                            });
+                        }
+                    }
                 },
 
                 deseleccionarEmpleado() {
                     this.empleadoSeleccionado = null;
                     this.empleadoId = '';
                     this.area = '';
+                    // Al deseleccionar el colaborador, limpiar también el bien para evitar inconsistencia de sede
+                    if (this.destino === 'empleado' && this.itemSeleccionado) {
+                        this.deseleccionarItem();
+                    }
                 },
 
                 seleccionarItem(item) {
@@ -593,6 +659,18 @@
                             confirmButtonColor: '#002855'
                         });
                         return false;
+                    }
+                    if (this.destino === 'empleado' && this.empleadoSeleccionado && this.itemSeleccionado) {
+                        if (this.empleadoSeleccionado.ubicacion && this.itemSeleccionado.ubicacion && this.empleadoSeleccionado.ubicacion !== this.itemSeleccionado.ubicacion) {
+                            e.preventDefault();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Sedes no coincidentes',
+                                text: `El bien seleccionado pertenece a Sede ${this.itemSeleccionado.ubicacion} y el colaborador pertenece a Sede ${this.empleadoSeleccionado.ubicacion}. Deben ser de la misma sede.`,
+                                confirmButtonColor: '#002855'
+                            });
+                            return false;
+                        }
                     }
                     if (!this.area.trim()) {
                         e.preventDefault();

@@ -8,13 +8,14 @@ use App\Models\Dispositivo;
 use App\Models\Empleado;
 use App\Models\Mobiliario;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AsignacionController extends Controller
@@ -208,7 +209,7 @@ class AsignacionController extends Controller
 
         // Cargar colaboradores activos con identidad formateada y versión corrida para búsqueda
         $empleados = Empleado::orderBy('nombre_completo')
-            ->get(['id', 'codigo', 'nombre_completo', 'identidad', 'gerencia'])
+            ->get(['id', 'codigo', 'nombre_completo', 'identidad', 'gerencia', 'ubicacion'])
             ->map(fn (Empleado $emp): array => [
                 'id' => $emp->id,
                 'codigo' => $emp->codigo,
@@ -216,6 +217,7 @@ class AsignacionController extends Controller
                 'identidad' => $emp->identidad_formateada,
                 'identidad_raw' => Empleado::normalizarIdentidad($emp->identidad),
                 'gerencia' => $emp->gerencia,
+                'ubicacion' => $emp->ubicacion,
             ]);
 
         // Categorías institucionales predefinidas
@@ -241,7 +243,7 @@ class AsignacionController extends Controller
                     $q->where('id', $id_referencia);
                 }
             })
-            ->get(['id', 'nombre', 'tipo', 'marca', 'modelo', 'n_serie', 'estado', 'disponibilidad', 'etiqueta'])
+            ->get(['id', 'nombre', 'tipo', 'marca', 'modelo', 'n_serie', 'estado', 'disponibilidad', 'etiqueta', 'ubicacion'])
             ->map(fn (Dispositivo $d): array => [
                 'id' => $d->id,
                 'nombre' => $d->nombre,
@@ -252,6 +254,7 @@ class AsignacionController extends Controller
                 'estado' => $d->estado,
                 'etiqueta' => $d->etiqueta,
                 'es_area_comun' => $d->esEquipoAreaComun(),
+                'ubicacion' => $d->ubicacion,
             ]);
 
         $mobiliarioDisponible = Mobiliario::disponibles()
@@ -260,7 +263,7 @@ class AsignacionController extends Controller
                     $q->where('id', $id_referencia);
                 }
             })
-            ->get(['id', 'nombre', 'tipo', 'estado', 'disponibilidad', 'etiqueta'])
+            ->get(['id', 'nombre', 'tipo', 'estado', 'disponibilidad', 'etiqueta', 'ubicacion'])
             ->map(fn (Mobiliario $m): array => [
                 'id' => $m->id,
                 'nombre' => $m->nombre,
@@ -268,6 +271,7 @@ class AsignacionController extends Controller
                 'estado' => $m->estado,
                 'etiqueta' => $m->etiqueta,
                 'es_area_comun' => $m->esEquipoAreaComun(),
+                'ubicacion' => $m->ubicacion,
             ]);
 
         return view('asignaciones.create', compact(
@@ -313,7 +317,10 @@ class AsignacionController extends Controller
             'entregado_por.required' => 'Indique el nombre de la persona que entrega el bien.',
         ]);
 
+        $validated['entregado_por'] = Auth::user()->name;
+
         $esAreaComun = $validated['destino'] === 'area_comun';
+        $empleado = null;
 
         // Si es a un colaborador, asegurar el área con la gerencia real del empleado en el servidor
         if (! $esAreaComun) {
@@ -321,7 +328,7 @@ class AsignacionController extends Controller
             $validated['area'] = $empleado->gerencia ?? $validated['area'];
         }
 
-        $errorMensaje = DB::transaction(function () use ($validated, $esAreaComun): ?string {
+        $errorMensaje = DB::transaction(function () use ($validated, $esAreaComun, $empleado): ?string {
             $query = $validated['tipo'] === Asignacion::TIPO_MOBILIARIO
                 ? Mobiliario::query()
                 : Dispositivo::query();
@@ -330,6 +337,10 @@ class AsignacionController extends Controller
 
             if (! $item) {
                 return 'El bien seleccionado no existe en el inventario.';
+            }
+
+            if (! $esAreaComun && $empleado && $item->ubicacion !== $empleado->ubicacion) {
+                return "El bien seleccionado pertenece a la Sede {$item->ubicacion} y no puede asignarse a un colaborador de la Sede {$empleado->ubicacion}.";
             }
 
             if (! $item->puedeAsignarseA($validated['destino'])) {

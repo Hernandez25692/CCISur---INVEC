@@ -231,9 +231,13 @@
                             <input type="text" 
                                    name="recibido_por" 
                                    id="recibido_por" 
-                                   value="{{ old('recibido_por', $recibidoPor) }}" 
-                                   required 
-                                   class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                                   value="{{ Auth::user()?->name ?? $recibidoPor }}" 
+                                   readonly
+                                   tabindex="-1"
+                                   class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 bg-gray-100 text-gray-700 cursor-not-allowed select-none shadow-xs focus:ring-0 focus:border-gray-300">
+                            <p class="text-[11px] text-gray-500 mt-1">
+                                <i class="fas fa-lock text-gray-400 mr-0.5"></i> Bloqueado automáticamente al usuario en sesión.
+                            </p>
                         </div>
                     </div>
                 </div>

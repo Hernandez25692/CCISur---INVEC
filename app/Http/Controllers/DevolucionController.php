@@ -13,6 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -332,7 +333,7 @@ class DevolucionController extends Controller
 
         $reglasFecha = ['required', 'date', 'before_or_equal:today'];
         if ($fechaEntregaRaw) {
-            $reglasFecha[] = 'after_or_equal:' . $fechaEntregaRaw;
+            $reglasFecha[] = 'after_or_equal:'.$fechaEntregaRaw;
         }
 
         $validated = $request->validate([
@@ -359,6 +360,8 @@ class DevolucionController extends Controller
             'estado_devuelto.in' => 'El estado físico seleccionado no es válido para devolución (un bien devuelto ya no puede recibirse como nuevo).',
             'recibido_por.required' => 'El nombre de quien recibe es obligatorio.',
         ]);
+
+        $validated['recibido_por'] = Auth::user()->name;
 
         try {
             $devolucion = DB::transaction(function () use ($validated) {
