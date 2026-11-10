@@ -26,6 +26,7 @@ class DevolucionController extends Controller
     {
         $buscar = trim((string) $request->input('buscar'));
         $tipo = $request->input('tipo');
+        $sede = $request->input('sede');
         $fechaInicio = $request->input('fecha_inicio');
         $fechaFin = $request->input('fecha_fin');
         $estadoFiltro = $request->input('estado');
@@ -132,6 +133,16 @@ class DevolucionController extends Controller
             });
         }
 
+        if ($sede && in_array($sede, \App\Models\Empleado::UBICACIONES, true)) {
+            $query->whereHas('asignacion', function ($sub) use ($sede): void {
+                $sub->where(function ($sub2) use ($sede): void {
+                    $sub2->whereHas('empleado', fn ($emp) => $emp->where('ubicacion', $sede))
+                        ->orWhereHas('mobiliario', fn ($mob) => $mob->where('ubicacion', $sede))
+                        ->orWhereHas('dispositivo', fn ($disp) => $disp->where('ubicacion', $sede));
+                });
+            });
+        }
+
         $parsedInicio = $fechaInicio ? rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false) : null;
         $parsedFin = $fechaFin ? rescue(fn () => Carbon::parse($fechaFin)->endOfDay(), null, false) : null;
 
@@ -169,7 +180,7 @@ class DevolucionController extends Controller
             'no_asignables' => Devolucion::whereIn('estado_devuelto', Dispositivo::ESTADOS_NO_ASIGNABLES)->count(),
         ];
 
-        return view('devoluciones.index', compact('devoluciones', 'metricas', 'totalAnuladas', 'estadoActa'));
+        return view('devoluciones.index', compact('devoluciones', 'metricas', 'totalAnuladas', 'estadoActa', 'sede'));
     }
 
     /**
@@ -179,6 +190,7 @@ class DevolucionController extends Controller
     {
         $buscar = trim((string) $request->input('buscar'));
         $tipo = $request->input('tipo');
+        $sede = $request->input('sede');
         $fechaInicio = $request->input('fecha_inicio');
         $fechaFin = $request->input('fecha_fin');
         $totalAnuladas = Devolucion::onlyTrashed()->count();
@@ -228,6 +240,16 @@ class DevolucionController extends Controller
         if ($tipo && in_array($tipo, [Asignacion::TIPO_DISPOSITIVO, Asignacion::TIPO_MOBILIARIO], true)) {
             $query->whereHas('asignacion', function ($sub) use ($tipo): void {
                 $sub->where('tipo', $tipo);
+            });
+        }
+
+        if ($sede && in_array($sede, \App\Models\Empleado::UBICACIONES, true)) {
+            $query->whereHas('asignacion', function ($sub) use ($sede): void {
+                $sub->where(function ($sub2) use ($sede): void {
+                    $sub2->whereHas('empleado', fn ($emp) => $emp->where('ubicacion', $sede))
+                        ->orWhereHas('mobiliario', fn ($mob) => $mob->where('ubicacion', $sede))
+                        ->orWhereHas('dispositivo', fn ($disp) => $disp->where('ubicacion', $sede));
+                });
             });
         }
 

@@ -1,21 +1,21 @@
 <x-app-layout>
     <div class="py-4 space-y-6">
         <!-- Encabezado -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Inventario de Mobiliario</h1>
                 <p class="mt-1 text-sm text-gray-500">Gestión y control de muebles y equipamiento institucional</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroMobiliarioForm'); if (f) { const oldAction = f.action; f.action = '{{ route('mobiliario.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('mobiliario.exportar', request()->query()) }}'; }"
-                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
+                    class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer whitespace-nowrap shrink-0"
                     title="Exportar listado a Excel con los filtros aplicados">
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
                 <a href="{{ route('mobiliario.bajas') }}"
-                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition whitespace-nowrap shrink-0">
                     <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
                     <span>Dados de baja</span>
                     @if (($inactivosCount ?? 0) > 0)
@@ -26,9 +26,9 @@
                 </a>
                 @can('admin')
                     <a href="{{ route('mobiliario.create') }}"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-brand-gold text-brand-navy text-xs sm:text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition whitespace-nowrap shrink-0">
                         <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                        Nuevo Mueble
+                        <span>Nuevo Mueble</span>
                     </a>
                 @endcan
             </div>

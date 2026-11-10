@@ -1,21 +1,21 @@
 <x-app-layout>
     <div class="py-4 space-y-6">
         <!-- Encabezado -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Actas de Devolución</h1>
                 <p class="mt-1 text-sm text-gray-500">Control formal de recepciones, estado físico del bien y finiquito de responsabilidad</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroDevolucionesForm'); if (f) { const oldAction = f.action; f.action = '{{ route('devoluciones.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('devoluciones.exportar', request()->query()) }}'; }"
-                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
+                    class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer whitespace-nowrap shrink-0"
                     title="Exportar listado a Excel con los filtros aplicados">
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
                 <a href="{{ route('devoluciones.bajas') }}"
-                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition whitespace-nowrap shrink-0">
                     <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
                     <span>Dados de baja</span>
                     @if (($totalAnuladas ?? 0) > 0)
@@ -26,9 +26,9 @@
                 </a>
                 @can('admin')
                     <a href="{{ route('devoluciones.create') }}"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-brand-gold text-brand-navy text-xs sm:text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition whitespace-nowrap shrink-0">
                         <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                        Registrar Devolución
+                        <span>Registrar Devolución</span>
                     </a>
                 @endcan
             </div>
@@ -116,7 +116,7 @@
         </div>
 
         @php
-            $hayFiltros = request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin', 'estado']) || request('estado_acta', 'activas') !== 'activas';
+            $hayFiltros = request()->anyFilled(['buscar', 'tipo', 'sede', 'fecha_inicio', 'fecha_fin', 'estado']) || request('estado_acta', 'activas') !== 'activas';
         @endphp
 
         {{-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) --}}
@@ -139,7 +139,7 @@
             <form id="filtroDevolucionesForm" method="GET" action="{{ route('devoluciones.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ $hayFiltros ? 'block' : 'hidden' }} sm:block p-4 space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3 items-end">
                     {{-- Buscador general --}}
                     <div>
                         <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
@@ -162,6 +162,18 @@
                             <option value="">Todos los tipos</option>
                             <option value="dispositivo" {{ request('tipo') === 'dispositivo' ? 'selected' : '' }}>Dispositivos</option>
                             <option value="mobiliario" {{ request('tipo') === 'mobiliario' ? 'selected' : '' }}>Mobiliario</option>
+                        </select>
+                    </div>
+
+                    {{-- Sede Institucional --}}
+                    <div>
+                        <label for="sede" class="block text-xs font-semibold text-gray-600 mb-1">Sede</label>
+                        <select name="sede" id="sede"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            <option value="">Todas las sedes</option>
+                            @foreach (\App\Models\Empleado::UBICACIONES as $u)
+                                <option value="{{ $u }}" {{ request('sede') === $u ? 'selected' : '' }}>Sede {{ $u }}</option>
+                            @endforeach
                         </select>
                     </div>
 

@@ -43,6 +43,15 @@ class AsignacionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $query->where('tipo', $tipo);
         }
 
+        $sede = $this->request->input('sede');
+        if ($sede && in_array($sede, \App\Models\Empleado::UBICACIONES, true)) {
+            $query->where(function (Builder $q) use ($sede): void {
+                $q->whereHas('empleado', fn (Builder $sub) => $sub->where('ubicacion', $sede))
+                    ->orWhereHas('mobiliario', fn (Builder $sub) => $sub->where('ubicacion', $sede))
+                    ->orWhereHas('dispositivo', fn (Builder $sub) => $sub->where('ubicacion', $sede));
+            });
+        }
+
         $fechaInicio = rescue(fn () => $this->request->filled('fecha_inicio') ? $this->request->date('fecha_inicio') : null);
         $fechaFin = rescue(fn () => $this->request->filled('fecha_fin') ? $this->request->date('fecha_fin') : null);
 

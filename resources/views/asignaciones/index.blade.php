@@ -1,21 +1,21 @@
 <x-app-layout>
     <div class="py-4 space-y-6">
         <!-- Encabezado -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Gestión de Asignaciones</h1>
                 <p class="mt-1 text-sm text-gray-500">Control de bienes institucionales actualmente en uso y custodia</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroAsignacionesForm'); if (f) { const oldAction = f.action; f.action = '{{ route('asignaciones.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('asignaciones.exportar', request()->query()) }}'; }"
-                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer"
+                    class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer whitespace-nowrap shrink-0"
                     title="Exportar listado a Excel con los filtros aplicados">
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
                 <a href="{{ route('asignaciones.bajas') }}"
-                    class="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition whitespace-nowrap shrink-0">
                     <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
                     <span>Dados de baja</span>
                     @if (($totalAnuladas ?? 0) > 0)
@@ -26,9 +26,9 @@
                 </a>
                 @can('admin')
                     <a href="{{ route('asignaciones.create') }}"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                        class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-brand-gold text-brand-navy text-xs sm:text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition whitespace-nowrap shrink-0">
                         <i class="fas fa-plus text-xs" aria-hidden="true"></i>
-                        Nueva Asignación
+                        <span>Nueva Asignación</span>
                     </a>
                 @endcan
             </div>
@@ -101,9 +101,9 @@
             <form id="filtroAsignacionesForm" method="GET" action="{{ route('asignaciones.index') }}"
                 x-data="{ fechaInicio: '{{ request('fecha_inicio') }}', fechaFin: '{{ request('fecha_fin') }}' }"
                 class="space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-end">
                     {{-- Buscador general --}}
-                    <div class="sm:col-span-2 lg:col-span-4">
+                    <div>
                         <label for="buscar" class="block text-xs font-semibold text-gray-600 mb-1">Buscar</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -117,7 +117,7 @@
                     </div>
 
                     {{-- Tipo de Bien --}}
-                    <div class="sm:col-span-1 lg:col-span-2">
+                    <div>
                         <label for="tipo" class="block text-xs font-semibold text-gray-600 mb-1">Tipo de Bien</label>
                         <select name="tipo" id="tipo"
                             class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
@@ -127,8 +127,20 @@
                         </select>
                     </div>
 
+                    {{-- Sede Institucional --}}
+                    <div>
+                        <label for="sede" class="block text-xs font-semibold text-gray-600 mb-1">Sede</label>
+                        <select name="sede" id="sede"
+                            class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
+                            <option value="">Todas las sedes</option>
+                            @foreach (\App\Models\Empleado::UBICACIONES as $u)
+                                <option value="{{ $u }}" {{ request('sede') === $u ? 'selected' : '' }}>Sede {{ $u }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     {{-- Estado de Acta --}}
-                    <div class="sm:col-span-1 lg:col-span-2">
+                    <div>
                         <label for="estado_acta" class="block text-xs font-semibold text-gray-600 mb-1">Estado de Acta</label>
                         <select name="estado_acta" id="estado_acta"
                             class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
@@ -138,7 +150,7 @@
                     </div>
 
                     {{-- Fecha Inicio --}}
-                    <div class="sm:col-span-1 lg:col-span-2">
+                    <div>
                         <label for="fecha_inicio" class="block text-xs font-semibold text-gray-600 mb-1">Desde</label>
                         <input type="date" name="fecha_inicio" id="fecha_inicio"
                             x-model="fechaInicio"
@@ -148,7 +160,7 @@
                     </div>
 
                     {{-- Fecha Fin --}}
-                    <div class="sm:col-span-1 lg:col-span-2">
+                    <div>
                         <label for="fecha_fin" class="block text-xs font-semibold text-gray-600 mb-1">Hasta</label>
                         <input type="date" name="fecha_fin" id="fecha_fin"
                             x-model="fechaFin"

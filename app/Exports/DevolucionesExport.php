@@ -131,6 +131,17 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             });
         }
 
+        $sede = $this->request->input('sede');
+        if ($sede && in_array($sede, \App\Models\Empleado::UBICACIONES, true)) {
+            $query->whereHas('asignacion', function (Builder $sub) use ($sede): void {
+                $sub->where(function (Builder $sub2) use ($sede): void {
+                    $sub2->whereHas('empleado', fn (Builder $emp) => $emp->where('ubicacion', $sede))
+                        ->orWhereHas('mobiliario', fn (Builder $mob) => $mob->where('ubicacion', $sede))
+                        ->orWhereHas('dispositivo', fn (Builder $disp) => $disp->where('ubicacion', $sede));
+                });
+            });
+        }
+
         $fechaInicio = $this->request->input('fecha_inicio');
         $fechaFin = $this->request->input('fecha_fin');
         $parsedInicio = $fechaInicio ? rescue(fn () => Carbon::parse($fechaInicio)->startOfDay(), null, false) : null;

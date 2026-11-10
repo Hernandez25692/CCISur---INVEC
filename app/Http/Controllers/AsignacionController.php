@@ -26,6 +26,7 @@ class AsignacionController extends Controller
     public function index(Request $request): View
     {
         $tipo = $request->input('tipo');
+        $sede = $request->input('sede');
         $buscar = trim((string) $request->input('buscar'));
         $estadoActa = $request->input('estado_acta', 'activas');
 
@@ -48,6 +49,15 @@ class AsignacionController extends Controller
         // Filtro por tipo de bien
         if ($tipo && in_array($tipo, [Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO], true)) {
             $query->where('tipo', $tipo);
+        }
+
+        // Filtro por sede institucional
+        if ($sede && in_array($sede, Empleado::UBICACIONES, true)) {
+            $query->where(function ($q) use ($sede): void {
+                $q->whereHas('empleado', fn ($sub) => $sub->where('ubicacion', $sede))
+                    ->orWhereHas('mobiliario', fn ($sub) => $sub->where('ubicacion', $sede))
+                    ->orWhereHas('dispositivo', fn ($sub) => $sub->where('ubicacion', $sede));
+            });
         }
 
         // Filtro por rango de fechas válidas de forma segura (sin errores 500 por manipulación)
@@ -100,6 +110,7 @@ class AsignacionController extends Controller
         return view('asignaciones.index', compact(
             'asignaciones',
             'tipo',
+            'sede',
             'buscar',
             'estadoActa',
             'totalActivas',
