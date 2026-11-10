@@ -189,12 +189,22 @@
                             @foreach ($asignaciones as $item)
                                 <tr class="even:bg-gray-50/50 hover:bg-brand-gold-50/40 transition-colors">
                                     <td class="px-4 py-3 whitespace-nowrap">
-                                        <div class="font-medium text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</div>
-                                        <div class="text-xs text-gray-500 font-mono">{{ $item->empleado?->codigo ?? '' }}</div>
+                                        @if ($item->es_area_comun)
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-6 h-6 rounded bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                                                    <i class="fas fa-building text-[11px]" aria-hidden="true"></i>
+                                                </span>
+                                                <div class="font-semibold text-gray-900">Área Común</div>
+                                            </div>
+                                            <div class="text-xs text-amber-700 font-medium">Uso Compartido</div>
+                                        @else
+                                            <div class="font-medium text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</div>
+                                            <div class="text-xs text-gray-500 font-mono">{{ $item->empleado?->codigo ?? '' }}</div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-3">
-                                        <div class="text-gray-900">{{ $item->area }}</div>
-                                        <div class="text-xs text-gray-500">{{ $item->empleado?->ubicacion ? 'Sede ' . $item->empleado->ubicacion : '' }}</div>
+                                        <div class="text-gray-900 font-medium">{{ $item->area }}</div>
+                                        <div class="text-xs text-gray-500">Sede {{ $item->empleado?->ubicacion ?? $dispositivo->ubicacion }}</div>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="text-gray-900 font-medium">{{ $item->fecha_entrega?->format('d/m/Y') ?? 'N/A' }}</div>
@@ -208,7 +218,7 @@
                                             <div class="mt-0.5 text-xs text-gray-500">Recibió: {{ $item->devolucion->recibido_por }}</div>
                                         @else
                                             <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-600/20">
-                                                En su poder (Activo)
+                                                {{ $item->es_area_comun ? 'Instalado / En uso (Activo)' : 'En su poder (Activo)' }}
                                             </span>
                                         @endif
                                     </td>
@@ -232,7 +242,7 @@
                                                 <button type="button"
                                                     data-swal-locked
                                                     data-swal-title="Sin acta de devolución"
-                                                    data-swal-text="Este dispositivo aún continúa asignado al colaborador, por lo que no se ha emitido un acta de devolución."
+                                                    data-swal-text="{{ $item->es_area_comun ? 'Este dispositivo continúa asignado e instalado en el área común, por lo que no se ha emitido un acta de devolución.' : 'Este dispositivo aún continúa asignado al colaborador, por lo que no se ha emitido un acta de devolución.' }}"
                                                     class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed"
                                                     title="Aún no cuenta con acta de devolución">
                                                     <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
@@ -253,11 +263,19 @@
                         <div class="p-4 space-y-3">
                             <div class="flex items-start justify-between gap-2">
                                 <div>
-                                    <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
-                                        {{ $item->empleado?->codigo ?? '' }}
-                                    </span>
-                                    <h3 class="text-sm font-bold text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</h3>
-                                    <p class="text-xs text-gray-500">Área: {{ $item->area }}</p>
+                                    @if ($item->es_area_comun)
+                                        <span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-800 text-xs font-semibold rounded mb-1">
+                                            <i class="fas fa-building text-[10px] mr-1" aria-hidden="true"></i>Área Común
+                                        </span>
+                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->area }}</h3>
+                                        <p class="text-xs text-amber-700 font-medium">Uso Compartido Institucional</p>
+                                    @else
+                                        <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
+                                            {{ $item->empleado?->codigo ?? '' }}
+                                        </span>
+                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</h3>
+                                        <p class="text-xs text-gray-500">Área: {{ $item->area }}</p>
+                                    @endif
                                 </div>
                                 @if ($item->devolucion)
                                     <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 bg-gray-100 text-gray-700 ring-gray-500/20">
@@ -265,7 +283,7 @@
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 bg-emerald-50 text-emerald-700 ring-emerald-600/20">
-                                        En su poder
+                                        {{ $item->es_area_comun ? 'Instalado / Activo' : 'En su poder' }}
                                     </span>
                                 @endif
                             </div>

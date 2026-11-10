@@ -54,8 +54,8 @@
             <form id="filtroMobiliarioForm" method="GET" action="{{ route('mobiliario.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                    <div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="sm:col-span-2 lg:col-span-1 xl:col-span-2">
                         <label for="filtro_nombre" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
                             Nombre o etiqueta
                         </label>
@@ -116,7 +116,7 @@
                         </select>
                     </div>
 
-                    <div>
+                    <div class="sm:col-span-2 lg:col-span-1 xl:col-span-2">
                         <label for="filtro_incluir_bajas" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
                             Histórico de registros
                         </label>
