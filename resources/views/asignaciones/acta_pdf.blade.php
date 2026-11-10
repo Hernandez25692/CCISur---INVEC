@@ -183,7 +183,7 @@
         /* Sección de Firmas */
         .signatures-table {
             width: 100%;
-            margin-top: 25px;
+            margin-top: 55px;
             border-collapse: collapse;
         }
 
@@ -242,7 +242,7 @@
                     <span class="code-badge">ACT-INV-{{ $asignacion->fecha_entrega ? $asignacion->fecha_entrega->format('Y') : date('Y') }}-{{ str_pad($asignacion->id, 4, '0', STR_PAD_LEFT) }}</span>
                 </td>
                 <td style="text-align: center;">
-                    <strong>Ciudad:</strong> Choluteca, Honduras
+                    <strong>Sede:</strong> {{ $asignacion->empleado->ubicacion ?? $item->ubicacion ?? 'Choluteca' }}
                 </td>
                 <td style="text-align: right;">
                     <strong>Fecha:</strong> {{ \Carbon\Carbon::parse($asignacion->fecha_entrega)->format('d/m/Y') }}
@@ -258,12 +258,12 @@
             <tr>
                 <th>Destino:</th>
                 <td><strong>Área Común / Dependencia Institucional</strong></td>
-                <th>Área / Espacio:</th>
-                <td>{{ $asignacion->area }}</td>
+                <th>Sede Institucional:</th>
+                <td><strong>Sede {{ $item->ubicacion ?? 'Choluteca' }}</strong></td>
             </tr>
             <tr>
-                <th>Tipo de Custodia:</th>
-                <td>Uso general institucional (Sin colaborador exclusivo)</td>
+                <th>Área / Espacio:</th>
+                <td>{{ $asignacion->area }}</td>
                 <th>Fecha de Asignación:</th>
                 <td>{{ \Carbon\Carbon::parse($asignacion->fecha_entrega)->format('d/m/Y') }}</td>
             </tr>
@@ -284,8 +284,8 @@
                 <td>{{ $asignacion->empleado->gerencia ?? $asignacion->area }}</td>
             </tr>
             <tr>
-                <th>Ubicación Asignada:</th>
-                <td>{{ $asignacion->area ?? $asignacion->empleado->ubicacion ?? 'Oficina Principal' }}</td>
+                <th>Sede Institucional:</th>
+                <td><strong>Sede {{ $asignacion->empleado->ubicacion ?? $item->ubicacion ?? 'Choluteca' }}</strong></td>
                 <th>Fecha de Entrega:</th>
                 <td>{{ \Carbon\Carbon::parse($asignacion->fecha_entrega)->format('d/m/Y') }}</td>
             </tr>
@@ -301,7 +301,7 @@
                 <th style="width: 30%;">Nombre / Descripción</th>
                 <th style="width: 20%;">Tipo / Categoría</th>
                 <th style="width: 15%;">Estado Físico</th>
-                <th style="width: 15%;">Ubicación</th>
+                <th style="width: 15%;">Sede Asignada</th>
             </tr>
         </thead>
         <tbody>
@@ -310,7 +310,7 @@
                 <td>{{ $item->nombre ?? 'N/A' }}</td>
                 <td>{{ ucfirst($asignacion->tipo) }} {{ isset($item->tipo) ? '('.$item->tipo.')' : '' }}</td>
                 <td>{{ $item->estado ?? 'Buen estado' }}</td>
-                <td>{{ $item->ubicacion ?? $asignacion->area }}</td>
+                <td>Sede {{ $item->ubicacion ?? $asignacion->empleado->ubicacion ?? 'Choluteca' }}</td>
             </tr>
         </tbody>
     </table>
@@ -340,19 +340,21 @@
     <!-- Cláusula de Responsabilidad -->
     <div class="clause-box">
         <strong>Términos de Responsabilidad y Custodia:</strong>
-        Por medio de la presente, el colaborador abajo firmante certifica haber recibido a su entera satisfacción el bien institucional detallado en este documento. Se compromete a destinarlo exclusivamente al cumplimiento de las funciones encomendadas por la <strong>Cámara de Comercio e Industrias del Sur (CCISUR)</strong>, asumiendo la responsabilidad directa de su cuidado, custodia y buen uso, debiendo reportar inmediatamente cualquier deterioro o extravío. Asimismo, acepta la obligación de restituir el activo al momento de que le sea solicitado o al término de su relación laboral.
+        Por medio de la presente, el colaborador abajo firmante certifica haber recibido a su entera satisfacción el bien institucional detallado en este documento. Se compromete a destinarlo exclusivamente al cumplimiento de las funciones encomendadas por la Cámara de Comercio e Industrias del Sur (CCISUR), asumiendo la responsabilidad directa de su cuidado, custodia y buen uso, debiendo reportar inmediatamente cualquier deterioro o extravío. Asimismo, acepta la obligación de restituir el activo al momento de que le sea solicitado o al término de su relación laboral.
     </div>
 
     <!-- Sección de Firmas Formales -->
     <table class="signatures-table">
         <tr>
             <td>
+                <div style="height: 55px;"></div>
                 <div class="signature-line"></div>
                 <p class="signature-name">{{ $asignacion->entregado_por ?? 'Administración' }}</p>
                 <p class="signature-role">Entregado por / Control de Bienes</p>
                 <p class="signature-role">CCISUR</p>
             </td>
             <td>
+                <div style="height: 55px;"></div>
                 <div class="signature-line"></div>
                 @if ($asignacion->es_area_comun)
                     <p class="signature-name">{{ $asignacion->area }}</p>

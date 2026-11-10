@@ -177,7 +177,7 @@
 
         .signatures-table {
             width: 100%;
-            margin-top: 25px;
+            margin-top: 55px;
             border-collapse: collapse;
         }
 
@@ -233,7 +233,7 @@
                     <span class="code-badge">{{ $correlativo }}</span>
                 </td>
                 <td style="text-align: center;">
-                    <strong>Ciudad:</strong> Choluteca, Honduras
+                    <strong>Sede:</strong> {{ $item->ubicacion ?? $asignacion->empleado->ubicacion ?? 'Choluteca' }}
                 </td>
                 <td style="text-align: right;">
                     <strong>Fecha:</strong> {{ $devolucion->fecha_devolucion ? $devolucion->fecha_devolucion->format('d/m/Y') : date('d/m/Y') }}
@@ -249,18 +249,18 @@
             <tr>
                 <th>Origen:</th>
                 <td><strong>Área Común / Dependencia Institucional</strong></td>
-                <th>Área / Espacio:</th>
-                <td>{{ $asignacion->area }}</td>
+                <th>Sede Institucional:</th>
+                <td><strong>Sede {{ $item->ubicacion ?? 'Choluteca' }}</strong></td>
             </tr>
             <tr>
-                <th>Tipo de Custodia:</th>
-                <td>Uso general institucional de CCISur (Sin colaborador exclusivo)</td>
+                <th>Área / Espacio:</th>
+                <td>{{ $asignacion->area }}</td>
                 <th>Fecha de Recepción:</th>
                 <td>{{ $devolucion->fecha_devolucion ? $devolucion->fecha_devolucion->format('d/m/Y') : date('d/m/Y') }}</td>
             </tr>
             <tr>
                 <th>Recibido Por:</th>
-                <td colspan="3">{{ $devolucion->recibido_por }} (Control de Bienes / Administración)</td>
+                <td colspan="3">{{ $devolucion->recibido_por }} (Control de Bienes / Administración CCISUR)</td>
             </tr>
         </table>
     @else
@@ -279,10 +279,14 @@
                 <td>{{ $asignacion->empleado->gerencia ?? $asignacion->area }}</td>
             </tr>
             <tr>
-                <th>Recibido Por:</th>
-                <td>{{ $devolucion->recibido_por }}</td>
+                <th>Sede Institucional:</th>
+                <td><strong>Sede {{ $asignacion->empleado->ubicacion ?? $item->ubicacion ?? 'Choluteca' }}</strong></td>
                 <th>Fecha de Devolución:</th>
                 <td>{{ $devolucion->fecha_devolucion ? $devolucion->fecha_devolucion->format('d/m/Y') : date('d/m/Y') }}</td>
+            </tr>
+            <tr>
+                <th>Recibido Por:</th>
+                <td colspan="3">{{ $devolucion->recibido_por }} (Control de Bienes / Administración CCISUR)</td>
             </tr>
         </table>
     @endif
@@ -292,11 +296,12 @@
     <table class="item-table">
         <thead>
             <tr>
-                <th style="width: 20%;">Código / Placa</th>
-                <th style="width: 30%;">Nombre / Descripción</th>
-                <th style="width: 20%;">Tipo / Categoría</th>
-                <th style="width: 15%;">Estado al Recibir</th>
-                <th style="width: 15%;">Disponibilidad</th>
+                <th style="width: 18%;">Código / Placa</th>
+                <th style="width: 28%;">Nombre / Descripción</th>
+                <th style="width: 18%;">Tipo / Categoría</th>
+                <th style="width: 14%;">Estado al Recibir</th>
+                <th style="width: 11%;">Sede</th>
+                <th style="width: 11%;">Disponibilidad</th>
             </tr>
         </thead>
         <tbody>
@@ -310,6 +315,7 @@
                         <br><span style="font-size: 8px; color: #64748b;">(Previo: {{ $devolucion->estado_anterior }})</span>
                     @endif
                 </td>
+                <td>Sede {{ $item->ubicacion ?? 'Choluteca' }}</td>
                 <td>{{ $item->disponibilidad ?? 'Disponible' }}</td>
             </tr>
         </tbody>
@@ -351,19 +357,21 @@
     <!-- 4. Constancia y Finiquito -->
     <div class="clause-box">
         <strong>Constancia de Recepción y Finiquito:</strong>
-        Por medio de la presente se hace constar que el custodio ha entregado formalmente a la <strong>Cámara de Comercio e Industrias del Sur (CCISUR)</strong> el bien institucional antes detallado, quedando plenamente liberado de la custodia material y responsabilidad directa sobre el mismo a partir de la fecha suscrita en este documento.
+        Por medio de la presente se hace constar que el custodio ha entregado formalmente a la Cámara de Comercio e Industrias del Sur (CCISUR) el bien institucional antes detallado, quedando plenamente liberado de la custodia material y responsabilidad directa sobre el mismo a partir de la fecha suscrita en este documento.
     </div>
 
     <!-- Firmas -->
     <table class="signatures-table">
         <tr>
             <td>
+                <div style="height: 55px;"></div>
                 <div class="signature-line"></div>
                 <p class="signature-name">{{ $devolucion->recibido_por ?? 'Administración' }}</p>
                 <p class="signature-role">Recibido por / Control de Bienes</p>
                 <p class="signature-role">CCISUR</p>
             </td>
             <td>
+                <div style="height: 55px;"></div>
                 <div class="signature-line"></div>
                 @if ($asignacion->es_area_comun)
                     <p class="signature-name">Responsable de Gerencia / Área</p>
