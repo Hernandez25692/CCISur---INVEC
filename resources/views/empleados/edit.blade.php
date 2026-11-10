@@ -79,21 +79,43 @@
                     @enderror
                 </div>
 
-                <div>
-                    <label for="ubicacion" class="block text-sm font-medium text-brand-navy">Sede / Ubicación</label>
-                    <select name="ubicacion" id="ubicacion" required
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('ubicacion') border-red-500 @enderror">
-                        <option value="">-- Seleccionar sede --</option>
-                        @foreach (\App\Models\Empleado::UBICACIONES as $ubicacion)
-                            <option value="{{ $ubicacion }}" @selected(old('ubicacion', $empleado->ubicacion) === $ubicacion)>
-                                {{ $ubicacion }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('ubicacion')
-                        <p class="text-red-600 text-xs mt-1 font-medium">{{ $message }}</p>
-                    @enderror
-                </div>
+                @if ($tieneAsignacionActiva ?? ($empleado->asignaciones_activas_count > 0))
+                    <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200/80 space-y-2">
+                        <div class="flex items-start gap-2 text-xs text-amber-900">
+                            <i class="fas fa-lock text-amber-600 mt-0.5" aria-hidden="true"></i>
+                            <div>
+                                <span class="font-semibold">Sede bloqueada por asignaciones activas:</span>
+                                <p class="mt-0.5 text-amber-800">
+                                    Este colaborador tiene bienes institucionales en custodia activa. Para transferirlo a otra sede, registre primero la devolución de sus equipos o mobiliario.
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="ubicacion_bloqueada" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                                Sede Actual
+                            </label>
+                            <input type="hidden" name="ubicacion" value="{{ $empleado->ubicacion }}">
+                            <input type="text" id="ubicacion_bloqueada" value="Sede {{ $empleado->ubicacion }}" readonly
+                                class="w-full border-amber-200 rounded-lg bg-white/80 text-gray-700 text-sm cursor-not-allowed">
+                        </div>
+                    </div>
+                @else
+                    <div>
+                        <label for="ubicacion" class="block text-sm font-medium text-brand-navy">Sede / Ubicación</label>
+                        <select name="ubicacion" id="ubicacion" required
+                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('ubicacion') border-red-500 @enderror">
+                            <option value="">-- Seleccionar sede --</option>
+                            @foreach (\App\Models\Empleado::UBICACIONES as $ubicacion)
+                                <option value="{{ $ubicacion }}" @selected(old('ubicacion', $empleado->ubicacion) === $ubicacion)>
+                                    {{ $ubicacion }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('ubicacion')
+                            <p class="text-red-600 text-xs mt-1 font-medium">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
             </div>
 
             <!-- Botones -->

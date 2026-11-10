@@ -127,13 +127,16 @@ class EmpleadoController extends Controller
         Gate::authorize('admin');
 
         $empleado->loadCount(['asignacionesActivas', 'asignaciones']);
+        $tieneAsignacionActiva = $empleado->tieneAsignacionesActivas();
 
-        return view('empleados.edit', compact('empleado'));
+        return view('empleados.edit', compact('empleado', 'tieneAsignacionActiva'));
     }
 
     public function update(Request $request, Empleado $empleado): RedirectResponse
     {
         Gate::authorize('admin');
+
+        $tieneAsignacionActiva = $empleado->tieneAsignacionesActivas();
 
         $request->merge([
             'identidad' => Empleado::normalizarIdentidad($request->input('identidad')),
@@ -164,7 +167,7 @@ class EmpleadoController extends Controller
             ],
             'nombre_completo' => ['required', 'string', 'max:255'],
             'gerencia' => ['required', Rule::in(Empleado::GERENCIAS)],
-            'ubicacion' => ['required', Rule::in(Empleado::UBICACIONES)],
+            'ubicacion' => [$tieneAsignacionActiva ? 'nullable' : 'required', Rule::in(Empleado::UBICACIONES)],
         ], [
             'identidad.required' => 'El número de identidad (DNI) es obligatorio.',
             'identidad.regex' => 'El número de identidad debe contener exactamente 13 dígitos numéricos.',
@@ -173,6 +176,10 @@ class EmpleadoController extends Controller
             'gerencia.required' => 'Debe seleccionar una gerencia.',
             'ubicacion.required' => 'Debe seleccionar una sede o ubicación.',
         ]);
+
+        if ($tieneAsignacionActiva) {
+            $validated['ubicacion'] = $empleado->ubicacion;
+        }
 
         $empleado->update($validated);
 

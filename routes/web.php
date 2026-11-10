@@ -169,7 +169,7 @@ Route::middleware(['auth'])->group(function () {
             });
         }
 
-        $columns = ['id', 'nombre', 'tipo', 'etiqueta', 'estado', 'disponibilidad'];
+        $columns = ['id', 'nombre', 'tipo', 'etiqueta', 'estado', 'disponibilidad', 'ubicacion'];
         if ($tipo === 'dispositivo') {
             $columns = array_merge($columns, ['marca', 'modelo', 'n_serie']);
         }

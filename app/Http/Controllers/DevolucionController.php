@@ -486,8 +486,22 @@ class DevolucionController extends Controller
             return back()->with('error', 'Contraseña incorrecta. No se pudo anular la devolución.');
         }
 
-        DB::transaction(function () use ($devolucion, $request, $validated): void {
-            $asignacion = $devolucion->asignacion;
+        $asignacion = $devolucion->asignacion;
+        if ($asignacion) {
+            $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
+                : Dispositivo::withTrashed()->find($asignacion->id_referencia);
+
+            if ($item && $item->estaAsignado()) {
+                return back()->with('error', 'No se puede anular esta devolución: el bien ya se encuentra actualmente asignado en otra asignación activa. Debe resolver esa asignación antes de poder reactivar la anterior.');
+            }
+
+            if (! $asignacion->es_area_comun && $asignacion->empleado?->trashed()) {
+                return back()->with('error', 'No se puede anular esta devolución: el colaborador asociado a esta asignación fue dado de baja.');
+            }
+        }
+
+        DB::transaction(function () use ($devolucion, $request, $validated, $asignacion): void {
 
             $devolucion->motivo_anulacion = $validated['motivo_anulacion'];
             $devolucion->anulado_por_user_id = $request->user()->id;
