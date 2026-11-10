@@ -6,6 +6,7 @@ use App\Exports\DevolucionesExport;
 use App\Models\Asignacion;
 use App\Models\Devolucion;
 use App\Models\Dispositivo;
+use App\Models\Empleado;
 use App\Models\Mobiliario;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -366,7 +367,7 @@ class DevolucionController extends Controller
             ],
             'fecha_devolucion' => $reglasFecha,
             'estado_devuelto' => ['required', 'string', Rule::in(Devolucion::ESTADOS_DEVOLUCION)],
-            'recibido_por' => ['required', 'string', 'max:255'],
+            'recibido_por' => ['nullable', 'string', 'max:255'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
         ], [
             'asignacion_id.required' => 'Debe seleccionar una asignación para registrar la devolución.',
@@ -486,47 +487,61 @@ class DevolucionController extends Controller
             return back()->with('error', 'Contraseña incorrecta. No se pudo anular la devolución.');
         }
 
-        $asignacion = $devolucion->asignacion;
-        if ($asignacion) {
+        $error = DB::transaction(function () use ($devolucion, $request, $validated): ?string {
+            $devolucionBloqueada = Devolucion::where('id', $devolucion->id)->lockForUpdate()->firstOrFail();
+            $asignacion = Asignacion::where('id', $devolucionBloqueada->asignacion_id)->lockForUpdate()->first();
+
+            if (! $asignacion) {
+                return 'No se puede anular la devolución: la asignación asociada no existe.';
+            }
+
             $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
-                ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
-                : Dispositivo::withTrashed()->find($asignacion->id_referencia);
+                ? Mobiliario::withTrashed()->where('id', $asignacion->id_referencia)->lockForUpdate()->first()
+                : Dispositivo::withTrashed()->where('id', $asignacion->id_referencia)->lockForUpdate()->first();
 
-            if ($item && $item->estaAsignado()) {
-                return back()->with('error', 'No se puede anular esta devolución: el bien ya se encuentra actualmente asignado en otra asignación activa. Debe resolver esa asignación antes de poder reactivar la anterior.');
+            if (! $item) {
+                return 'No se puede anular la devolución: el bien asociado ya no existe en el inventario.';
             }
 
-            if (! $asignacion->es_area_comun && $asignacion->empleado?->trashed()) {
-                return back()->with('error', 'No se puede anular esta devolución: el colaborador asociado a esta asignación fue dado de baja.');
+            if ($item->estaAsignado()) {
+                return 'No se puede anular esta devolución: el bien ya se encuentra actualmente asignado en otra asignación activa. Debe resolver esa asignación antes de poder reactivar la anterior.';
             }
-        }
 
-        DB::transaction(function () use ($devolucion, $request, $validated, $asignacion): void {
+            // Validar coherencia de sede y colaborador
+            if (! $asignacion->es_area_comun && $asignacion->empleado_id) {
+                $empleado = Empleado::withTrashed()->where('id', $asignacion->empleado_id)->lockForUpdate()->first();
 
-            $devolucion->motivo_anulacion = $validated['motivo_anulacion'];
-            $devolucion->anulado_por_user_id = $request->user()->id;
-            $devolucion->save();
-            $devolucion->delete();
+                if (! $empleado || $empleado->trashed()) {
+                    return 'No se puede anular esta devolución: el colaborador asociado a esta asignación fue dado de baja o no existe.';
+                }
 
-            if ($asignacion) {
-                $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
-                    ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
-                    : Dispositivo::withTrashed()->find($asignacion->id_referencia);
-
-                if ($item) {
-                    // Restaurar el estado físico original que tenía el bien antes de registrar la devolución
-                    if (! empty($devolucion->estado_anterior)) {
-                        $item->estado = $devolucion->estado_anterior;
-                    } elseif (! empty($asignacion->estado_al_asignar)) {
-                        $item->estado = $asignacion->estado_al_asignar;
-                    }
-
-                    // Al anular la devolución, el bien regresa a estar Asignado a su custodio anterior
-                    $item->disponibilidad = $item::DISPONIBILIDAD_ASIGNADO;
-                    $item->save();
+                if ($item->ubicacion !== $empleado->ubicacion) {
+                    return "No se puede anular esta devolución: el bien pertenece a la Sede {$item->ubicacion} y el colaborador a la Sede {$empleado->ubicacion}.";
                 }
             }
+
+            $devolucionBloqueada->motivo_anulacion = $validated['motivo_anulacion'];
+            $devolucionBloqueada->anulado_por_user_id = $request->user()->id;
+            $devolucionBloqueada->save();
+            $devolucionBloqueada->delete();
+
+            // Restaurar el estado físico original que tenía el bien antes de registrar la devolución
+            if (! empty($devolucionBloqueada->estado_anterior)) {
+                $item->estado = $devolucionBloqueada->estado_anterior;
+            } elseif (! empty($asignacion->estado_al_asignar)) {
+                $item->estado = $asignacion->estado_al_asignar;
+            }
+
+            // Al anular la devolución, el bien regresa a estar Asignado a su custodio anterior
+            $item->disponibilidad = $item::DISPONIBILIDAD_ASIGNADO;
+            $item->save();
+
+            return null;
         });
+
+        if ($error) {
+            return back()->with('error', $error);
+        }
 
         return redirect()->route('devoluciones.index')
             ->with('success', 'Acta de devolución anulada. El bien ha retornado a su estado asignado anterior.');
@@ -549,35 +564,41 @@ class DevolucionController extends Controller
             return back()->with('error', 'Contraseña incorrecta. No se pudo reactivar la devolución.');
         }
 
-        $devolucion = Devolucion::onlyTrashed()->findOrFail($id);
-        $asignacion = Asignacion::withTrashed()->findOrFail($devolucion->asignacion_id);
+        $error = DB::transaction(function () use ($id): ?string {
+            $devolucion = Devolucion::onlyTrashed()->where('id', $id)->lockForUpdate()->firstOrFail();
+            $asignacion = Asignacion::withTrashed()->where('id', $devolucion->asignacion_id)->lockForUpdate()->firstOrFail();
 
-        if ($asignacion->trashed()) {
-            return back()->with('error', 'No se puede reactivar: la asignación asociada se encuentra anulada. Primero debe reactivar la asignación.');
-        }
+            if ($asignacion->trashed()) {
+                return 'No se puede reactivar: la asignación asociada se encuentra anulada. Primero debe reactivar la asignación.';
+            }
 
-        if ($asignacion->devolucion()->exists()) {
-            return back()->with('error', 'No se puede reactivar: esta asignación ya cuenta con otra acta de devolución activa.');
-        }
+            if ($asignacion->devolucion()->exists()) {
+                return 'No se puede reactivar: esta asignación ya cuenta con otra acta de devolución activa.';
+            }
 
-        DB::transaction(function () use ($devolucion, $asignacion): void {
+            $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::withTrashed()->where('id', $asignacion->id_referencia)->lockForUpdate()->first()
+                : Dispositivo::withTrashed()->where('id', $asignacion->id_referencia)->lockForUpdate()->first();
+
             $devolucion->motivo_anulacion = null;
             $devolucion->anulado_por_user_id = null;
             $devolucion->save();
             $devolucion->restore();
-
-            $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
-                ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
-                : Dispositivo::withTrashed()->find($asignacion->id_referencia);
 
             if ($item) {
                 $item->estado = $devolucion->estado_devuelto;
                 $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacion->es_area_comun, false);
                 $item->save();
             }
+
+            return null;
         });
 
-        return redirect()->route('devoluciones.show', $devolucion->id)
+        if ($error) {
+            return back()->with('error', $error);
+        }
+
+        return redirect()->route('devoluciones.show', $id)
             ->with('success', 'Acta de devolución reactivada exitosamente. El inventario ha sido actualizado.');
     }
 }

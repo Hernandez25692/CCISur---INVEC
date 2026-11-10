@@ -158,13 +158,14 @@ Route::middleware(['auth'])->group(function () {
         }
 
         if ($q !== '') {
-            $query->where(function ($sub) use ($q, $tipo): void {
-                $sub->where('nombre', 'like', "%{$q}%")
-                    ->orWhere('etiqueta', 'like', "%{$q}%");
+            $qSafe = addcslashes($q, '%_\\');
+            $query->where(function ($sub) use ($qSafe, $tipo): void {
+                $sub->where('nombre', 'like', "%{$qSafe}%")
+                    ->orWhere('etiqueta', 'like', "%{$qSafe}%");
                 if ($tipo === 'dispositivo') {
-                    $sub->orWhere('n_serie', 'like', "%{$q}%")
-                        ->orWhere('marca', 'like', "%{$q}%")
-                        ->orWhere('modelo', 'like', "%{$q}%");
+                    $sub->orWhere('n_serie', 'like', "%{$qSafe}%")
+                        ->orWhere('marca', 'like', "%{$qSafe}%")
+                        ->orWhere('modelo', 'like', "%{$qSafe}%");
                 }
             });
         }

@@ -316,7 +316,7 @@ class AsignacionController extends Controller
             'area' => ['required', 'string', 'max:255'],
             'observaciones' => ['nullable', 'string', 'max:2000'],
             'fecha_entrega' => ['required', 'date'],
-            'entregado_por' => ['required', 'string', 'max:255'],
+            'entregado_por' => ['nullable', 'string', 'max:255'],
         ], [
             'tipo.required' => 'Debe seleccionar si asignará mobiliario o un dispositivo.',
             'id_referencia.required' => 'Debe seleccionar el artículo específico a asignar.',
@@ -403,18 +403,12 @@ class AsignacionController extends Controller
     }
 
     /**
-     * Anular asignación por error humano (requiere contraseña y motivo, aplica Soft Delete con trazabilidad).
+     * Anular asignación por error humano (requiere contraseña y motivo, aplica Soft Delete con trazabilidad atómica).
      */
     public function destroy(Request $request, Asignacion $asignacion): RedirectResponse
     {
         Gate::authorize('admin');
 
-        // 1. Prohibir eliminación si ya cuenta con devolución
-        if ($asignacion->devolucion()->exists()) {
-            return redirect()->back()->with('error', 'Acción denegada: No se puede anular una asignación que ya cuenta con un acta de devolución formal registrada.');
-        }
-
-        // 2. Exigir contraseña del usuario en sesión y motivo de anulación
         $validated = $request->validate([
             'password' => ['required', 'string'],
             'motivo_anulacion' => ['required', 'string', 'min:5', 'max:500'],
@@ -428,31 +422,39 @@ class AsignacionController extends Controller
             return redirect()->back()->with('error', 'La contraseña ingresada es incorrecta. La asignación NO fue anulada.');
         }
 
-        // 3. Ejecutar anulación lógica y liberación del bien en transacción
-        DB::transaction(function () use ($asignacion, $request, $validated): void {
-            $tipo = $asignacion->tipo;
-            $idReferencia = $asignacion->id_referencia;
+        $error = DB::transaction(function () use ($asignacion, $request, $validated): ?string {
+            $asignacionBloqueada = Asignacion::where('id', $asignacion->id)->lockForUpdate()->firstOrFail();
 
-            $asignacion->motivo_anulacion = $validated['motivo_anulacion'];
-            $asignacion->anulado_por_user_id = $request->user()->id;
-            $asignacion->save();
-            $asignacion->delete();
+            if ($asignacionBloqueada->devolucion()->exists()) {
+                return 'Acción denegada: No se puede anular una asignación que ya cuenta con un acta de devolución formal registrada.';
+            }
 
-            $item = $tipo === Asignacion::TIPO_MOBILIARIO
-                ? Mobiliario::find($idReferencia)
-                : Dispositivo::find($idReferencia);
+            $asignacionBloqueada->motivo_anulacion = $validated['motivo_anulacion'];
+            $asignacionBloqueada->anulado_por_user_id = $request->user()->id;
+            $asignacionBloqueada->save();
+            $asignacionBloqueada->delete();
+
+            $item = $asignacionBloqueada->tipo === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::where('id', $asignacionBloqueada->id_referencia)->lockForUpdate()->first()
+                : Dispositivo::where('id', $asignacionBloqueada->id_referencia)->lockForUpdate()->first();
 
             if ($item) {
-                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacion->es_area_comun, $item->estaAsignado());
+                $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacionBloqueada->es_area_comun, $item->estaAsignado());
                 $item->save();
             }
+
+            return null;
         });
+
+        if ($error) {
+            return redirect()->back()->with('error', $error);
+        }
 
         return redirect()->route('asignaciones.index')->with('success', 'Asignación anulada exitosamente. El bien ha sido liberado y queda nuevamente disponible en el inventario.');
     }
 
     /**
-     * Reactivar una asignación anulada por error previo (requiere contraseña y disponibilidad del bien).
+     * Reactivar una asignación anulada por error previo (requiere contraseña, disponibilidad y coherencia de sede).
      */
     public function restore(Request $request, int $id): RedirectResponse
     {
@@ -468,25 +470,41 @@ class AsignacionController extends Controller
             return redirect()->back()->with('error', 'La contraseña ingresada es incorrecta. La asignación NO fue reactivada.');
         }
 
-        $asignacion = Asignacion::onlyTrashed()->findOrFail($id);
+        $error = DB::transaction(function () use ($id): ?string {
+            $asignacion = Asignacion::onlyTrashed()
+                ->where('id', $id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
-            ? Mobiliario::find($asignacion->id_referencia)
-            : Dispositivo::find($asignacion->id_referencia);
+            $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::where('id', $asignacion->id_referencia)->lockForUpdate()->first()
+                : Dispositivo::where('id', $asignacion->id_referencia)->lockForUpdate()->first();
 
-        if (! $item) {
-            return redirect()->back()->with('error', 'No se puede reactivar: el bien asociado ya no existe en el inventario.');
-        }
+            if (! $item) {
+                return 'No se puede reactivar: el bien asociado ya no existe en el inventario.';
+            }
 
-        if ($item->estaAsignado()) {
-            return redirect()->back()->with('error', 'Acción denegada: El bien ya cuenta con una asignación activa actualmente en el inventario.');
-        }
+            if ($item->estaAsignado()) {
+                return 'Acción denegada: El bien ya cuenta con una asignación activa actualmente en el inventario.';
+            }
 
-        if (! $item::esEstadoAsignable($item->estado)) {
-            return redirect()->back()->with('error', 'Acción denegada: El bien se encuentra en un estado físico no asignable ('.$item->estado.').');
-        }
+            if (! $item::esEstadoAsignable($item->estado)) {
+                return 'Acción denegada: El bien se encuentra en un estado físico no asignable ('.$item->estado.').';
+            }
 
-        DB::transaction(function () use ($asignacion, $item): void {
+            // Validar coherencia de sede y que el colaborador no esté dado de baja
+            if (! $asignacion->es_area_comun && $asignacion->empleado_id) {
+                $empleado = Empleado::withTrashed()->where('id', $asignacion->empleado_id)->lockForUpdate()->first();
+
+                if (! $empleado || $empleado->trashed()) {
+                    return 'No se puede reactivar: el colaborador asociado a esta asignación fue dado de baja o no existe.';
+                }
+
+                if ($item->ubicacion !== $empleado->ubicacion) {
+                    return "No se puede reactivar: el bien pertenece a la Sede {$item->ubicacion} y el colaborador a la Sede {$empleado->ubicacion}.";
+                }
+            }
+
             $asignacion->motivo_anulacion = null;
             $asignacion->anulado_por_user_id = null;
             $asignacion->save();
@@ -494,9 +512,15 @@ class AsignacionController extends Controller
 
             $item->disponibilidad = $item::DISPONIBILIDAD_ASIGNADO;
             $item->save();
+
+            return null;
         });
 
-        return redirect()->route('asignaciones.show', $asignacion->id)
+        if ($error) {
+            return redirect()->back()->with('error', $error);
+        }
+
+        return redirect()->route('asignaciones.show', $id)
             ->with('success', 'Asignación reactivada exitosamente. El bien vuelve a encontrarse asignado.');
     }
 
