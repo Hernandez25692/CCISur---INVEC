@@ -72,11 +72,15 @@
 
                     <div>
                         <label for="filtro_ubicacion" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                            Última Ubicación
+                            Sede / Ubicación
                         </label>
-                        <input type="text" id="filtro_ubicacion" name="ubicacion" value="{{ request('ubicacion') }}"
-                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
-                            placeholder="Ej. Bodega, Oficina">
+                        <select id="filtro_ubicacion" name="ubicacion"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                            <option value="">Todas</option>
+                            @foreach (\App\Models\Mobiliario::UBICACIONES as $ubicacion)
+                                <option value="{{ $ubicacion }}" @selected(request('ubicacion') === $ubicacion)>{{ $ubicacion }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div>

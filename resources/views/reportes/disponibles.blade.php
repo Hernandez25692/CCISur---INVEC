@@ -23,10 +23,14 @@
                         placeholder="Buscar por nombre...">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1">Ubicación</label>
-                    <input type="text" name="ubicacion" value="{{ request('ubicacion') }}"
-                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                        placeholder="Ej. Bodega, Archivo...">
+                    <label class="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1">Sede / Ubicación</label>
+                    <select name="ubicacion"
+                        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand-gold focus:border-brand-gold text-sm">
+                        <option value="">Todas las sedes</option>
+                        @foreach (\App\Models\Mobiliario::UBICACIONES as $ubicacion)
+                            <option value="{{ $ubicacion }}" @selected(request('ubicacion') === $ubicacion)>{{ $ubicacion }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1">Estado Físico</label>

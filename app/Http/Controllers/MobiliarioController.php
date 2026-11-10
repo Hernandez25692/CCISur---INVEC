@@ -104,7 +104,7 @@ class MobiliarioController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'tipo' => ['required', 'string', Rule::in(Mobiliario::TIPOS)],
-            'ubicacion' => ['required', 'string', 'max:255'],
+            'ubicacion' => ['required', 'string', Rule::in(Mobiliario::UBICACIONES)],
             'estado' => ['required', Rule::in(Mobiliario::ESTADOS)],
             'fecha_registro' => ['required', 'date'],
             'es_area_comun' => ['nullable', 'boolean'],
@@ -148,7 +148,7 @@ class MobiliarioController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'tipo' => ['required', 'string', Rule::in(Mobiliario::TIPOS)],
-            'ubicacion' => ['required', 'string', 'max:255'],
+            'ubicacion' => ['required', 'string', Rule::in(Mobiliario::UBICACIONES)],
             'estado' => [$tieneAsignacionActiva ? 'nullable' : 'required', Rule::in(Mobiliario::ESTADOS)],
             'fecha_registro' => ['required', 'date'],
             'es_area_comun' => ['nullable', 'boolean'],

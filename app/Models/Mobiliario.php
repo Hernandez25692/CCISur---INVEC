@@ -15,6 +15,8 @@ class Mobiliario extends Model
 
     public const ETIQUETA_BIEN = 'mueble';
 
+    public const UBICACIONES = Empleado::UBICACIONES;
+
     public const TIPOS = [
         'Escritorio',
         'Silla',

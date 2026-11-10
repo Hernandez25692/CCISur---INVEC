@@ -15,6 +15,8 @@ class Dispositivo extends Model
 
     public const ETIQUETA_BIEN = 'dispositivo';
 
+    public const UBICACIONES = Empleado::UBICACIONES;
+
     public const TIPOS = [
         'Laptop',
         'Computadora de escritorio',

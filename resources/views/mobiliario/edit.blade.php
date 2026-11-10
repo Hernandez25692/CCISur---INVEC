@@ -54,11 +54,18 @@
                 @enderror
             </div>
 
-            <!-- Ubicación -->
+            <!-- Sede / Ubicación -->
             <div>
-                <label for="ubicacion" class="block text-sm font-medium text-brand-navy">Ubicación</label>
-                <input type="text" name="ubicacion" id="ubicacion" value="{{ old('ubicacion', $mobiliario->ubicacion) }}" required
+                <label for="ubicacion" class="block text-sm font-medium text-brand-navy">Sede / Ubicación</label>
+                <select name="ubicacion" id="ubicacion" required
                     class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('ubicacion') border-red-500 @enderror">
+                    <option value="">-- Seleccionar sede --</option>
+                    @foreach (\App\Models\Mobiliario::UBICACIONES as $ubicacion)
+                        <option value="{{ $ubicacion }}" @selected(old('ubicacion', $mobiliario->ubicacion) === $ubicacion)>
+                            {{ $ubicacion }}
+                        </option>
+                    @endforeach
+                </select>
                 @error('ubicacion')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                 @enderror
