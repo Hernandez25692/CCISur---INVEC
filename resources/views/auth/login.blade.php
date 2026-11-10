@@ -3,367 +3,435 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Iniciar Sesión | INVEC</title>
+    <title>Iniciar Sesión | INVEC - CCISUR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Reset y estilos base */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        :root {
+            --brand-navy-950: #0b1329;
+            --brand-navy-900: #0f172a;
+            --brand-navy-800: #1e293b;
+            --brand-navy-700: #334155;
+            --brand-gold-500: #AF9731;
+            --brand-gold-400: #c4a938;
+            --brand-gold-600: #8c7621;
+            --brand-gold-100: #fef9c3;
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4f0fe 100%);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
-            color: #333;
-            line-height: 1.6;
+            background-color: var(--brand-navy-950);
+            color: #1e293b;
+            position: relative;
+            overflow-x: hidden;
         }
 
-        /* Layout principal */
-        .login-container {
+        .login-layout {
             display: flex;
             width: 100%;
             min-height: 100vh;
+            min-height: 100dvh;
         }
 
-        /* Panel izquierdo - Información */
-        .info-panel {
+        /* ── Panel Izquierdo Institucional (Escritorio) ── */
+        .brand-panel {
             display: none;
+            width: 48%;
+            background: radial-gradient(circle at 30% 25%, #1e293b 0%, #0b1329 100%);
+            padding: 3.5rem 3.5rem;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 50%;
-            padding: 2rem 3rem;
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            color: white;
+            justify-content: space-between;
             position: relative;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
             overflow: hidden;
         }
 
-        .info-panel::before {
-            content: '';
+        .ambient-glow {
             position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 200px;
-            height: 200px;
+            width: 500px;
+            height: 500px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            background: radial-gradient(circle, rgba(175, 151, 49, 0.12) 0%, rgba(175, 151, 49, 0) 70%);
+            top: 20%;
+            left: 20%;
+            pointer-events: none;
         }
 
-        .info-panel::after {
-            content: '';
-            position: absolute;
-            bottom: -80px;
-            left: -80px;
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
+        .brand-content {
+            z-index: 2;
         }
 
-        .info-panel img {
-            height: 80px;
-            margin-bottom: 2rem;
-            filter: brightness(0) invert(1);
-            z-index: 1;
+        .brand-logo-capsule {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border-radius: 1rem;
+            padding: 0.75rem 1.4rem;
+            max-width: 260px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            margin-bottom: 2.25rem;
         }
 
-        .info-panel h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
+        .brand-logo-capsule img {
+            width: 100%;
+            height: auto;
+            max-height: 52px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .brand-title {
+            color: #ffffff;
+            font-size: 2.1rem;
+            font-weight: 800;
+            line-height: 1.25;
             margin-bottom: 1rem;
-            text-align: center;
-            z-index: 1;
+            letter-spacing: -0.02em;
         }
 
-        .info-panel p {
-            font-size: 1.1rem;
-            text-align: center;
-            margin-bottom: 2.5rem;
-            opacity: 0.9;
-            z-index: 1;
+        .brand-title span {
+            color: var(--brand-gold-400);
+        }
+
+        .brand-desc {
+            color: #94a3b8;
+            font-size: 0.98rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            max-width: 440px;
         }
 
         .features-list {
             list-style: none;
-            margin-top: 1.5rem;
-            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            z-index: 2;
         }
 
         .features-list li {
-            position: relative;
-            padding-left: 1.5rem;
-            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #cbd5e1;
+            font-size: 0.92rem;
+        }
+
+        .features-list li i {
+            color: var(--brand-gold-400);
             font-size: 0.95rem;
-            opacity: 0.9;
+            flex-shrink: 0;
         }
 
-        .features-list li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: #93c5fd;
-            font-weight: bold;
+        .brand-footer {
+            z-index: 2;
+            color: #64748b;
+            font-size: 0.78rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 1.25rem;
         }
 
-        /* Panel derecho - Formulario */
+        /* ── Panel Derecho - Formulario de Login ── */
         .form-panel {
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 2rem;
-            background: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        }
-
-        .form-container {
-            width: 100%;
-            max-width: 400px;
-            padding: 1.5rem;
-        }
-
-        .form-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .form-header img {
-            height: 60px;
-            margin-bottom: 1.5rem;
-        }
-
-        .form-header h2 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1e40af;
-            margin-bottom: 0.5rem;
-        }
-
-        .form-header p {
-            color: #6b7280;
-            font-size: 0.95rem;
-        }
-
-        /* Formulario */
-        .login-form {
-            margin-top: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
+            padding: 2rem 1.25rem;
+            background: radial-gradient(circle at 50% 15%, #1e293b 0%, #0b1329 100%);
             position: relative;
+            overflow: hidden;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #4b5563;
+        .form-panel .ambient-glow {
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
-        .form-control {
+        .form-card {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background-color: #f9fafb;
+            max-width: 420px;
+            background: #ffffff;
+            padding: 2.25rem 1.75rem;
+            border-radius: 1.25rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 2;
         }
 
-        .form-control:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-            background-color: white;
-        }
-
-        .form-options {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-        }
-
-        .remember-me input {
-            margin-right: 0.5rem;
-            accent-color: #1e40af;
-        }
-
-        .forgot-password {
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .forgot-password:hover {
-            text-decoration: underline;
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background-color: #1e40af;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #1e3a8a;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
-        }
-
-        .register-link {
+        /* Header móvil con logo CCISUR */
+        .mobile-header {
             text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.95rem;
-            color: #6b7280;
+            margin-bottom: 1.5rem;
         }
 
-        .register-link a {
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 500;
+        .mobile-logo {
+            max-height: 48px;
+            width: auto;
+            max-width: 210px;
+            object-fit: contain;
+            margin: 0 auto 0.75rem auto;
+            display: block;
         }
 
-        .register-link a:hover {
-            text-decoration: underline;
+        .form-card h2 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--brand-navy-900);
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.02em;
+        }
+
+        .form-card p.subtitle {
+            color: #64748b;
+            font-size: 0.92rem;
+            margin-bottom: 1.75rem;
         }
 
         /* Alertas */
         .alert {
-            padding: 0.9rem 1.1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            font-size: 0.875rem;
-            line-height: 1.45;
+            padding: 0.85rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.88rem;
             display: flex;
             align-items: flex-start;
-            gap: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            gap: 0.65rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.45;
         }
 
         .alert-success {
             background-color: #f0fdf4;
-            color: #166534;
             border: 1px solid #bbf7d0;
+            color: #166534;
         }
 
         .alert-danger {
             background-color: #fef2f2;
-            color: #991b1b;
             border: 1px solid #fecaca;
+            color: #991b1b;
         }
 
-        /* Responsive */
-        @media (min-width: 992px) {
-            .info-panel {
+        .alert i {
+            margin-top: 0.15rem;
+            flex-shrink: 0;
+            font-size: 1rem;
+        }
+
+        /* Campos de Entrada */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--brand-navy-900);
+            margin-bottom: 0.45rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            color: #94a3b8;
+            font-size: 0.95rem;
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.6rem;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            color: #0f172a;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            background-color: #ffffff;
+            border-color: var(--brand-gold-500);
+            box-shadow: 0 0 0 3px rgba(175, 151, 49, 0.2);
+        }
+
+        .form-control:focus + .input-icon,
+        .input-wrapper:focus-within .input-icon {
+            color: var(--brand-gold-500);
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            right: 0.85rem;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0.35rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            transition: color 0.2s ease;
+        }
+
+        .toggle-password-btn:hover {
+            color: var(--brand-navy-800);
+        }
+
+        /* Botón Ingresar */
+        .btn-submit {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            width: 100%;
+            min-height: 48px;
+            padding: 0.85rem 1.5rem;
+            margin-top: 0.75rem;
+            background: linear-gradient(135deg, var(--brand-gold-500) 0%, var(--brand-gold-600) 100%);
+            color: #0f172a;
+            font-size: 0.98rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(175, 151, 49, 0.35);
+        }
+
+        .btn-submit:hover {
+            background: linear-gradient(135deg, var(--brand-gold-400) 0%, var(--brand-gold-500) 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(175, 151, 49, 0.45);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* ── Responsividad (Desktop) ── */
+        @media (min-width: 1024px) {
+            .brand-panel {
                 display: flex;
             }
 
             .form-panel {
-                width: 50%;
-            }
-        }
-
-        /* Animaciones */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+                width: 52%;
+                padding: 3.5rem;
+                background: #f8fafc;
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            .form-panel .ambient-glow {
+                display: none;
             }
-        }
 
-        .form-container {
-            animation: fadeIn 0.6s ease-out;
-        }
+            .form-card {
+                padding: 2.75rem 2.5rem;
+                border: 1px solid #e2e8f0;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+            }
 
-        /* Efecto de onda decorativo */
-        .wave {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100px;
-            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="rgba(255,255,255,0.1)" /><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" fill="rgba(255,255,255,0.2)" /><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="rgba(255,255,255,0.3)" /></svg>');
-            background-size: cover;
-            z-index: 0;
+            .mobile-header {
+                display: none;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="login-container">
-        <!-- Panel izquierdo - Información -->
-        <div class="info-panel">
-            <img src="{{ asset('Logo/logo_menu.png') }}" alt="Logo INVEC">
-            <h1>Bienvenido a INVEC</h1>
-            <p>Sistema de Inventario y Asignación de Equipos</p>
+    <div class="login-layout">
+        <!-- Panel Izquierdo - Identidad Institucional CCISUR (Desktop) -->
+        <div class="brand-panel">
+            <div class="ambient-glow"></div>
 
-            <ul class="features-list">
-                <li>Control de dispositivos y mobiliario</li>
-                <li>Asignaciones con actas de entrega</li>
-                <li>Reportes de disponibilidad</li>
-                <li>Seguimiento de mantenimientos</li>
-                <li>Historial completo de equipos</li>
-            </ul>
-
-            <div class="wave"></div>
-        </div>
-
-        <!-- Panel derecho - Formulario -->
-        <div class="form-panel">
-            <div class="form-container">
-                <div class="form-header">
-                    <img src="{{ asset('Logo/logo_menu.png') }}" alt="INVEC">
-                    <h2>Iniciar Sesión</h2>
-                    <p>Ingresa tus credenciales para continuar</p>
+            <div class="brand-content">
+                <div class="brand-logo-capsule">
+                    <img src="{{ asset('Logo/logo_devo.png') }}" alt="CCISUR - Cámara de Comercio e Industrias del Sur">
                 </div>
 
+                <h1 class="brand-title">Control de Inventario <br><span>y Asignaciones</span></h1>
+                <p class="brand-desc">
+                    Plataforma institucional para la administración, trazabilidad y control de los bienes, dispositivos y mobiliario de CCISUR.
+                </p>
+
+                <ul class="features-list">
+                    <li>
+                        <i class="fas fa-circle-check"></i>
+                        <span>Control integral de dispositivos y mobiliario</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-circle-check"></i>
+                        <span>Generación oficial de actas de entrega y devolución</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-circle-check"></i>
+                        <span>Trazabilidad histórica y reportes exportables</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-circle-check"></i>
+                        <span>Acceso seguro protegido por roles</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="brand-footer">
+                Cámara de Comercio e Industrias del Sur (CCISUR) • INVEC &copy; {{ date('Y') }}
+            </div>
+        </div>
+
+        <!-- Panel Derecho - Formulario de Acceso -->
+        <div class="form-panel">
+            <div class="ambient-glow"></div>
+            <div class="form-card">
+                <!-- Header Móvil con Logo CCISUR -->
+                <div class="mobile-header">
+                    <img src="{{ asset('Logo/logo_devo.png') }}" alt="CCISUR" class="mobile-logo">
+                </div>
+
+                <h2>Iniciar Sesión</h2>
+                <p class="subtitle">Ingresa tus credenciales para acceder al sistema</p>
+
+                <!-- Estado o Sesión -->
                 @if (session('status'))
                     <div class="alert alert-success" role="status">
-                        <i class="fas fa-check-circle" style="font-size: 1.1rem; color: #16a34a; flex-shrink: 0; margin-top: 0.1rem;" aria-hidden="true"></i>
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
                         <span>{{ session('status') }}</span>
                     </div>
                 @endif
 
+                <!-- Errores de Validación -->
                 @if ($errors->any())
                     <div class="alert alert-danger" role="alert" aria-live="assertive">
-                        <i class="fas fa-circle-exclamation" style="font-size: 1.1rem; color: #dc2626; flex-shrink: 0; margin-top: 0.1rem;" aria-hidden="true"></i>
-                        <div style="flex: 1;">
+                        <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                        <div>
                             @if ($errors->count() === 1)
                                 <span>{{ $errors->first() }}</span>
                             @else
-                                <ul style="margin: 0; padding-left: 1.25rem;">
+                                <ul style="margin: 0; padding-left: 1rem;">
                                     @foreach ($errors->all() as $error)
                                         <li>{{ $error }}</li>
                                     @endforeach
@@ -373,42 +441,57 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('login', [], false) }}" class="login-form">
+                <form method="POST" action="{{ route('login', [], false) }}">
                     @csrf
 
-                    <!-- Correo -->
+                    <!-- Correo Electrónico -->
                     <div class="form-group">
                         <label for="email">Correo Electrónico</label>
-                        <input id="email" type="email" name="email" value="{{ old('email') }}" required
-                            autofocus class="form-control" placeholder="tu@email.com">
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
+                                class="form-control" placeholder="tu.correo@ccisur.hn">
+                        </div>
                     </div>
 
-                    <!-- Contraseña -->
+                    <!-- Contraseña con Ojito -->
                     <div class="form-group">
                         <label for="password">Contraseña</label>
-                        <input id="password" type="password" name="password" required class="form-control"
-                            placeholder="••••••••">
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input id="password" type="password" name="password" required class="form-control"
+                                placeholder="••••••••" style="padding-right: 2.75rem;">
+                            <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility()" aria-label="Mostrar u ocultar contraseña">
+                                <i id="toggle-eye-icon" class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Recuérdame y enlace -->
-                    <div class="form-options">
-                        <label class="remember-me">
-                            <input type="checkbox" name="remember"> Recuérdame
-                        </label>
-                        @if (Route::has('password.request'))
-                            <a href="{{ route('password.request') }}" class="forgot-password">¿Olvidaste tu
-                                contraseña?</a>
-                        @endif
-                    </div>
-
-                    <!-- Botón -->
-                    <button type="submit" class="btn btn-primary">
-                        Iniciar Sesión
+                    <!-- Botón de Envío -->
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-arrow-right-to-bracket"></i>
+                        <span>Ingresar al Sistema</span>
                     </button>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+        function togglePasswordVisibility() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('toggle-eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
+    </script>
 </body>
 
 </html>

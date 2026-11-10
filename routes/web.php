@@ -8,9 +8,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Página de inicio pública
+// Ruta raíz: redirige al dashboard si ya está autenticado o al login
 Route::get('/', function () {
-    return view('inicio');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
 // Pantalla institucional de bloqueo por inactividad
