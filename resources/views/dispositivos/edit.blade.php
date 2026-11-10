@@ -101,21 +101,43 @@
             </div>
 
             <!-- Sede / Ubicación -->
-            <div>
-                <label for="ubicacion" class="block text-sm font-medium text-brand-navy">Sede / Ubicación</label>
-                <select name="ubicacion" id="ubicacion" required
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('ubicacion') border-red-500 @enderror">
-                    <option value="">-- Seleccionar sede --</option>
-                    @foreach (\App\Models\Dispositivo::UBICACIONES as $ubicacion)
-                        <option value="{{ $ubicacion }}" @selected(old('ubicacion', $dispositivo->ubicacion) === $ubicacion)>
-                            {{ $ubicacion }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('ubicacion')
-                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                @enderror
-            </div>
+            @if ($dispositivo->estaAsignado())
+                <div class="rounded-lg bg-amber-50/70 border border-amber-200 p-4 space-y-2">
+                    <div class="flex items-start gap-2.5">
+                        <i class="fas fa-lock text-amber-600 mt-0.5" aria-hidden="true"></i>
+                        <div class="text-xs text-amber-900">
+                            <p class="font-semibold">Sede protegida mientras el dispositivo está asignado</p>
+                            <p class="mt-0.5 text-amber-800">
+                                Este equipo se encuentra actualmente en custodia activa de un colaborador. Para transferirlo a otra sede, registre primero el acta de devolución correspondiente.
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="ubicacion_bloqueada" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Sede Actual
+                        </label>
+                        <input type="hidden" name="ubicacion" value="{{ $dispositivo->ubicacion }}">
+                        <input type="text" id="ubicacion_bloqueada" value="Sede {{ $dispositivo->ubicacion }}" readonly
+                            class="w-full border-amber-200 rounded-lg bg-white/80 text-gray-700 text-sm cursor-not-allowed">
+                    </div>
+                </div>
+            @else
+                <div>
+                    <label for="ubicacion" class="block text-sm font-medium text-brand-navy">Sede / Ubicación</label>
+                    <select name="ubicacion" id="ubicacion" required
+                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('ubicacion') border-red-500 @enderror">
+                        <option value="">-- Seleccionar sede --</option>
+                        @foreach (\App\Models\Dispositivo::UBICACIONES as $ubicacion)
+                            <option value="{{ $ubicacion }}" @selected(old('ubicacion', $dispositivo->ubicacion) === $ubicacion)>
+                                {{ $ubicacion }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('ubicacion')
+                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
 
             <!-- Estado Físico -->
             @if ($dispositivo->estaAsignado())

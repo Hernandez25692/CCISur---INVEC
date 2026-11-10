@@ -155,7 +155,8 @@ class MobiliarioController extends Controller
         ]);
 
         if ($tieneAsignacionActiva) {
-            // Mientras el mueble está asignado, su estado físico y disponibilidad están bloqueados
+            // Mientras el mueble está asignado, su sede, estado físico y disponibilidad están bloqueados
+            $validated['ubicacion'] = $mobiliario->ubicacion;
             $validated['estado'] = $mobiliario->estado;
             $validated['disponibilidad'] = Mobiliario::DISPONIBILIDAD_ASIGNADO;
         } else {

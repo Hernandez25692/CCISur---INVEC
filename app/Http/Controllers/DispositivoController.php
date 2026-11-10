@@ -199,6 +199,7 @@ class DispositivoController extends Controller
         ]);
 
         if ($tieneAsignacionActiva) {
+            $validated['ubicacion'] = $dispositivo->ubicacion;
             $validated['estado'] = $dispositivo->estado;
             $validated['disponibilidad'] = Dispositivo::DISPONIBILIDAD_ASIGNADO;
         } else {
