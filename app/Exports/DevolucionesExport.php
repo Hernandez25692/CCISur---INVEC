@@ -211,7 +211,7 @@ class DevolucionesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $asig?->nombre_bien ?? 'N/A',
             $asig?->etiqueta_bien ?? 'N/A',
             $devolucion->estado_devuelto,
-            $devolucion->estado_anterior ?? $asig?->estado_al_asignar ?? 'N/A',
+            $devolucion->estado_anterior ?? 'N/A',
             $devolucion->recibido_por,
             $devolucion->observaciones ?? 'Sin observaciones',
             $devolucion->deleted_at?->format('d/m/Y H:i') ?? 'N/A',

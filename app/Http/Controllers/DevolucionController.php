@@ -402,7 +402,7 @@ class DevolucionController extends Controller
                     : Dispositivo::withTrashed()->find($asignacion->id_referencia);
 
                 // Capturar el estado físico previo antes de registrar la devolución
-                $estadoAnterior = $item?->estado ?? $asignacion->estado_al_asignar ?? null;
+                $estadoAnterior = $item?->estado ?? null;
 
                 if ($item) {
                     // Actualizar estado físico del bien recibido
@@ -470,9 +470,13 @@ class DevolucionController extends Controller
         return $pdf->stream("{$correlativo}.pdf");
     }
 
-    public function destroy(Request $request, Devolucion $devolucion)
+    public function destroy(Request $request, Devolucion $devolucion): RedirectResponse
     {
         Gate::authorize('admin');
+
+        if (! $devolucion->puedeSerAnuladaPor($request->user())) {
+            return back()->with('error', $devolucion->motivoNoAnulable($request->user()) ?? 'Acción denegada: El plazo de gracia para anulación ha expirado.');
+        }
 
         $validated = $request->validate([
             'password' => ['required', 'string'],
@@ -489,6 +493,11 @@ class DevolucionController extends Controller
 
         $error = DB::transaction(function () use ($devolucion, $request, $validated): ?string {
             $devolucionBloqueada = Devolucion::where('id', $devolucion->id)->lockForUpdate()->firstOrFail();
+
+            if (! $devolucionBloqueada->puedeSerAnuladaPor($request->user())) {
+                return $devolucionBloqueada->motivoNoAnulable($request->user()) ?? 'Acción denegada: El plazo de gracia para anulación ha expirado.';
+            }
+
             $asignacion = Asignacion::where('id', $devolucionBloqueada->asignacion_id)->lockForUpdate()->first();
 
             if (! $asignacion) {
@@ -528,8 +537,6 @@ class DevolucionController extends Controller
             // Restaurar el estado físico original que tenía el bien antes de registrar la devolución
             if (! empty($devolucionBloqueada->estado_anterior)) {
                 $item->estado = $devolucionBloqueada->estado_anterior;
-            } elseif (! empty($asignacion->estado_al_asignar)) {
-                $item->estado = $asignacion->estado_al_asignar;
             }
 
             // Al anular la devolución, el bien regresa a estar Asignado a su custodio anterior

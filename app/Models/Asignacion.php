@@ -108,4 +108,71 @@ class Asignacion extends Model
     {
         return $this->destinatario_texto;
     }
+
+    /**
+     * Calcula la fecha y hora límite para anular esta asignación según el rol del usuario.
+     * - Administrador: 1 día hábil (24 horas hábiles excluyendo sábados y domingos).
+     * - Superadministrador: 3 días hábiles (72 horas hábiles excluyendo sábados y domingos).
+     */
+    public function fechaLimiteAnulacion(?User $user = null): ?\Carbon\Carbon
+    {
+        $user = $user ?? auth()->user();
+        if (! $user || ! $this->created_at) {
+            return null;
+        }
+
+        $diasHabiles = $user->esSuperAdmin() ? 3 : 1;
+
+        return $this->created_at->copy()->addWeekdays($diasHabiles);
+    }
+
+    /**
+     * Determina si el acta aún se encuentra dentro del plazo de anulación permitido.
+     */
+    public function puedeSerAnuladaPor(?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+        if (! $user || ! $user->estaActivo() || ! $user->esAdministrador()) {
+            return false;
+        }
+
+        if ($this->trashed() || $this->devolucion()->exists()) {
+            return false;
+        }
+
+        $limite = $this->fechaLimiteAnulacion($user);
+        if (! $limite) {
+            return false;
+        }
+
+        return now()->lessThanOrEqualTo($limite);
+    }
+
+    /**
+     * Motivo explicativo de por qué no se puede anular esta asignación.
+     */
+    public function motivoNoAnulable(?User $user = null): ?string
+    {
+        $user = $user ?? auth()->user();
+        if (! $user) {
+            return 'Usuario no autenticado.';
+        }
+
+        if ($this->trashed()) {
+            return 'Esta asignación ya se encuentra anulada.';
+        }
+
+        if ($this->devolucion()->exists()) {
+            return 'No se puede anular: ya cuenta con un acta de devolución formal registrada.';
+        }
+
+        $limite = $this->fechaLimiteAnulacion($user);
+        if ($limite && now()->greaterThan($limite)) {
+            $plazo = $user->esSuperAdmin() ? '3 días hábiles (Superadministrador)' : '24 horas hábiles (Administrador)';
+
+            return "El plazo de gracia para anulación ha expirado ({$plazo}, venció el {$limite->format('d/m/Y H:i')}). Para revertir este registro, proceda formalmente con un Acta de Devolución.";
+        }
+
+        return null;
+    }
 }

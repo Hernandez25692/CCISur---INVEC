@@ -409,6 +409,10 @@ class AsignacionController extends Controller
     {
         Gate::authorize('admin');
 
+        if (! $asignacion->puedeSerAnuladaPor($request->user())) {
+            return redirect()->back()->with('error', $asignacion->motivoNoAnulable($request->user()) ?? 'Acción denegada: El plazo de gracia para anulación ha expirado.');
+        }
+
         $validated = $request->validate([
             'password' => ['required', 'string'],
             'motivo_anulacion' => ['required', 'string', 'min:5', 'max:500'],
@@ -424,6 +428,10 @@ class AsignacionController extends Controller
 
         $error = DB::transaction(function () use ($asignacion, $request, $validated): ?string {
             $asignacionBloqueada = Asignacion::where('id', $asignacion->id)->lockForUpdate()->firstOrFail();
+
+            if (! $asignacionBloqueada->puedeSerAnuladaPor($request->user())) {
+                return $asignacionBloqueada->motivoNoAnulable($request->user()) ?? 'Acción denegada: El plazo de gracia para anulación ha expirado.';
+            }
 
             if ($asignacionBloqueada->devolucion()->exists()) {
                 return 'Acción denegada: No se puede anular una asignación que ya cuenta con un acta de devolución formal registrada.';

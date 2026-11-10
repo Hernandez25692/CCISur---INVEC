@@ -347,14 +347,21 @@
 
                                             {{-- Anular Asignación con contraseña (data-attributes seguros contra XSS) --}}
                                             @can('admin')
-                                                <button type="button"
-                                                    class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
-                                                    title="Anular asignación por error"
-                                                    data-id="{{ $item->id }}"
-                                                    data-nombre="{{ $referencia->nombre ?? 'Bien' }}"
-                                                    data-etiqueta="{{ $referencia->etiqueta ?? 'Sin etiqueta' }}">
-                                                    <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
-                                                </button>
+                                                @if ($item->puedeSerAnuladaPor(auth()->user()))
+                                                    <button type="button"
+                                                        class="w-7 h-7 rounded inline-flex items-center justify-center text-red-600 hover:text-red-900 hover:bg-red-50 transition btn-anular"
+                                                        title="Anular asignación por error (Plazo vence: {{ $item->fechaLimiteAnulacion(auth()->user())?->format('d/m/Y H:i') }})"
+                                                        data-id="{{ $item->id }}"
+                                                        data-nombre="{{ $referencia->nombre ?? 'Bien' }}"
+                                                        data-etiqueta="{{ $referencia->etiqueta ?? 'Sin etiqueta' }}">
+                                                        <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
+                                                    </button>
+                                                @else
+                                                    <span class="w-7 h-7 rounded inline-flex items-center justify-center text-gray-300 cursor-not-allowed"
+                                                        title="{{ $item->motivoNoAnulable(auth()->user()) ?? 'Plazo de anulación expirado (Acta consolidada)' }}">
+                                                        <i class="fas fa-lock text-xs" aria-hidden="true"></i>
+                                                    </span>
+                                                @endif
                                             @endcan
                                         </div>
                                     @endif
