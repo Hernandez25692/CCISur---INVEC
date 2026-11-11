@@ -254,7 +254,7 @@ class AsignacionController extends Controller
                     $q->where('id', $id_referencia);
                 }
             })
-            ->get(['id', 'nombre', 'tipo', 'marca', 'modelo', 'n_serie', 'estado', 'disponibilidad', 'etiqueta', 'ubicacion'])
+            ->get(['id', 'nombre', 'tipo', 'marca', 'modelo', 'n_serie', 'estado', 'disponibilidad', 'etiqueta', 'ubicacion', 'especificaciones'])
             ->map(fn (Dispositivo $d): array => [
                 'id' => $d->id,
                 'nombre' => $d->nombre,
@@ -266,6 +266,7 @@ class AsignacionController extends Controller
                 'etiqueta' => $d->etiqueta,
                 'es_area_comun' => $d->esEquipoAreaComun(),
                 'ubicacion' => $d->ubicacion,
+                'especificaciones' => $d->especificaciones_texto,
             ]);
 
         $mobiliarioDisponible = Mobiliario::disponibles()

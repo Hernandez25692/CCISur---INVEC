@@ -303,6 +303,12 @@
                                     <p class="text-[11px] text-gray-500" x-show="item.marca">
                                         <span x-text="item.marca"></span> <span x-show="item.modelo" x-text="'/ ' + item.modelo"></span>
                                     </p>
+                                    <template x-if="item.especificaciones">
+                                        <p class="text-[10px] text-gray-600 bg-gray-50 border border-gray-200/70 rounded px-1.5 py-0.5 mt-1 inline-flex items-center gap-1 font-medium line-clamp-1" :title="item.especificaciones">
+                                            <i class="fas fa-microchip text-[9px] text-brand-navy shrink-0" aria-hidden="true"></i>
+                                            <span x-text="item.especificaciones"></span>
+                                        </p>
+                                    </template>
                                 </div>
                                 <div class="mt-3 pt-2 border-t border-gray-100 flex justify-end">
                                     <button type="button"
@@ -351,6 +357,14 @@
                                     <span>&bull; <strong>Serie:</strong> <span class="font-mono" x-text="itemSeleccionado.n_serie"></span></span>
                                 </template>
                             </p>
+                            <template x-if="itemSeleccionado && itemSeleccionado.especificaciones">
+                                <div class="mt-1">
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white border border-gray-200 text-gray-700 text-xs font-medium">
+                                        <i class="fas fa-microchip text-[10px] text-brand-navy" aria-hidden="true"></i>
+                                        <span x-text="itemSeleccionado.especificaciones"></span>
+                                    </span>
+                                </div>
+                            </template>
                         </div>
                     </div>
                     <button type="button" @click="deseleccionarItem()" class="text-xs text-red-600 hover:text-red-800 font-semibold px-3 py-1.5 rounded-lg hover:bg-white/80 transition">
@@ -546,7 +560,8 @@
                             const serie = (item.n_serie || '').toLowerCase();
                             const marca = (item.marca || '').toLowerCase();
                             const modelo = (item.modelo || '').toLowerCase();
-                            return nombre.includes(q) || etiqueta.includes(q) || serie.includes(q) || marca.includes(q) || modelo.includes(q);
+                            const specs = (item.especificaciones || '').toLowerCase();
+                            return nombre.includes(q) || etiqueta.includes(q) || serie.includes(q) || marca.includes(q) || modelo.includes(q) || specs.includes(q);
                         }
                         return true;
                     });
