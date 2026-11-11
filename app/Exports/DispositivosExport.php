@@ -94,6 +94,8 @@ class DispositivosExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'Marca',
             'Modelo',
             'Número de Serie',
+            'Especificaciones Técnicas',
+            'Notas Técnicas',
             'Ubicación',
             'Estado Físico',
             'Disponibilidad',
@@ -107,6 +109,8 @@ class DispositivosExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
      */
     public function map($dispositivo): array
     {
+        $notasTecnicas = $dispositivo->especificaciones['notas_tecnicas'] ?? null;
+
         return [
             $dispositivo->etiqueta ?? 'S/E',
             $dispositivo->nombre,
@@ -114,6 +118,8 @@ class DispositivosExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $dispositivo->marca,
             $dispositivo->modelo,
             $dispositivo->n_serie ?? 'Sin serie',
+            $dispositivo->especificaciones_texto ?? 'N/A',
+            ! empty($notasTecnicas) ? $notasTecnicas : 'N/A',
             $dispositivo->ubicacion,
             $dispositivo->estado,
             $dispositivo->disponibilidad_corta,

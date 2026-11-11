@@ -131,11 +131,28 @@ class DispositivoController extends Controller
             'estado' => ['required', Rule::in(Dispositivo::ESTADOS)],
             'fecha_registro' => ['required', 'date'],
             'es_area_comun' => ['nullable', 'boolean'],
+            'especificaciones' => ['nullable', 'array'],
+            'especificaciones.procesador' => ['nullable', 'string', 'max:255'],
+            'especificaciones.ram' => ['nullable', 'string', 'max:50'],
+            'especificaciones.almacenamiento' => ['nullable', 'string', 'max:100'],
+            'especificaciones.sistema_operativo' => ['nullable', 'string', 'max:100'],
+            'especificaciones.puertos_red' => ['nullable', 'string', 'max:50'],
+            'especificaciones.velocidad_red' => ['nullable', 'string', 'max:100'],
+            'especificaciones.poe' => ['nullable', 'string', 'max:50'],
+            'especificaciones.gestion_red' => ['nullable', 'string', 'max:50'],
+            'especificaciones.tamano_pantalla' => ['nullable', 'string', 'max:50'],
+            'especificaciones.conectores_pantalla' => ['nullable', 'string', 'max:100'],
+            'especificaciones.tecnologia_impresion' => ['nullable', 'string', 'max:100'],
+            'especificaciones.conectividad_impresion' => ['nullable', 'string', 'max:100'],
+            'especificaciones.capacidad_ups' => ['nullable', 'string', 'max:50'],
+            'especificaciones.notas_tecnicas' => ['nullable', 'string', 'max:500'],
         ], [
             'n_serie.required' => 'El número de serie es obligatorio para este tipo de equipo.',
             'n_serie.unique' => 'El número de serie ingresado ya está registrado en el inventario (verifique si se encuentra en el archivo de bajas para reactivarlo).',
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
+
+        $validated['especificaciones'] = $this->procesarEspecificaciones($request);
 
         $validated['disponibilidad'] = Dispositivo::calcularDisponibilidad(
             $validated['estado'],
@@ -192,11 +209,28 @@ class DispositivoController extends Controller
             'estado' => [$tieneAsignacionActiva ? 'nullable' : 'required', Rule::in(Dispositivo::ESTADOS)],
             'fecha_registro' => ['required', 'date'],
             'es_area_comun' => ['nullable', 'boolean'],
+            'especificaciones' => ['nullable', 'array'],
+            'especificaciones.procesador' => ['nullable', 'string', 'max:255'],
+            'especificaciones.ram' => ['nullable', 'string', 'max:50'],
+            'especificaciones.almacenamiento' => ['nullable', 'string', 'max:100'],
+            'especificaciones.sistema_operativo' => ['nullable', 'string', 'max:100'],
+            'especificaciones.puertos_red' => ['nullable', 'string', 'max:50'],
+            'especificaciones.velocidad_red' => ['nullable', 'string', 'max:100'],
+            'especificaciones.poe' => ['nullable', 'string', 'max:50'],
+            'especificaciones.gestion_red' => ['nullable', 'string', 'max:50'],
+            'especificaciones.tamano_pantalla' => ['nullable', 'string', 'max:50'],
+            'especificaciones.conectores_pantalla' => ['nullable', 'string', 'max:100'],
+            'especificaciones.tecnologia_impresion' => ['nullable', 'string', 'max:100'],
+            'especificaciones.conectividad_impresion' => ['nullable', 'string', 'max:100'],
+            'especificaciones.capacidad_ups' => ['nullable', 'string', 'max:50'],
+            'especificaciones.notas_tecnicas' => ['nullable', 'string', 'max:500'],
         ], [
             'n_serie.required' => 'El número de serie es obligatorio para este tipo de equipo.',
             'n_serie.unique' => 'El número de serie ingresado ya pertenece a otro dispositivo registrado (o archivado en bajas).',
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
+
+        $validated['especificaciones'] = $this->procesarEspecificaciones($request);
 
         if ($tieneAsignacionActiva) {
             $validated['ubicacion'] = $dispositivo->ubicacion;
@@ -213,6 +247,10 @@ class DispositivoController extends Controller
         unset($validated['es_area_comun']);
 
         $dispositivo->update($validated);
+
+        if ($request->input('from') === 'historial') {
+            return redirect()->route('dispositivos.historial', $dispositivo->id)->with('success', 'Dispositivo actualizado correctamente.');
+        }
 
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo actualizado correctamente.');
     }
@@ -351,5 +389,71 @@ class DispositivoController extends Controller
             'totalDevueltos',
             'hayFiltros'
         ));
+    }
+
+    /**
+     * Limpia y estructura el arreglo de especificaciones técnicas descartando valores vacíos,
+     * aplicando whitelist por categoría de hardware para evitar residuos al cambiar de tipo
+     * y reemplazando las opciones personalizadas ('Otro') por el texto ingresado.
+     */
+    private function procesarEspecificaciones(Request $request): ?array
+    {
+        $raw = $request->input('especificaciones', []);
+        if (! is_array($raw)) {
+            return null;
+        }
+
+        $categoria = Dispositivo::obtenerCategoriaHardware($request->input('tipo'));
+        $porCategoria = [
+            'computadora' => ['procesador', 'ram', 'almacenamiento', 'sistema_operativo'],
+            'red' => ['puertos_red', 'velocidad_red', 'poe', 'gestion_red'],
+            'pantalla' => ['tamano_pantalla', 'conectores_pantalla'],
+            'impresion' => ['tecnologia_impresion', 'conectividad_impresion'],
+            'ups' => ['capacidad_ups'],
+        ];
+
+        // Definir claves permitidas para la categoría seleccionada + notas técnicas
+        $permitidas = array_merge(
+            $porCategoria[$categoria] ?? array_merge(...array_values($porCategoria)),
+            ['notas_tecnicas']
+        );
+
+        // Incluir claves temporales *_otro solo para los campos permitidos
+        $permitidasConOtro = $permitidas;
+        foreach ($permitidas as $campo) {
+            $permitidasConOtro[] = "{$campo}_otro";
+        }
+
+        // Whitelist estricto: descarta claves desconocidas o inyectadas
+        $raw = collect($raw)->only($permitidasConOtro)->all();
+
+        $camposConOtro = [
+            'ram',
+            'almacenamiento',
+            'sistema_operativo',
+            'puertos_red',
+            'velocidad_red',
+            'poe',
+            'tamano_pantalla',
+            'tecnologia_impresion',
+            'conectividad_impresion',
+            'capacidad_ups',
+        ];
+
+        foreach ($camposConOtro as $campo) {
+            $campoOtro = "{$campo}_otro";
+            if (isset($raw[$campo]) && $raw[$campo] === 'Otro') {
+                $raw[$campo] = ! empty($raw[$campoOtro]) ? trim((string) $raw[$campoOtro]) : null;
+            }
+            unset($raw[$campoOtro]);
+        }
+
+        $filtradas = collect($raw)
+            ->only($permitidas)
+            ->map(fn ($valor) => is_string($valor) ? trim($valor) : $valor)
+            ->filter(fn ($valor) => filled($valor) && $valor !== 'Otro')
+            ->all();
+
+        return empty($filtradas) ? null : $filtradas;
     }
 }

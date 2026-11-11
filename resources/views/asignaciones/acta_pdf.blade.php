@@ -325,6 +325,12 @@
             <th style="width: 16%;">N° de Serie:</th>
             <td style="width: 18%;">{{ $item->n_serie ?? '---' }}</td>
         </tr>
+        @if ($item->tiene_especificaciones)
+        <tr>
+            <th style="width: 16%;">Especificaciones:</th>
+            <td colspan="5">{{ $item->especificaciones_texto }}</td>
+        </tr>
+        @endif
     </table>
     @endif
 

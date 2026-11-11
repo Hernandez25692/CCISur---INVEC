@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-4 space-y-6">
+    <div class="py-4 space-y-6" x-data="{ fichaAbierta: false }">
         <!-- Encabezado y navegación de retorno inteligente -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -34,7 +34,7 @@
                         </button>
                     </form>
                 @else
-                    <a href="{{ route('dispositivos.edit', $dispositivo->id) }}"
+                    <a href="{{ route('dispositivos.edit', ['dispositivo' => $dispositivo->id, 'from' => 'historial']) }}"
                         class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
                         <i class="fas fa-pen text-xs text-brand-gold-600" aria-hidden="true"></i>
                         Editar Dispositivo
@@ -69,6 +69,16 @@
                         <span>· Estado: <span class="inline-flex items-center px-2 py-0.2 rounded-full text-[11px] font-medium {{ $dispositivo->clase_estado }}">{{ $dispositivo->estado_corto }}</span></span>
                         <span>· Disp: <span class="inline-flex items-center px-2 py-0.2 rounded-full text-[11px] font-medium {{ $dispositivo->clase_disponibilidad }}">{{ $dispositivo->disponibilidad_corta }}</span></span>
                     </p>
+                    @if ($dispositivo->tiene_especificaciones)
+                        <div class="pt-1 flex items-center gap-1.5 flex-wrap">
+                            <button type="button"
+                                @click="fichaAbierta = !fichaAbierta; if (fichaAbierta) $nextTick(() => document.getElementById('especificaciones-hardware')?.scrollIntoView({ behavior: 'smooth' }))"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-navy-50 text-brand-navy hover:bg-brand-navy hover:text-brand-gold border border-brand-navy-100 text-[11px] font-semibold transition cursor-pointer">
+                                <i class="fas fa-microchip text-brand-gold-600 text-[10px]" aria-hidden="true"></i>
+                                <span x-text="fichaAbierta ? 'Ocultar ficha técnica' : 'Ver ficha técnica'"></span>
+                            </button>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -90,6 +100,182 @@
                 </div>
             </div>
         </div>
+
+        @if ($dispositivo->tiene_especificaciones)
+            <!-- Ficha Detallada de Hardware / Especificaciones Técnicas (Colapsable) -->
+            <div id="especificaciones-hardware"
+                class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <button type="button"
+                    @click="fichaAbierta = !fichaAbierta"
+                    class="w-full p-5 flex items-center justify-between text-left hover:bg-gray-50/60 transition focus:outline-none focus:bg-gray-50/80"
+                    :aria-expanded="fichaAbierta.toString()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-brand-navy text-brand-gold flex items-center justify-center font-bold text-sm shrink-0">
+                            <i class="fas fa-microchip" aria-hidden="true"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-bold text-brand-navy">Ficha Técnica de Hardware</h3>
+                                <span x-show="!fichaAbierta" class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-semibold">
+                                    Oculta
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-500">Especificaciones y configuración interna del dispositivo</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-xs font-semibold text-brand-navy">
+                        <span x-text="fichaAbierta ? 'Ocultar especificaciones' : 'Mostrar especificaciones'" class="hidden sm:inline text-xs text-gray-500 font-medium"></span>
+                        <div class="w-7 h-7 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-500">
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200"
+                                :class="{ 'rotate-180': fichaAbierta }" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </button>
+
+                <div x-show="fichaAbierta" x-cloak class="p-5 pt-0 border-t border-gray-100 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
+                    @php $esp = $dispositivo->especificaciones ?? []; @endphp
+
+                    @if(!empty($esp['procesador']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-microchip text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Procesador</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['procesador'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['ram']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-memory text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Memoria RAM</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['ram'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['almacenamiento']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-hdd text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Almacenamiento</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['almacenamiento'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['sistema_operativo']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fab fa-windows text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Sistema Operativo</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['sistema_operativo'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['puertos_red']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-network-wired text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Puertos de Red</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['puertos_red'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['velocidad_red']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-tachometer-alt text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Velocidad</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['velocidad_red'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['poe']) && $esp['poe'] !== 'No PoE')
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-bolt text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Alimentación PoE</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['poe'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['gestion_red']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-sliders-h text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Gestión</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['gestion_red'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['tamano_pantalla']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-desktop text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Tamaño de Pantalla</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['tamano_pantalla'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['conectores_pantalla']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-plug text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Conectores</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['conectores_pantalla'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['tecnologia_impresion']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-print text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Tecnología Impresión</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['tecnologia_impresion'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['conectividad_impresion']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-wifi text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Conectividad</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['conectividad_impresion'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!empty($esp['capacidad_ups']))
+                        <div class="p-3 rounded-lg bg-gray-50/70 border border-gray-100 flex items-start gap-2.5">
+                            <i class="fas fa-car-battery text-brand-navy text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <span class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Capacidad Eléctrica</span>
+                                <span class="text-xs font-bold text-brand-navy break-words">{{ $esp['capacidad_ups'] }}</span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                @if(!empty($esp['notas_tecnicas']))
+                    <div class="text-xs text-gray-600 bg-amber-50/70 border border-amber-200/70 rounded-lg p-3">
+                        <strong class="font-semibold text-amber-900 block mb-0.5"><i class="fas fa-info-circle text-amber-600 mr-1" aria-hidden="true"></i> Notas técnicas adicionales:</strong>
+                        {{ $esp['notas_tecnicas'] }}
+                    </div>
+                @endif
+            </div>
+        @endif
 
         <!-- Filtros del Historial (colapsables en móvil) -->
         <div x-data="{ mostrarFiltros: @js((bool) ($hayFiltros ?? false)) }"
