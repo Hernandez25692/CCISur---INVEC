@@ -51,6 +51,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dispositivos/exportar', [\App\Http\Controllers\DispositivoController::class, 'exportar'])->name('dispositivos.exportar');
     Route::post('/dispositivos/{id}/reactivar', [\App\Http\Controllers\DispositivoController::class, 'reactivar'])->name('dispositivos.reactivar');
     Route::get('/dispositivos/{dispositivo}/historial', [\App\Http\Controllers\DispositivoController::class, 'historial'])->withTrashed()->name('dispositivos.historial');
+    Route::post('/dispositivos/cambios-hardware/{cambio}/revertir', [\App\Http\Controllers\DispositivoController::class, 'revertirCambioHardware'])->name('dispositivos.cambios-hardware.revertir');
+    Route::get('/dispositivos/cambios-hardware/{cambio}/constancia-pdf', [\App\Http\Controllers\DispositivoController::class, 'constanciaCambioHardwarePdf'])->name('dispositivos.cambios-hardware.pdf');
     Route::resource('dispositivos', DispositivoController::class);
 
     Route::get('/empleados/bajas', [\App\Http\Controllers\EmpleadoController::class, 'bajas'])->name('empleados.bajas');

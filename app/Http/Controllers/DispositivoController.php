@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Exports\DispositivosExport;
 use App\Models\Dispositivo;
+use App\Models\HistorialCambioHardware;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -187,12 +191,14 @@ class DispositivoController extends Controller
     {
         Gate::authorize('admin');
 
+        // El tipo de dispositivo es un atributo estructural inmutable tras su registro inicial
         $request->merge([
+            'tipo' => $dispositivo->tipo,
             'n_serie' => Dispositivo::normalizarSerie($request->input('n_serie')),
         ]);
 
         $tieneAsignacionActiva = $dispositivo->estaAsignado();
-        $requiereSerie = Dispositivo::requiereSerie($request->input('tipo'));
+        $requiereSerie = Dispositivo::requiereSerie($dispositivo->tipo);
 
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
@@ -224,13 +230,19 @@ class DispositivoController extends Controller
             'especificaciones.conectividad_impresion' => ['nullable', 'string', 'max:100'],
             'especificaciones.capacidad_ups' => ['nullable', 'string', 'max:50'],
             'especificaciones.notas_tecnicas' => ['nullable', 'string', 'max:500'],
+            'tipo_edicion_hardware' => ['nullable', Rule::in(['correccion', 'modificacion'])],
+            'motivo_cambio_hardware' => ['nullable', 'string', 'max:500'],
         ], [
             'n_serie.required' => 'El número de serie es obligatorio para este tipo de equipo.',
             'n_serie.unique' => 'El número de serie ingresado ya pertenece a otro dispositivo registrado (o archivado en bajas).',
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
 
-        $validated['especificaciones'] = $this->procesarEspecificaciones($request);
+        $nuevasSpecs = $this->procesarEspecificaciones($request);
+        $validated['especificaciones'] = $nuevasSpecs;
+
+        // Solo la opción explícita 'correccion' suprime la bitácora física (enfoque conservador seguro)
+        $esModificacionFisica = $request->input('tipo_edicion_hardware') !== 'correccion';
 
         if ($tieneAsignacionActiva) {
             $validated['ubicacion'] = $dispositivo->ubicacion;
@@ -244,9 +256,37 @@ class DispositivoController extends Controller
             );
         }
 
-        unset($validated['es_area_comun']);
+        unset($validated['es_area_comun'], $validated['tipo_edicion_hardware'], $validated['motivo_cambio_hardware']);
 
-        $dispositivo->update($validated);
+        DB::transaction(function () use ($dispositivo, $validated, $esModificacionFisica, $nuevasSpecs, $request): void {
+            $dispositivoBloqueado = Dispositivo::lockForUpdate()->findOrFail($dispositivo->id);
+            $specsAnteriores = $dispositivoBloqueado->especificaciones;
+
+            $cambiosDetectados = [];
+            if ($esModificacionFisica) {
+                $cambiosDetectados = HistorialCambioHardware::detectarCambios($specsAnteriores ?? [], $nuevasSpecs ?? []);
+            }
+
+            if (! empty($cambiosDetectados)) {
+                $asignacionActiva = $dispositivoBloqueado->asignacionesActivas()->with('empleado')->first();
+                $motivoHardware = $request->filled('motivo_cambio_hardware')
+                    ? Str::limit(trim((string) $request->input('motivo_cambio_hardware')), 500, '')
+                    : null;
+
+                HistorialCambioHardware::create([
+                    'dispositivo_id' => $dispositivoBloqueado->id,
+                    'user_id' => Auth::id(),
+                    'asignacion_id' => $asignacionActiva?->id,
+                    'empleado_id' => $asignacionActiva?->empleado_id,
+                    'especificaciones_anteriores' => $specsAnteriores,
+                    'especificaciones_nuevas' => $nuevasSpecs,
+                    'cambios' => $cambiosDetectados,
+                    'motivo' => $motivoHardware,
+                ]);
+            }
+
+            $dispositivoBloqueado->update($validated);
+        });
 
         if ($request->input('from') === 'historial') {
             return redirect()->route('dispositivos.historial', $dispositivo->id)->with('success', 'Dispositivo actualizado correctamente.');
@@ -382,13 +422,97 @@ class DispositivoController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $cambiosHardware = $dispositivo->cambiosHardware()
+            ->with(['user', 'revertidoPor', 'empleado'])
+            ->get();
+        $totalCambiosHardware = $cambiosHardware->count();
+        $ultimoCambioVigente = $cambiosHardware->firstWhere('revertido', false);
+        $ultimoCambioVigenteId = $ultimoCambioVigente?->id;
+
         return view('dispositivos.historial', compact(
             'dispositivo',
             'asignaciones',
             'totalAsignaciones',
             'totalDevueltos',
-            'hayFiltros'
+            'hayFiltros',
+            'cambiosHardware',
+            'totalCambiosHardware',
+            'ultimoCambioVigenteId'
         ));
+    }
+
+    /**
+     * Revertir una modificación de hardware accidental y restaurar las especificaciones previas.
+     * Aplica principio LIFO (Last In, First Out): solo permite revertir la modificación vigente más reciente.
+     */
+    public function revertirCambioHardware(Request $request, HistorialCambioHardware $cambio): RedirectResponse
+    {
+        Gate::authorize('admin');
+
+        $request->validate([
+            'motivo_reversion' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        return DB::transaction(function () use ($request, $cambio): RedirectResponse {
+            $cambioBloqueado = HistorialCambioHardware::lockForUpdate()->find($cambio->id);
+
+            if (! $cambioBloqueado) {
+                return back()->with('error', 'El registro de modificación no existe.');
+            }
+
+            if ($cambioBloqueado->revertido) {
+                return back()->with('error', 'Esta modificación de hardware ya fue revertida previamente.');
+            }
+
+            $dispositivo = Dispositivo::lockForUpdate()->find($cambioBloqueado->dispositivo_id);
+            if (! $dispositivo) {
+                return back()->with('error', 'El dispositivo asociado ya no existe.');
+            }
+
+            // Integridad LIFO: Solo se puede revertir la modificación vigente más reciente
+            $hayPosterioresVigentes = $dispositivo->cambiosHardware()
+                ->where('revertido', false)
+                ->where('id', '>', $cambioBloqueado->id)
+                ->exists();
+
+            if ($hayPosterioresVigentes) {
+                return back()->with('error', 'No se puede revertir este cambio porque existen modificaciones posteriores vigentes. Debe revertir los cambios en orden inverso (del más reciente al más antiguo).');
+            }
+
+            $dispositivo->update([
+                'especificaciones' => $cambioBloqueado->especificaciones_anteriores,
+            ]);
+
+            $motivoRaw = $request->filled('motivo_reversion')
+                ? trim((string) $request->input('motivo_reversion'))
+                : 'Reversión de cambio de hardware por error de captura';
+
+            $cambioBloqueado->update([
+                'revertido' => true,
+                'revertido_por' => Auth::id(),
+                'revertido_at' => now(),
+                'motivo_reversion' => Str::limit($motivoRaw, 500, ''),
+            ]);
+
+            return redirect()->route('dispositivos.historial', ['dispositivo' => $dispositivo->id, 'tab' => 'bitacora'])
+                ->with('success', 'La modificación de hardware fue revertida exitosamente y se restauraron las especificaciones anteriores.');
+        });
+    }
+
+    /**
+     * Generar comprobante / constancia institucional en PDF de un cambio de hardware.
+     * Accesible a cualquier usuario autenticado (lectores/auditores), en paridad con las actas de entrega/devolución.
+     */
+    public function constanciaCambioHardwarePdf(HistorialCambioHardware $cambio)
+    {
+        $cambio->load(['dispositivo', 'user', 'empleado', 'revertidoPor']);
+
+        $pdf = Pdf::loadView('dispositivos.constancia_hardware_pdf', compact('cambio'))
+            ->setPaper('letter', 'portrait');
+
+        $nombreArchivo = 'Constancia_Hardware_'.($cambio->dispositivo->etiqueta ?? 'DIS').'_'.$cambio->created_at->format('Ymd_His').'.pdf';
+
+        return $pdf->stream($nombreArchivo);
     }
 
     /**

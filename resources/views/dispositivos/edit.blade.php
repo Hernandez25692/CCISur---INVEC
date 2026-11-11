@@ -81,19 +81,15 @@
             <!-- Tipo y Número de Serie -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label for="tipo" class="block text-sm font-medium text-brand-navy">Tipo de Dispositivo</label>
-                    <select name="tipo" id="tipo" x-model="tipoSeleccionado" required
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('tipo') border-red-500 @enderror">
-                        <option value="">-- Seleccionar tipo --</option>
-                        @foreach (\App\Models\Dispositivo::TIPOS as $tipoOption)
-                            <option value="{{ $tipoOption }}" @selected(old('tipo', $dispositivo->tipo) === $tipoOption)>
-                                {{ $tipoOption }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('tipo')
-                        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-                    @enderror
+                    <label class="block text-sm font-medium text-brand-navy">Tipo de Dispositivo</label>
+                    <div class="mt-1 flex items-center justify-between h-[38px] px-3 rounded-lg bg-gray-100 border border-gray-200 text-gray-700 text-sm cursor-not-allowed">
+                        <span class="font-medium text-brand-navy">{{ $dispositivo->tipo }}</span>
+                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 bg-white/80 border border-gray-200 px-2 py-0.5 rounded">
+                            <i class="fas fa-lock text-[10px]" aria-hidden="true"></i> Fijo
+                        </span>
+                    </div>
+                    <input type="hidden" name="tipo" value="{{ $dispositivo->tipo }}">
+                    <p class="text-[11px] text-gray-400 mt-1">El tipo de equipo no se puede modificar tras su registro.</p>
                 </div>
 
                 <div>
@@ -550,6 +546,52 @@
                         placeholder="Ej. Teclado retroiluminado, incluye adaptador USB-C o dirección MAC"
                         class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
                 </div>
+
+                @if ($dispositivo->tiene_especificaciones)
+                    <!-- Selector de Propósito de Edición de Especificaciones -->
+                    <div x-data="{ tipoEdicion: @js(old('tipo_edicion_hardware', 'modificacion')) }"
+                        class="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-3">
+                        <div>
+                            <span class="block text-xs font-bold text-brand-navy uppercase tracking-wider">
+                                Propósito de la Edición de Especificaciones
+                            </span>
+                            <p class="text-[11px] text-gray-500 mt-0.5">
+                                Indicá si este ajuste corresponde a un cambio físico real de piezas o solo a una corrección tipográfica.
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="relative flex items-start p-3 rounded-lg border cursor-pointer transition"
+                                :class="tipoEdicion === 'modificacion' ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-400' : 'bg-white border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" name="tipo_edicion_hardware" value="modificacion" x-model="tipoEdicion" class="mt-0.5 text-brand-navy focus:ring-brand-gold">
+                                <div class="ml-2.5 text-xs">
+                                    <span class="font-bold text-brand-navy block">Modificación física de hardware</span>
+                                    <span class="text-gray-500 text-[11px] leading-tight block mt-0.5">Upgrade o reemplazo de componentes. Genera folio en bitácora, constancia PDF y nota en el acta de devolución.</span>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-start p-3 rounded-lg border cursor-pointer transition"
+                                :class="tipoEdicion === 'correccion' ? 'bg-blue-50/80 border-blue-300 ring-1 ring-blue-400' : 'bg-white border-gray-200 hover:bg-gray-50'">
+                                <input type="radio" name="tipo_edicion_hardware" value="correccion" x-model="tipoEdicion" class="mt-0.5 text-brand-navy focus:ring-brand-gold">
+                                <div class="ml-2.5 text-xs">
+                                    <span class="font-bold text-brand-navy block">Corrección de captura / Error de dedo</span>
+                                    <span class="text-gray-500 text-[11px] leading-tight block mt-0.5">Solo corrige datos mal ingresados. No genera constancia ni afecta la bitácora física o acta de devolución.</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Motivo (visible cuando es modificación física) -->
+                        <div x-show="tipoEdicion === 'modificacion'" class="pt-2 border-t border-gray-200/60">
+                            <label for="motivo_cambio_hardware" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                                <i class="fas fa-tools text-brand-gold-600 mr-1" aria-hidden="true"></i> Motivo de la Modificación <span class="text-xs font-normal text-gray-500 lowercase">(opcional para bitácora)</span>
+                            </label>
+                            <input type="text" name="motivo_cambio_hardware" id="motivo_cambio_hardware"
+                                value="{{ old('motivo_cambio_hardware') }}"
+                                placeholder="Ej. Se amplió memoria RAM a solicitud de gerencia o reemplazo de SSD por falla"
+                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <!-- Fecha de Registro -->

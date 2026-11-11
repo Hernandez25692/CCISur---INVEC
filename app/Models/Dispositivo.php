@@ -214,6 +214,11 @@ class Dispositivo extends Model
         return $limpio;
     }
 
+    public function cambiosHardware(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HistorialCambioHardware::class, 'dispositivo_id')->latest('id');
+    }
+
     /**
      * Determina la categoría de hardware según el tipo de dispositivo para la UI reactiva.
      */

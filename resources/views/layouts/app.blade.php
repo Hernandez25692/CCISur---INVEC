@@ -273,6 +273,57 @@
                 });
             });
 
+            // Confirmación SweetAlert2 para revertir cambio de hardware
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('form[data-swal-confirm-revertir-hardware]');
+                if (!form || form.dataset.swalConfirmed === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const etiqueta = form.dataset.swalEtiqueta ? ` en ${form.dataset.swalEtiqueta}` : '';
+
+                if (typeof window.Swal === 'undefined') {
+                    if (window.confirm(`¿Estás seguro de revertir esta modificación de hardware? Se restaurarán los componentes anteriores${etiqueta}.`)) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                    return;
+                }
+
+                window.Swal.fire({
+                    icon: 'warning',
+                    title: '¿Revertir modificación de hardware?',
+                    text: `Se restaurarán las especificaciones técnicas previas a este cambio${etiqueta}. La acción quedará asentada en la bitácora.`,
+                    input: 'text',
+                    inputLabel: 'Motivo de la reversión (opcional):',
+                    inputPlaceholder: 'Ej. Error de captura o pieza defectuosa',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, revertir cambio',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#d97706',
+                    cancelButtonColor: '#031940',
+                    reverseButtons: true,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        if (result.value && result.value.trim() !== '') {
+                            let motivoInput = form.querySelector('input[name="motivo_reversion"]');
+                            if (!motivoInput) {
+                                motivoInput = document.createElement('input');
+                                motivoInput.type = 'hidden';
+                                motivoInput.name = 'motivo_reversion';
+                                form.appendChild(motivoInput);
+                            }
+                            motivoInput.value = result.value.trim();
+                        }
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+            });
+
             // Modal informativo cuando un bien está protegido y NO se puede eliminar
             document.addEventListener('click', function (event) {
                 const lockedBtn = event.target.closest('[data-swal-locked]');

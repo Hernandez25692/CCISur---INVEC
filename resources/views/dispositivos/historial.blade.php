@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-4 space-y-6" x-data="{ fichaAbierta: false }">
+    <div class="py-4 space-y-6" x-data="{ fichaAbierta: false, tabActiva: @js(request('tab', 'historial')) }">
         <!-- Encabezado y navegación de retorno inteligente -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -83,13 +83,14 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100">
-                <div class="px-3.5 py-2 rounded-lg bg-brand-navy-50 border border-brand-navy-200/50 flex items-center gap-2.5">
+                <button type="button" @click="tabActiva = 'historial'"
+                    class="px-3.5 py-2 rounded-lg bg-brand-navy-50 border border-brand-navy-200/50 flex items-center gap-2.5 hover:bg-brand-navy-100/60 transition cursor-pointer text-left">
                     <i class="fas fa-hand-holding text-brand-navy text-xs" aria-hidden="true"></i>
                     <div class="text-xs">
-                        <span class="text-brand-navy font-medium">Asignaciones totales:</span>
+                        <span class="text-brand-navy font-medium">Asignaciones:</span>
                         <span class="font-bold text-brand-navy ml-1">{{ $totalAsignaciones ?? 0 }}</span>
                     </div>
-                </div>
+                </button>
 
                 <div class="px-3.5 py-2 rounded-lg bg-emerald-50/70 border border-emerald-200/70 flex items-center gap-2.5">
                     <span class="w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
@@ -98,6 +99,15 @@
                         <span class="font-bold text-emerald-900 ml-1">{{ $totalDevueltos ?? 0 }}</span>
                     </div>
                 </div>
+
+                <button type="button" @click="tabActiva = 'bitacora'"
+                    class="px-3.5 py-2 rounded-lg bg-purple-50/70 border border-purple-200/70 flex items-center gap-2.5 hover:bg-purple-100/70 transition cursor-pointer text-left">
+                    <i class="fas fa-microchip text-purple-700 text-xs" aria-hidden="true"></i>
+                    <div class="text-xs">
+                        <span class="text-purple-800 font-medium">Cambios HW:</span>
+                        <span class="font-bold text-purple-900 ml-1">{{ $totalCambiosHardware ?? 0 }}</span>
+                    </div>
+                </button>
             </div>
         </div>
 
@@ -277,251 +287,473 @@
             </div>
         @endif
 
-        <!-- Filtros del Historial (colapsables en móvil) -->
-        <div x-data="{ mostrarFiltros: @js((bool) ($hayFiltros ?? false)) }"
-            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <button type="button" @click="mostrarFiltros = !mostrarFiltros"
-                :aria-expanded="mostrarFiltros.toString()"
-                class="sm:hidden w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-brand-navy bg-gray-50/70 hover:bg-gray-100/70 transition">
-                <span class="inline-flex items-center gap-2">
-                    <i class="fas fa-sliders-h text-brand-gold text-xs" aria-hidden="true"></i>
-                    Filtrar historial
-                    @if ($hayFiltros ?? false)
-                        <span class="px-2 py-0.5 text-[11px] rounded-full bg-brand-gold text-brand-navy font-bold">Activos</span>
-                    @endif
-                </span>
-                <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform duration-200"
-                    :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
-            </button>
+        <!-- Selector de Pestañas (Tabs) -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-4 sm:space-x-8" aria-label="Pestañas de la hoja de vida">
+                <button type="button"
+                    @click="tabActiva = 'historial'"
+                    :class="tabActiva === 'historial'
+                        ? 'border-brand-navy text-brand-navy font-bold'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium'"
+                    class="group inline-flex items-center gap-2 py-3 px-1 border-b-2 text-sm transition focus:outline-none cursor-pointer">
+                    <i class="fas fa-history text-xs" :class="tabActiva === 'historial' ? 'text-brand-gold-600' : 'text-gray-400 group-hover:text-gray-500'" aria-hidden="true"></i>
+                    <span>Historial de Asignaciones</span>
+                    <span :class="tabActiva === 'historial' ? 'bg-brand-navy text-brand-gold' : 'bg-gray-100 text-gray-600'"
+                        class="ml-1.5 py-0.5 px-2 rounded-full text-xs font-semibold">
+                        {{ $totalAsignaciones }}
+                    </span>
+                </button>
 
-            <form method="GET" action="{{ route('dispositivos.historial', $dispositivo->id) }}"
-                :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
-                class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="filtro_buscar" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                            Colaborador, código o área
-                        </label>
-                        <input type="text" id="filtro_buscar" name="buscar" value="{{ request('buscar') }}"
-                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
-                            placeholder="Ej. Claudia, EM001 o Contabilidad">
-                    </div>
-
-                    <div class="flex items-end justify-end gap-2.5">
-                        <a href="{{ route('dispositivos.historial', $dispositivo->id) }}"
-                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
-                            Limpiar
-                        </a>
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                            <i class="fas fa-search text-xs" aria-hidden="true"></i>
-                            Filtrar
-                        </button>
-                    </div>
-                </div>
-            </form>
+                <button type="button"
+                    @click="tabActiva = 'bitacora'"
+                    :class="tabActiva === 'bitacora'
+                        ? 'border-brand-navy text-brand-navy font-bold'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium'"
+                    class="group inline-flex items-center gap-2 py-3 px-1 border-b-2 text-sm transition focus:outline-none cursor-pointer">
+                    <i class="fas fa-microchip text-xs" :class="tabActiva === 'bitacora' ? 'text-brand-gold-600' : 'text-gray-400 group-hover:text-gray-500'" aria-hidden="true"></i>
+                    <span>Bitácora de Modificaciones de Hardware</span>
+                    <span :class="tabActiva === 'bitacora' ? 'bg-brand-navy text-brand-gold' : 'bg-gray-100 text-gray-600'"
+                        class="ml-1.5 py-0.5 px-2 rounded-full text-xs font-semibold">
+                        {{ $totalCambiosHardware }}
+                    </span>
+                </button>
+            </nav>
         </div>
 
-        <!-- Tabla de Historial y Actas PDF -->
-        <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
-            @if ($asignaciones->total() > 0)
-                <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-                    <p>
-                        Mostrando <span class="font-semibold text-brand-navy">{{ $asignaciones->firstItem() }}–{{ $asignaciones->lastItem() }}</span>
-                        de <span class="font-semibold text-brand-navy">{{ $asignaciones->total() }}</span>
-                        {{ $asignaciones->total() === 1 ? 'registro en la hoja de vida' : 'registros en la hoja de vida' }}
-                    </p>
-                    @if ($hayFiltros ?? false)
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-gold-50 text-brand-navy font-medium">
-                            <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
-                            Filtros aplicados
-                        </span>
-                    @endif
-                </div>
-            @endif
+        <!-- PESTAÑA 1: Historial de Asignaciones y Custodios -->
+        <div x-show="tabActiva === 'historial'" x-cloak class="space-y-6">
+            <!-- Filtros del Historial (colapsables en móvil) -->
+            <div x-data="{ mostrarFiltros: @js((bool) ($hayFiltros ?? false)) }"
+                class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <button type="button" @click="mostrarFiltros = !mostrarFiltros"
+                    :aria-expanded="mostrarFiltros.toString()"
+                    class="sm:hidden w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-brand-navy bg-gray-50/70 hover:bg-gray-100/70 transition">
+                    <span class="inline-flex items-center gap-2">
+                        <i class="fas fa-sliders-h text-brand-gold text-xs" aria-hidden="true"></i>
+                        Filtrar historial
+                        @if ($hayFiltros ?? false)
+                            <span class="px-2 py-0.5 text-[11px] rounded-full bg-brand-gold text-brand-navy font-bold">Activos</span>
+                        @endif
+                    </span>
+                    <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform duration-200"
+                        :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
+                </button>
 
-            @if ($asignaciones->isEmpty())
-                <div class="px-6 py-12 text-center">
-                    @if ($hayFiltros ?? false)
-                        <i class="fas fa-search text-3xl text-gray-300 mb-2" aria-hidden="true"></i>
-                        <h3 class="mt-1 text-sm font-semibold text-brand-navy">No se encontraron asignaciones con esos filtros</h3>
-                        <p class="mt-1 text-xs text-gray-500">Probá limpiando el término de búsqueda para ver todo el historial del dispositivo.</p>
-                        <div class="mt-4">
-                            <a href="{{ route('dispositivos.historial', $dispositivo->id) }}"
-                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 transition">
-                                <i class="fas fa-undo" aria-hidden="true"></i>
-                                Ver toda la hoja de vida
-                            </a>
+                <form method="GET" action="{{ route('dispositivos.historial', $dispositivo->id) }}"
+                    :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
+                    class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="filtro_buscar" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                                Colaborador, código o área
+                            </label>
+                            <input type="text" id="filtro_buscar" name="buscar" value="{{ request('buscar') }}"
+                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold"
+                                placeholder="Ej. Claudia, EM001 o Contabilidad">
                         </div>
-                    @else
-                        <i class="fas fa-folder-open text-3xl text-gray-300 mb-2" aria-hidden="true"></i>
-                        <h3 class="mt-1 text-sm font-semibold text-brand-navy">Este dispositivo nunca ha sido asignado</h3>
-                        <p class="mt-1 text-xs text-gray-500">Cuando sea entregado a un colaborador, sus actas de entrega y devolución aparecerán aquí.</p>
-                    @endif
-                </div>
-            @else
-                <!-- Vista de Tabla para Escritorio y Tablet (md+) -->
-                <div class="hidden md:block overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <caption class="sr-only">Hoja de vida de {{ $dispositivo->nombre }} ({{ $dispositivo->etiqueta }})</caption>
-                        <thead class="bg-brand-navy text-white">
-                            <tr>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Custodio / Colaborador</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Área / Sede</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha Entrega</th>
-                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado del Préstamo</th>
-                                <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actas PDF</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
-                            @foreach ($asignaciones as $item)
-                                <tr class="even:bg-gray-50/50 hover:bg-brand-gold-50/40 transition-colors">
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        @if ($item->es_area_comun)
-                                            <div class="flex items-center gap-2">
-                                                <span class="w-6 h-6 rounded bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
-                                                    <i class="fas fa-building text-[11px]" aria-hidden="true"></i>
-                                                </span>
-                                                <div class="font-semibold text-gray-900">Área Común</div>
-                                            </div>
-                                            <div class="text-xs text-amber-700 font-medium">Uso Compartido</div>
-                                        @else
-                                            <div class="font-medium text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</div>
-                                            <div class="text-xs text-gray-500 font-mono">{{ $item->empleado?->codigo ?? '' }}</div>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="text-gray-900 font-medium">{{ $item->area }}</div>
-                                        <div class="text-xs text-gray-500">Sede {{ $item->empleado?->ubicacion ?? $dispositivo->ubicacion }}</div>
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        <div class="text-gray-900 font-medium">{{ $item->fecha_entrega?->format('d/m/Y') ?? 'N/A' }}</div>
-                                        <div class="text-xs text-gray-500">Entregó: {{ $item->entregado_por }}</div>
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        @if ($item->devolucion)
-                                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset bg-gray-100 text-gray-700 ring-gray-500/20">
-                                                Devuelto · {{ $item->devolucion->fecha_devolucion?->format('d/m/Y') }}
-                                            </span>
-                                            <div class="mt-0.5 text-xs text-gray-500">Recibió: {{ $item->devolucion->recibido_por }}</div>
-                                        @else
-                                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-600/20">
-                                                {{ $item->es_area_comun ? 'Instalado / En uso (Activo)' : 'En su poder (Activo)' }}
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-right">
-                                        <div class="inline-flex items-center justify-end gap-2">
-                                            <a href="{{ route('asignaciones.pdf', $item->id) }}" target="_blank" rel="noopener"
-                                                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-navy-50 text-brand-navy text-xs font-semibold hover:bg-brand-navy hover:text-white transition"
-                                                title="Ver Acta de Entrega en PDF">
-                                                <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
-                                                Entrega
-                                            </a>
 
-                                            @if ($item->devolucion)
-                                                <a href="{{ route('devoluciones.pdf', $item->devolucion->id) }}" target="_blank" rel="noopener"
-                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-gold-50 text-brand-navy text-xs font-semibold hover:bg-brand-gold transition"
-                                                    title="Ver Acta de Devolución en PDF">
-                                                    <i class="fas fa-file-pdf text-xs text-brand-gold-700" aria-hidden="true"></i>
-                                                    Devolución
-                                                </a>
-                                            @else
-                                                <button type="button"
-                                                    data-swal-locked
-                                                    data-swal-title="Sin acta de devolución"
-                                                    data-swal-text="{{ $item->es_area_comun ? 'Este dispositivo continúa asignado e instalado en el área común, por lo que no se ha emitido un acta de devolución.' : 'Este dispositivo aún continúa asignado al colaborador, por lo que no se ha emitido un acta de devolución.' }}"
-                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed"
-                                                    title="Aún no cuenta con acta de devolución">
-                                                    <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
-                                                    Devolución
-                                                </button>
-                                            @endif
-                                        </div>
-                                    </td>
+                        <div class="flex items-end justify-end gap-2.5">
+                            <a href="{{ route('dispositivos.historial', $dispositivo->id) }}"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                                Limpiar
+                            </a>
+                            <button type="submit"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                                <i class="fas fa-search text-xs" aria-hidden="true"></i>
+                                Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabla de Historial y Actas PDF -->
+            <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+                @if ($asignaciones->total() > 0)
+                    <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+                        <p>
+                            Mostrando <span class="font-semibold text-brand-navy">{{ $asignaciones->firstItem() }}–{{ $asignaciones->lastItem() }}</span>
+                            de <span class="font-semibold text-brand-navy">{{ $asignaciones->total() }}</span>
+                            {{ $asignaciones->total() === 1 ? 'registro en la hoja de vida' : 'registros en la hoja de vida' }}
+                        </p>
+                        @if ($hayFiltros ?? false)
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-gold-50 text-brand-navy font-medium">
+                                <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
+                                Filtros aplicados
+                            </span>
+                        @endif
+                    </div>
+                @endif
+
+                @if ($asignaciones->isEmpty())
+                    <div class="px-6 py-12 text-center">
+                        @if ($hayFiltros ?? false)
+                            <i class="fas fa-search text-3xl text-gray-300 mb-2" aria-hidden="true"></i>
+                            <h3 class="mt-1 text-sm font-semibold text-brand-navy">No se encontraron asignaciones con esos filtros</h3>
+                            <p class="mt-1 text-xs text-gray-500">Probá limpiando el término de búsqueda para ver todo el historial del dispositivo.</p>
+                            <div class="mt-4">
+                                <a href="{{ route('dispositivos.historial', $dispositivo->id) }}"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 transition">
+                                    <i class="fas fa-undo" aria-hidden="true"></i>
+                                    Ver toda la hoja de vida
+                                </a>
+                            </div>
+                        @else
+                            <i class="fas fa-folder-open text-3xl text-gray-300 mb-2" aria-hidden="true"></i>
+                            <h3 class="mt-1 text-sm font-semibold text-brand-navy">Este dispositivo nunca ha sido asignado</h3>
+                            <p class="mt-1 text-xs text-gray-500">Cuando sea entregado a un colaborador, sus actas de entrega y devolución aparecerán aquí.</p>
+                        @endif
+                    </div>
+                @else
+                    <!-- Vista de Tabla para Escritorio y Tablet (md+) -->
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <caption class="sr-only">Hoja de vida de {{ $dispositivo->nombre }} ({{ $dispositivo->etiqueta }})</caption>
+                            <thead class="bg-brand-navy text-white">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Custodio / Colaborador</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Área / Sede</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha Entrega</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Estado del Préstamo</th>
+                                    <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Actas PDF</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                @foreach ($asignaciones as $item)
+                                    <tr class="even:bg-gray-50/50 hover:bg-brand-gold-50/40 transition-colors">
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            @if ($item->es_area_comun)
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-6 h-6 rounded bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                                                        <i class="fas fa-building text-[11px]" aria-hidden="true"></i>
+                                                    </span>
+                                                    <div class="font-semibold text-gray-900">Área Común</div>
+                                                </div>
+                                                <div class="text-xs text-amber-700 font-medium">Uso Compartido</div>
+                                            @else
+                                                <div class="font-medium text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</div>
+                                                <div class="text-xs text-gray-500 font-mono">{{ $item->empleado?->codigo ?? '' }}</div>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="text-gray-900 font-medium">{{ $item->area }}</div>
+                                            <div class="text-xs text-gray-500">Sede {{ $item->empleado?->ubicacion ?? $dispositivo->ubicacion }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            <div class="text-gray-900 font-medium">{{ $item->fecha_entrega?->format('d/m/Y') ?? 'N/A' }}</div>
+                                            <div class="text-xs text-gray-500">Entregó: {{ $item->entregado_por }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap">
+                                            @if ($item->devolucion)
+                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset bg-gray-100 text-gray-700 ring-gray-500/20">
+                                                    Devuelto · {{ $item->devolucion->fecha_devolucion?->format('d/m/Y') }}
+                                                </span>
+                                                <div class="mt-0.5 text-xs text-gray-500">Recibió: {{ $item->devolucion->recibido_por }}</div>
+                                            @else
+                                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-600/20">
+                                                    {{ $item->es_area_comun ? 'Instalado / En uso (Activo)' : 'En su poder (Activo)' }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-right">
+                                            <div class="inline-flex items-center justify-end gap-2">
+                                                <a href="{{ route('asignaciones.pdf', $item->id) }}" target="_blank" rel="noopener"
+                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-navy-50 text-brand-navy text-xs font-semibold hover:bg-brand-navy hover:text-white transition"
+                                                    title="Ver Acta de Entrega en PDF">
+                                                    <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+                                                    Entrega
+                                                </a>
 
-                <!-- Vista de Tarjetas para Móvil (< md) -->
-                <div class="md:hidden divide-y divide-gray-100">
-                    @foreach ($asignaciones as $item)
-                        <div class="p-4 space-y-3">
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    @if ($item->es_area_comun)
-                                        <span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-800 text-xs font-semibold rounded mb-1">
-                                            <i class="fas fa-building text-[10px] mr-1" aria-hidden="true"></i>Área Común
+                                                @if ($item->devolucion)
+                                                    <a href="{{ route('devoluciones.pdf', $item->devolucion->id) }}" target="_blank" rel="noopener"
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-gold-50 text-brand-navy text-xs font-semibold hover:bg-brand-gold transition"
+                                                        title="Ver Acta de Devolución en PDF">
+                                                        <i class="fas fa-file-pdf text-xs text-brand-gold-700" aria-hidden="true"></i>
+                                                        Devolución
+                                                    </a>
+                                                @else
+                                                    <button type="button"
+                                                        data-swal-locked
+                                                        data-swal-title="Sin acta de devolución"
+                                                        data-swal-text="{{ $item->es_area_comun ? 'Este dispositivo continúa asignado e instalado en el área común, por lo que no se ha emitido un acta de devolución.' : 'Este dispositivo aún continúa asignado al colaborador, por lo que no se ha emitido un acta de devolución.' }}"
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed"
+                                                        title="Aún no cuenta con acta de devolución">
+                                                        <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+                                                        Devolución
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Vista de Tarjetas para Móvil (< md) -->
+                    <div class="md:hidden divide-y divide-gray-100">
+                        @foreach ($asignaciones as $item)
+                            <div class="p-4 space-y-3">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        @if ($item->es_area_comun)
+                                            <span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-800 text-xs font-semibold rounded mb-1">
+                                                <i class="fas fa-building text-[10px] mr-1" aria-hidden="true"></i>Área Común
+                                            </span>
+                                            <h3 class="text-sm font-bold text-gray-900">{{ $item->area }}</h3>
+                                            <p class="text-xs text-amber-700 font-medium">Uso Compartido Institucional</p>
+                                        @else
+                                            <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
+                                                {{ $item->empleado?->codigo ?? '' }}
+                                            </span>
+                                            <h3 class="text-sm font-bold text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</h3>
+                                            <p class="text-xs text-gray-500">Área: {{ $item->area }}</p>
+                                        @endif
+                                    </div>
+                                    @if ($item->devolucion)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 bg-gray-100 text-gray-700 ring-gray-500/20">
+                                            Devuelto
                                         </span>
-                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->area }}</h3>
-                                        <p class="text-xs text-amber-700 font-medium">Uso Compartido Institucional</p>
                                     @else
-                                        <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
-                                            {{ $item->empleado?->codigo ?? '' }}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 bg-emerald-50 text-emerald-700 ring-emerald-600/20">
+                                            {{ $item->es_area_comun ? 'Instalado / Activo' : 'En su poder' }}
                                         </span>
-                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</h3>
-                                        <p class="text-xs text-gray-500">Área: {{ $item->area }}</p>
                                     @endif
                                 </div>
-                                @if ($item->devolucion)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 bg-gray-100 text-gray-700 ring-gray-500/20">
-                                        Devuelto
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 bg-emerald-50 text-emerald-700 ring-emerald-600/20">
-                                        {{ $item->es_area_comun ? 'Instalado / Activo' : 'En su poder' }}
-                                    </span>
-                                @endif
-                            </div>
 
-                            <div class="pt-2 border-t border-gray-50 text-xs text-gray-600 space-y-0.5">
-                                <p>
-                                    <span class="font-semibold text-brand-navy">Entrega:</span>
-                                    {{ $item->fecha_entrega?->format('d/m/Y') ?? 'N/A' }} ({{ $item->entregado_por }})
-                                </p>
-                                @if ($item->devolucion)
+                                <div class="pt-2 border-t border-gray-50 text-xs text-gray-600 space-y-0.5">
                                     <p>
-                                        <span class="font-semibold text-brand-navy">Devolución:</span>
-                                        {{ $item->devolucion->fecha_devolucion?->format('d/m/Y') }} ({{ $item->devolucion->recibido_por }})
+                                        <span class="font-semibold text-brand-navy">Entrega:</span>
+                                        {{ $item->fecha_entrega?->format('d/m/Y') ?? 'N/A' }} ({{ $item->entregado_por }})
                                     </p>
-                                @endif
+                                    @if ($item->devolucion)
+                                        <p>
+                                            <span class="font-semibold text-brand-navy">Devolución:</span>
+                                            {{ $item->devolucion->fecha_devolucion?->format('d/m/Y') }} ({{ $item->devolucion->recibido_por }})
+                                        </p>
+                                    @endif
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                                    <a href="{{ route('asignaciones.pdf', $item->id) }}" target="_blank" rel="noopener"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-navy-50 text-brand-navy text-xs font-semibold hover:bg-brand-navy hover:text-white transition">
+                                        <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+                                        Acta Entrega
+                                    </a>
+
+                                    @if ($item->devolucion)
+                                        <a href="{{ route('devoluciones.pdf', $item->devolucion->id) }}" target="_blank" rel="noopener"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-gold-50 text-brand-navy text-xs font-semibold hover:bg-brand-gold transition">
+                                            <i class="fas fa-file-pdf text-xs text-brand-gold-700" aria-hidden="true"></i>
+                                            Acta Devolución
+                                        </a>
+                                    @else
+                                        <button type="button"
+                                            data-swal-locked
+                                            data-swal-title="Sin acta de devolución"
+                                            data-swal-text="Este dispositivo aún continúa en poder del colaborador, por lo que no se ha emitido un acta de devolución."
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed"
+                                            title="Aún no cuenta con acta de devolución">
+                                            <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
+                                            Acta Devolución
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if ($asignaciones->hasPages())
+                    <div class="px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+                        {{ $asignaciones->links() }}
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- PESTAÑA 2: Bitácora de Modificaciones de Hardware -->
+        <div x-show="tabActiva === 'bitacora'" x-cloak class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h3 class="text-base font-bold text-brand-navy flex items-center gap-2">
+                        <i class="fas fa-microchip text-brand-gold-600" aria-hidden="true"></i>
+                        Bitácora de Modificaciones de Hardware
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Registro cronológico de upgrades, reemplazos y ajustes en los componentes técnicos del equipo
+                    </p>
+                </div>
+                @can('admin')
+                    @unless ($dispositivo->trashed())
+                        <a href="{{ route('dispositivos.edit', ['dispositivo' => $dispositivo->id, 'from' => 'historial']) }}"
+                            class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-brand-navy text-white text-xs font-semibold shadow-sm hover:bg-brand-navy-700 transition shrink-0">
+                            <i class="fas fa-pen text-brand-gold text-xs" aria-hidden="true"></i>
+                            Modificar Especificaciones
+                        </a>
+                    @endunless
+                @endcan
+            </div>
+
+            @if ($cambiosHardware->isEmpty())
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+                        <i class="fas fa-microchip text-xl" aria-hidden="true"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-brand-navy">Sin modificaciones de hardware registradas</h4>
+                    <p class="mt-1 text-xs text-gray-500 max-w-md mx-auto">
+                        Este equipo conserva sus especificaciones técnicas de fábrica o iniciales. Cuando se realice un cambio de RAM, disco, procesador u otros componentes, el registro y su acta comparativa se generarán aquí automáticamente.
+                    </p>
+                </div>
+            @else
+                <div class="space-y-4">
+                    @foreach ($cambiosHardware as $cambio)
+                        <div class="bg-white rounded-xl shadow-sm border {{ $cambio->revertido ? 'border-amber-200 bg-amber-50/20' : 'border-gray-100' }} p-5 space-y-4">
+                            <!-- Encabezado del registro -->
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-gray-100">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-brand-navy-50 text-brand-navy">
+                                        #HW-{{ str_pad($cambio->id, 5, '0', STR_PAD_LEFT) }}
+                                    </span>
+                                    <span class="text-xs text-gray-500 font-medium">
+                                        <i class="far fa-calendar-alt text-brand-gold-600 mr-1" aria-hidden="true"></i>
+                                        {{ $cambio->created_at->format('d/m/Y h:i A') }}
+                                        <span class="text-gray-400">({{ $cambio->created_at->diffForHumans() }})</span>
+                                    </span>
+                                    <span class="text-xs text-gray-500">
+                                        · Registró: <strong class="text-brand-navy">{{ $cambio->user?->name ?? 'Sistema' }}</strong>
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    @if ($cambio->revertido)
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                            <i class="fas fa-undo text-[10px]" aria-hidden="true"></i>
+                                            Revertido
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                            <i class="fas fa-check text-[10px]" aria-hidden="true"></i>
+                                            Vigente
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
 
-                            <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
-                                <a href="{{ route('asignaciones.pdf', $item->id) }}" target="_blank" rel="noopener"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-navy-50 text-brand-navy text-xs font-semibold hover:bg-brand-navy hover:text-white transition">
-                                    <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
-                                    Acta Entrega
+                            <!-- Custodio y Motivo -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                <div class="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                    <span class="block text-gray-500 font-medium text-[11px] uppercase tracking-wider mb-0.5">Custodio al momento del cambio:</span>
+                                    @if ($cambio->empleado)
+                                        <div class="font-semibold text-brand-navy flex items-center gap-1.5">
+                                            <i class="fas fa-user text-brand-gold-600 text-xs" aria-hidden="true"></i>
+                                            <span>{{ $cambio->empleado->nombre_completo }}</span>
+                                            <span class="text-gray-500 font-mono font-normal">({{ $cambio->empleado->codigo }})</span>
+                                        </div>
+                                    @elseif ($cambio->asignacion && $cambio->asignacion->es_area_comun)
+                                        <div class="font-semibold text-amber-800 flex items-center gap-1.5">
+                                            <i class="fas fa-building text-amber-600 text-xs" aria-hidden="true"></i>
+                                            <span>Área Común: {{ $cambio->asignacion->area }}</span>
+                                        </div>
+                                    @else
+                                        <div class="font-semibold text-gray-700 flex items-center gap-1.5">
+                                            <i class="fas fa-warehouse text-gray-400 text-xs" aria-hidden="true"></i>
+                                            <span>En bodega / Sin asignar</span>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <div class="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                    <span class="block text-gray-500 font-medium text-[11px] uppercase tracking-wider mb-0.5">Motivo reportado:</span>
+                                    <p class="font-medium text-gray-800 italic">
+                                        "{{ $cambio->motivo ?? 'Mantenimiento / actualización de componentes' }}"
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if ($cambio->revertido)
+                                <div class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+                                    <i class="fas fa-info-circle text-amber-600 mt-0.5 shrink-0" aria-hidden="true"></i>
+                                    <div>
+                                        <span class="font-bold">Modificación revertida:</span>
+                                        El {{ $cambio->revertido_at?->format('d/m/Y h:i A') }} por <span class="font-semibold">{{ $cambio->revertidoPor?->name ?? 'Usuario' }}</span>.
+                                        @if ($cambio->motivo_reversion)
+                                            <span class="block mt-0.5 text-amber-800 italic">"{{ $cambio->motivo_reversion }}"</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Detalle comparativo de cambios (Antes vs Después) -->
+                            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                                    <thead class="bg-gray-50 text-gray-600">
+                                        <tr>
+                                            <th scope="col" class="px-3.5 py-2 text-left font-semibold uppercase tracking-wider w-1/4">Componente</th>
+                                            <th scope="col" class="px-3.5 py-2 text-left font-semibold uppercase tracking-wider w-3/8 text-red-700">Especificación Anterior</th>
+                                            <th scope="col" class="px-3.5 py-2 text-left font-semibold uppercase tracking-wider w-3/8 text-emerald-700">Nueva Especificación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 bg-white">
+                                        @foreach ($cambio->cambios ?? [] as $c)
+                                            <tr>
+                                                <td class="px-3.5 py-2.5 font-bold text-brand-navy whitespace-nowrap">
+                                                    {{ $c['etiqueta'] ?? ucfirst($c['campo']) }}
+                                                </td>
+                                                <td class="px-3.5 py-2.5 text-gray-600">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-red-50 text-red-700 font-mono text-[11px]">
+                                                        {{ $c['antes'] ?? 'Sin registrar' }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-3.5 py-2.5 font-medium text-gray-900">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-mono text-[11px] font-semibold">
+                                                        {{ $c['despues'] ?? 'Eliminado' }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Acciones: Descargar Constancia PDF y Revertir -->
+                            <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                                <a href="{{ route('dispositivos.cambios-hardware.pdf', $cambio->id) }}"
+                                    target="_blank" rel="noopener"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-navy-50 text-brand-navy hover:bg-brand-navy hover:text-white text-xs font-semibold transition shadow-sm">
+                                    <i class="fas fa-file-pdf text-brand-gold-600 text-xs" aria-hidden="true"></i>
+                                    Constancia PDF
                                 </a>
 
-                                @if ($item->devolucion)
-                                    <a href="{{ route('devoluciones.pdf', $item->devolucion->id) }}" target="_blank" rel="noopener"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-gold-50 text-brand-navy text-xs font-semibold hover:bg-brand-gold transition">
-                                        <i class="fas fa-file-pdf text-xs text-brand-gold-700" aria-hidden="true"></i>
-                                        Acta Devolución
-                                    </a>
-                                @else
-                                    <button type="button"
-                                        data-swal-locked
-                                        data-swal-title="Sin acta de devolución"
-                                        data-swal-text="Este dispositivo aún continúa en poder del colaborador, por lo que no se ha emitido un acta de devolución."
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-400 text-xs font-semibold cursor-not-allowed"
-                                        title="Aún no cuenta con acta de devolución">
-                                        <i class="fas fa-file-pdf text-xs" aria-hidden="true"></i>
-                                        Acta Devolución
-                                    </button>
-                                @endif
+                                @can('admin')
+                                    @if (! $cambio->revertido && ! $dispositivo->trashed())
+                                        @if ($cambio->id === ($ultimoCambioVigenteId ?? null))
+                                            <form action="{{ route('dispositivos.cambios-hardware.revertir', $cambio->id) }}"
+                                                method="POST"
+                                                class="inline"
+                                                data-swal-confirm-revertir-hardware
+                                                data-swal-etiqueta="{{ $dispositivo->etiqueta }}"
+                                                data-swal-fecha="{{ $cambio->created_at->format('d/m/Y') }}">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 text-xs font-semibold transition cursor-pointer"
+                                                    title="Deshacer este cambio y restaurar las especificaciones previas">
+                                                    <i class="fas fa-undo text-xs text-amber-700" aria-hidden="true"></i>
+                                                    Revertir Modificación
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 bg-gray-50 text-gray-400 text-xs font-medium cursor-not-allowed"
+                                                title="Solo se puede revertir la modificación más reciente. Revierta primero los cambios posteriores en orden cronológico inverso.">
+                                                <i class="fas fa-lock text-[10px]" aria-hidden="true"></i>
+                                                Reversión bloqueada (Hay cambios posteriores)
+                                            </span>
+                                        @endif
+                                    @endif
+                                @endcan
                             </div>
                         </div>
                     @endforeach
-                </div>
-            @endif
-
-            @if ($asignaciones->hasPages())
-                <div class="px-5 py-4 border-t border-gray-100 bg-gray-50/50">
-                    {{ $asignaciones->links() }}
                 </div>
             @endif
         </div>
