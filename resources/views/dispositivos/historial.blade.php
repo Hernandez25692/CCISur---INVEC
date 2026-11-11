@@ -20,25 +20,27 @@
                 <p class="mt-1 text-sm text-gray-500">Historial trazable de asignaciones, custodios y actas de este equipo tecnológico</p>
             </div>
 
-            @if ($dispositivo->trashed())
-                <form action="{{ route('dispositivos.reactivar', $dispositivo->id) }}" method="POST" class="inline"
-                    data-swal-confirm-reactivar-bien
-                    data-swal-nombre="{{ $dispositivo->nombre }}"
-                    data-swal-etiqueta="{{ $dispositivo->etiqueta }}">
-                    @csrf
-                    <button type="submit"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold shadow-sm hover:bg-emerald-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
-                        <i class="fas fa-undo text-xs" aria-hidden="true"></i>
-                        Reactivar Dispositivo
-                    </button>
-                </form>
-            @else
-                <a href="{{ route('dispositivos.edit', $dispositivo->id) }}"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
-                    <i class="fas fa-pen text-xs text-brand-gold-600" aria-hidden="true"></i>
-                    Editar Dispositivo
-                </a>
-            @endif
+            @can('admin')
+                @if ($dispositivo->trashed())
+                    <form action="{{ route('dispositivos.reactivar', $dispositivo->id) }}" method="POST" class="inline"
+                        data-swal-confirm-reactivar-bien
+                        data-swal-nombre="{{ $dispositivo->nombre }}"
+                        data-swal-etiqueta="{{ $dispositivo->etiqueta }}">
+                        @csrf
+                        <button type="submit"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold shadow-sm hover:bg-emerald-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+                            Reactivar Dispositivo
+                        </button>
+                    </form>
+                @else
+                    <a href="{{ route('dispositivos.edit', $dispositivo->id) }}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                        <i class="fas fa-pen text-xs text-brand-gold-600" aria-hidden="true"></i>
+                        Editar Dispositivo
+                    </a>
+                @endif
+            @endcan
         </div>
 
         <!-- Ficha técnica del Dispositivo -->

@@ -20,24 +20,26 @@
                 <p class="mt-1 text-sm text-gray-500">Historial documental de actas de entrega y devolución por colaborador</p>
             </div>
 
-            @if ($empleado->trashed())
-                <form action="{{ route('empleados.reactivar', $empleado->id) }}" method="POST" class="inline"
-                    data-swal-confirm-reactivar
-                    data-swal-nombre="{{ $empleado->nombre_completo }}">
-                    @csrf
-                    <button type="submit"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold shadow-sm hover:bg-emerald-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
-                        <i class="fas fa-user-check text-xs" aria-hidden="true"></i>
-                        Reactivar Colaborador
-                    </button>
-                </form>
-            @else
-                <a href="{{ route('empleados.edit', $empleado->id) }}"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
-                    <i class="fas fa-user-edit text-xs text-brand-gold-600" aria-hidden="true"></i>
-                    Editar Colaborador
-                </a>
-            @endif
+            @can('admin')
+                @if ($empleado->trashed())
+                    <form action="{{ route('empleados.reactivar', $empleado->id) }}" method="POST" class="inline"
+                        data-swal-confirm-reactivar
+                        data-swal-nombre="{{ $empleado->nombre_completo }}">
+                        @csrf
+                        <button type="submit"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold shadow-sm hover:bg-emerald-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                            <i class="fas fa-user-check text-xs" aria-hidden="true"></i>
+                            Reactivar Colaborador
+                        </button>
+                    </form>
+                @else
+                    <a href="{{ route('empleados.edit', $empleado->id) }}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                        <i class="fas fa-user-edit text-xs text-brand-gold-600" aria-hidden="true"></i>
+                        Editar Colaborador
+                    </a>
+                @endif
+            @endcan
         </div>
 
         <!-- Ficha resumen del Colaborador -->
