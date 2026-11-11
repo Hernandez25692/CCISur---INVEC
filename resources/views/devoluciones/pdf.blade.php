@@ -338,6 +338,28 @@
         </tr>
         @endif
     </table>
+    @if ($asignacion->tipo === 'dispositivo' && $asignacion->cambiosHardwareVigentes && $asignacion->cambiosHardwareVigentes->isNotEmpty())
+    <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 3px solid #af9731; border-radius: 3px; padding: 4px 7px; margin-top: -3px; margin-bottom: 6px; font-size: 8px; line-height: 1.3;">
+        <strong style="color: #0f172a; text-transform: uppercase;">Nota de Trazabilidad Técnica (Modificaciones de Hardware en Custodia):</strong>
+        <span style="color: #475569;">Durante el período en poder del custodio se realizaron y autorizaron los siguientes cambios técnicos:</span>
+        <ul style="margin: 2px 0 0 0; padding-left: 13px; color: #334155;">
+            @foreach ($asignacion->cambiosHardwareVigentes as $cambio)
+                <li>
+                    <strong>Folio #HW-{{ str_pad($cambio->id, 5, '0', STR_PAD_LEFT) }}</strong> ({{ $cambio->created_at->format('d/m/Y') }}):
+                    @php
+                        $cambiosStr = collect($cambio->cambios ?? [])
+                            ->map(fn($c) => ($c['etiqueta'] ?? $c['campo']) . ': ' . ($c['antes'] ?? 'N/A') . ' → ' . ($c['despues'] ?? 'N/A'))
+                            ->implode(' · ');
+                    @endphp
+                    {{ $cambiosStr }}
+                    @if ($cambio->motivo)
+                        <em>(Motivo: {{ $cambio->motivo }})</em>
+                    @endif
+                </li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
     @elseif ($asignacion->tipo === 'mobiliario' && $item)
     <table class="info-table" style="margin-top: -5px;">
         <tr>

@@ -438,6 +438,7 @@ class DevolucionController extends Controller
             'asignacion.empleado',
             'asignacion.mobiliario',
             'asignacion.dispositivo',
+            'asignacion.cambiosHardwareVigentes',
         ]);
 
         $asignacion = $devolucion->asignacion;
@@ -456,6 +457,7 @@ class DevolucionController extends Controller
             'asignacion.empleado',
             'asignacion.mobiliario',
             'asignacion.dispositivo',
+            'asignacion.cambiosHardwareVigentes',
         ]);
 
         $asignacion = $devolucion->asignacion;

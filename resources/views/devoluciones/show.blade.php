@@ -194,6 +194,41 @@
                                 </div>
                             </div>
                         </div>
+
+                        @if ($asignacion->tipo === 'dispositivo' && $asignacion->cambiosHardwareVigentes && $asignacion->cambiosHardwareVigentes->isNotEmpty())
+                            <div class="mt-4 p-4 rounded-xl border border-amber-200 bg-amber-50/60 space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-bold text-amber-900 uppercase tracking-wider">
+                                    <i class="fas fa-microchip text-brand-gold-600" aria-hidden="true"></i>
+                                    <span>Modificaciones de Hardware Registradas Durante la Custodia</span>
+                                </div>
+                                <p class="text-xs text-amber-800">
+                                    Durante el período en que el custodio mantuvo este equipo, se registraron las siguientes modificaciones técnicas autorizadas:
+                                </p>
+                                <ul class="divide-y divide-amber-200/60 bg-white rounded-lg border border-amber-200/60 overflow-hidden text-xs">
+                                    @foreach ($asignacion->cambiosHardwareVigentes as $cambio)
+                                        <li class="p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                            <div>
+                                                <span class="font-mono font-bold text-brand-navy">#HW-{{ str_pad($cambio->id, 5, '0', STR_PAD_LEFT) }}</span>
+                                                <span class="text-gray-500 text-xs ml-1">({{ $cambio->created_at->format('d/m/Y') }}):</span>
+                                                @php
+                                                    $cambiosStr = collect($cambio->cambios ?? [])
+                                                        ->map(fn($c) => ($c['etiqueta'] ?? $c['campo']) . ': ' . ($c['antes'] ?? 'N/A') . ' → ' . ($c['despues'] ?? 'N/A'))
+                                                        ->implode(' · ');
+                                                @endphp
+                                                <span class="text-gray-800 font-medium ml-1">{{ $cambiosStr }}</span>
+                                                @if ($cambio->motivo)
+                                                    <span class="block text-gray-500 italic text-[11px] mt-0.5">Motivo: {{ $cambio->motivo }}</span>
+                                                @endif
+                                            </div>
+                                            <a href="{{ route('dispositivos.cambios-hardware.pdf', $cambio->id) }}" target="_blank"
+                                                class="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-navy hover:text-brand-gold transition shrink-0">
+                                                <i class="fas fa-file-pdf text-brand-gold-600"></i> Ver Constancia
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                     @else
                         <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-xs">
                             El bien asociado a esta devolución ya no se encuentra en el catálogo activo (ha sido eliminado o reclasificado).

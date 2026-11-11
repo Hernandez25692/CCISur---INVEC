@@ -81,6 +81,16 @@ class Asignacion extends Model
         return $this->belongsTo(User::class, 'anulado_por_user_id');
     }
 
+    public function cambiosHardware(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HistorialCambioHardware::class, 'asignacion_id');
+    }
+
+    public function cambiosHardwareVigentes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HistorialCambioHardware::class, 'asignacion_id')->where('revertido', false);
+    }
+
     public function getNombreBienAttribute(): string
     {
         $bien = $this->tipo === self::TIPO_MOBILIARIO ? $this->mobiliario : $this->dispositivo;
