@@ -183,6 +183,10 @@ class EmpleadoController extends Controller
 
         $empleado->update($validated);
 
+        if ($request->input('from') === 'expediente' || $request->input('from') === 'historial') {
+            return redirect()->route('asignaciones.historial', $empleado->id)->with('success', 'Colaborador actualizado correctamente.');
+        }
+
         return redirect()->route('empleados.index')->with('success', 'Colaborador actualizado correctamente.');
     }
 

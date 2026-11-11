@@ -171,6 +171,10 @@ class MobiliarioController extends Controller
 
         $mobiliario->update($validated);
 
+        if ($request->input('from') === 'historial') {
+            return redirect()->route('mobiliario.historial', $mobiliario->id)->with('success', 'Mobiliario actualizado correctamente.');
+        }
+
         return redirect()->route('mobiliario.index')->with('success', 'Mobiliario actualizado correctamente.');
     }
 

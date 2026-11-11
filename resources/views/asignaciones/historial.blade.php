@@ -33,7 +33,7 @@
                         </button>
                     </form>
                 @else
-                    <a href="{{ route('empleados.edit', $empleado->id) }}"
+                    <a href="{{ route('empleados.edit', ['empleado' => $empleado->id, 'from' => 'expediente']) }}"
                         class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
                         <i class="fas fa-user-edit text-xs text-brand-gold-600" aria-hidden="true"></i>
                         Editar Colaborador

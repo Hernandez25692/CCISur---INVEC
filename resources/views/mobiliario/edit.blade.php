@@ -1,6 +1,16 @@
 <x-app-layout>
     <div class="py-6 max-w-3xl mx-auto">
+        @php
+            $volverAHistorial = request('from') === 'historial' || str_contains(url()->previous(), "/mobiliario/{$mobiliario->id}/historial");
+            $cancelarUrl = $volverAHistorial ? route('mobiliario.historial', $mobiliario->id) : route('mobiliario.index');
+        @endphp
+
         <div class="mb-6">
+            <a href="{{ $cancelarUrl }}"
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-navy hover:text-brand-gold-700 transition mb-2">
+                <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
+                {{ $volverAHistorial ? 'Volver a Hoja de Vida' : 'Volver a Inventario de Mobiliario' }}
+            </a>
             <h1 class="text-2xl font-bold text-brand-navy">Editar Mueble</h1>
             <p class="mt-1 text-sm text-gray-500">Actualiza la información o estado del bien seleccionado</p>
         </div>
@@ -9,6 +19,10 @@
             class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-5">
             @csrf
             @method('PUT')
+
+            @if ($volverAHistorial)
+                <input type="hidden" name="from" value="historial">
+            @endif
 
             <!-- Nombre -->
             <div>
@@ -159,7 +173,7 @@
             </div>
 
             <div class="flex justify-between items-center pt-4 border-t border-gray-100">
-                <a href="{{ route('mobiliario.index') }}"
+                <a href="{{ $cancelarUrl }}"
                     class="text-sm font-medium text-gray-600 hover:text-brand-navy transition">
                     ← Cancelar
                 </a>

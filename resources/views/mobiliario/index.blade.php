@@ -207,13 +207,19 @@
                             @foreach ($mobiliarios as $item)
                                 <tr class="even:bg-gray-50/50 hover:bg-brand-gold-50/40 transition-colors">
                                     <td class="px-4 py-3 whitespace-nowrap">
-                                        <span class="px-2.5 py-1 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded-md">
+                                        <a href="{{ route('mobiliario.historial', $item->id) }}"
+                                            class="inline-block px-2.5 py-1 bg-brand-navy-50 text-brand-navy hover:bg-brand-navy hover:text-brand-gold text-xs font-mono font-medium rounded-md transition-colors"
+                                            title="Ver hoja de vida e historial">
                                             {{ $item->etiqueta }}
-                                        </span>
+                                        </a>
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="font-medium text-gray-900 flex items-center gap-1.5 flex-wrap">
-                                            <span>{{ $item->nombre }}</span>
+                                            <a href="{{ route('mobiliario.historial', $item->id) }}"
+                                                class="text-brand-navy hover:text-brand-gold-700 hover:underline transition-colors font-semibold"
+                                                title="Ver hoja de vida e historial">
+                                                <span>{{ $item->nombre }}</span>
+                                            </a>
                                             @if ($item->trashed())
                                                 <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
                                                     Dado de baja
@@ -310,11 +316,17 @@
                         <div class="p-4 space-y-3">
                             <div class="flex items-start justify-between gap-2">
                                 <div>
-                                    <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
+                                    <a href="{{ route('mobiliario.historial', $item->id) }}"
+                                        class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy hover:bg-brand-navy hover:text-brand-gold text-xs font-mono font-medium rounded mb-1 transition-colors"
+                                        title="Ver hoja de vida e historial">
                                         {{ $item->etiqueta }}
-                                    </span>
+                                    </a>
                                     <div class="flex items-center gap-1.5 flex-wrap">
-                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->nombre }}</h3>
+                                        <a href="{{ route('mobiliario.historial', $item->id) }}"
+                                            class="text-sm font-bold text-brand-navy hover:text-brand-gold-700 transition"
+                                            title="Ver hoja de vida e historial">
+                                            <span>{{ $item->nombre }}</span>
+                                        </a>
                                         @if ($item->trashed())
                                             <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
                                                 Dado de baja

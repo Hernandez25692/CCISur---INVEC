@@ -1,6 +1,16 @@
 <x-app-layout>
     <div class="py-6 max-w-3xl mx-auto">
+        @php
+            $volverAExpediente = request('from') === 'expediente' || request('from') === 'historial' || str_contains(url()->previous(), "/asignaciones/empleado/{$empleado->id}");
+            $cancelarUrl = $volverAExpediente ? route('asignaciones.historial', $empleado->id) : route('empleados.index');
+        @endphp
+
         <div class="mb-6">
+            <a href="{{ $cancelarUrl }}"
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-navy hover:text-brand-gold-700 transition mb-2">
+                <i class="fas fa-arrow-left text-[10px]" aria-hidden="true"></i>
+                {{ $volverAExpediente ? 'Volver a Expediente' : 'Volver a Colaboradores' }}
+            </a>
             <h1 class="text-2xl font-bold text-brand-navy">Editar Colaborador</h1>
             <p class="mt-1 text-sm text-gray-500">Actualiza la información personal, gerencia o sede del colaborador seleccionado</p>
         </div>
@@ -9,6 +19,10 @@
             class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-5">
             @csrf
             @method('PUT')
+
+            @if ($volverAExpediente)
+                <input type="hidden" name="from" value="expediente">
+            @endif
 
             <!-- Código y Bienes activos (solo lectura) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -120,7 +134,7 @@
 
             <!-- Botones -->
             <div class="flex justify-between items-center pt-4 border-t border-gray-100">
-                <a href="{{ route('empleados.index') }}"
+                <a href="{{ $cancelarUrl }}"
                     class="text-sm font-medium text-gray-600 hover:text-brand-navy transition">
                     ← Cancelar
                 </a>
