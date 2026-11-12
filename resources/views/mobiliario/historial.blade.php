@@ -34,11 +34,28 @@
                         </button>
                     </form>
                 @else
-                    <a href="{{ route('mobiliario.edit', ['mobiliario' => $mobiliario->id, 'from' => 'historial']) }}"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
-                        <i class="fas fa-pen text-xs text-brand-gold-600" aria-hidden="true"></i>
-                        Editar Mueble
-                    </a>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('mobiliario.edit', ['mobiliario' => $mobiliario->id, 'from' => 'historial']) }}"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                            <i class="fas fa-pen text-xs text-brand-gold-600" aria-hidden="true"></i>
+                            Editar Mueble
+                        </a>
+
+                        @if ($mobiliario->puede_darse_de_baja)
+                            <form action="{{ route('mobiliario.destroy', $mobiliario->id) }}" method="POST" class="inline"
+                                data-swal-confirm-baja-bien
+                                data-swal-nombre="{{ $mobiliario->nombre }}"
+                                data-swal-etiqueta="{{ $mobiliario->etiqueta }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-xs font-semibold shadow-sm hover:bg-amber-600 hover:text-white transition">
+                                    <i class="fas fa-archive text-xs" aria-hidden="true"></i>
+                                    Dar de baja
+                                </button>
+                            </form>
+                        @endif
+                    </div>
                 @endif
             @endcan
         </div>

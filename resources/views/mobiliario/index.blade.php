@@ -264,29 +264,7 @@
                                                     <i class="fas fa-pen text-xs" aria-hidden="true"></i>
                                                 </a>
 
-                                                @if ($item->puede_darse_de_baja)
-                                                    <form action="{{ route('mobiliario.destroy', $item->id) }}" method="POST" class="inline"
-                                                        data-swal-confirm-baja-bien
-                                                        data-swal-nombre="{{ $item->nombre }}"
-                                                        data-swal-etiqueta="{{ $item->etiqueta }}">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit"
-                                                            class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
-                                                            title="Dar de baja mueble" aria-label="Dar de baja {{ $item->nombre }}">
-                                                            <i class="fas fa-archive text-xs" aria-hidden="true"></i>
-                                                        </button>
-                                                    </form>
-                                                @else
-                                                    <button type="button"
-                                                        data-swal-locked="{{ $item->motivo_no_baja }}"
-                                                        data-swal-title="No se puede dar de baja este mueble"
-                                                        class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-                                                        title="{{ $item->motivo_no_baja }}"
-                                                        aria-label="Baja bloqueada para {{ $item->nombre }}">
-                                                        <i class="fas fa-archive text-xs" aria-hidden="true"></i>
-                                                    </button>
-                                                @endif
+
 
                                                 @if ($item->puede_asignarse)
                                                     <a href="{{ route('asignaciones.create', ['tipo' => 'mobiliario', 'id' => $item->id]) }}"
@@ -370,30 +348,7 @@
                                     </a>
                                 @endif
 
-                                @if ($item->puede_darse_de_baja)
-                                    <form action="{{ route('mobiliario.destroy', $item->id) }}" method="POST" class="inline"
-                                        data-swal-confirm-baja-bien
-                                        data-swal-nombre="{{ $item->nombre }}"
-                                        data-swal-etiqueta="{{ $item->etiqueta }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200 text-xs font-medium text-amber-700 hover:bg-amber-50 transition"
-                                            aria-label="Dar de baja {{ $item->nombre }}">
-                                            <i class="fas fa-archive text-[11px]" aria-hidden="true"></i>
-                                            Dar de baja
-                                        </button>
-                                    </form>
-                                @else
-                                    <button type="button"
-                                        data-swal-locked="{{ $item->motivo_no_baja }}"
-                                        data-swal-title="No se puede dar de baja este mueble"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:bg-gray-50 transition"
-                                        aria-label="Baja bloqueada para {{ $item->nombre }}">
-                                        <i class="fas fa-archive text-[11px]" aria-hidden="true"></i>
-                                        Dar de baja
-                                    </button>
-                                @endif
+
                             </div>
                         </div>
                     @endforeach

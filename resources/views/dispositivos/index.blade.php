@@ -14,6 +14,17 @@
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
+                <a href="{{ request()->boolean('en_taller') ? route('dispositivos.index', request()->except('en_taller', 'page')) : route('dispositivos.index', array_merge(request()->except('page'), ['en_taller' => 1])) }}"
+                    class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border {{ request()->boolean('en_taller') ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400 font-bold' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold' }} text-xs sm:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition whitespace-nowrap shrink-0"
+                    title="{{ request()->boolean('en_taller') ? 'Quitar filtro de taller' : 'Filtrar dispositivos actualmente en taller o mantenimiento técnico' }}">
+                    <i class="fas fa-tools text-xs {{ request()->boolean('en_taller') ? 'text-amber-600' : 'text-gray-500' }}" aria-hidden="true"></i>
+                    <span>En Taller</span>
+                    @if (($enTallerCount ?? 0) > 0)
+                        <span class="px-2 py-0.5 text-xs rounded-full {{ request()->boolean('en_taller') ? 'bg-amber-200 text-amber-900' : 'bg-gray-200 text-gray-800' }} font-bold">
+                            {{ $enTallerCount }}
+                        </span>
+                    @endif
+                </a>
                 <a href="{{ route('dispositivos.bajas') }}"
                     class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition whitespace-nowrap shrink-0">
                     <i class="fas fa-archive text-xs text-gray-500" aria-hidden="true"></i>
@@ -54,6 +65,9 @@
             <form id="filtroDispositivosForm" method="GET" action="{{ route('dispositivos.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
+                @if (request()->boolean('en_taller'))
+                    <input type="hidden" name="en_taller" value="1">
+                @endif
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <div>
                         <label for="filtro_nombre" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
@@ -106,7 +120,7 @@
                         <select id="filtro_estado" name="estado"
                             class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
                             <option value="">Todos</option>
-                            @foreach (\App\Models\Dispositivo::ESTADOS as $estado)
+                            @foreach (array_diff(\App\Models\Dispositivo::ESTADOS, ['En reparación / En revisión']) as $estado)
                                 <option value="{{ $estado }}" @selected(request('estado') === $estado)>{{ $estado }}</option>
                             @endforeach
                         </select>
@@ -155,11 +169,22 @@
         <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
             @if ($dispositivos->total() > 0)
                 <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-                    <p>
-                        Mostrando <span class="font-semibold text-brand-navy">{{ $dispositivos->firstItem() }}–{{ $dispositivos->lastItem() }}</span>
-                        de <span class="font-semibold text-brand-navy">{{ $dispositivos->total() }}</span>
-                        {{ $dispositivos->total() === 1 ? 'dispositivo registrado' : 'dispositivos registrados' }}
-                    </p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <p>
+                            Mostrando <span class="font-semibold text-brand-navy">{{ $dispositivos->firstItem() }}–{{ $dispositivos->lastItem() }}</span>
+                            de <span class="font-semibold text-brand-navy">{{ $dispositivos->total() }}</span>
+                            {{ $dispositivos->total() === 1 ? 'dispositivo registrado' : 'dispositivos registrados' }}
+                        </p>
+                        @if (request()->boolean('en_taller'))
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-semibold border border-amber-200">
+                                <i class="fas fa-tools text-[10px] text-amber-700" aria-hidden="true"></i>
+                                En Taller
+                                <a href="{{ route('dispositivos.index', request()->except('en_taller', 'page')) }}" class="text-amber-700 hover:text-amber-950 ml-0.5" title="Quitar filtro de taller">
+                                    <i class="fas fa-times-circle" aria-hidden="true"></i>
+                                </a>
+                            </span>
+                        @endif
+                    </div>
                     @if ($hayFiltros ?? false)
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-gold-50 text-brand-navy font-medium">
                             <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
@@ -172,7 +197,20 @@
             @if ($dispositivos->isEmpty())
                 <!-- Estado vacío contextual -->
                 <div class="px-6 py-12 text-center">
-                    @if ($hayFiltros ?? false)
+                    @if (request()->boolean('en_taller'))
+                        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 text-amber-600 mb-2">
+                            <i class="fas fa-tools text-2xl" aria-hidden="true"></i>
+                        </div>
+                        <h3 class="mt-1 text-sm font-semibold text-brand-navy">No hay dispositivos en taller</h3>
+                        <p class="mt-1 text-xs text-gray-500">Ningún equipo tecnológico se encuentra actualmente en reparación o revisión técnica.</p>
+                        <div class="mt-4">
+                            <a href="{{ route('dispositivos.index') }}"
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                                <i class="fas fa-undo" aria-hidden="true"></i>
+                                Ver todo el inventario
+                            </a>
+                        </div>
+                    @elseif ($hayFiltros ?? false)
                         <i class="fas fa-search text-3xl text-gray-300 mb-2" aria-hidden="true"></i>
                         <h3 class="mt-1 text-sm font-semibold text-brand-navy">No se encontraron dispositivos con esos criterios</h3>
                         <p class="mt-1 text-xs text-gray-500">Probá ajustando o limpiando los filtros de búsqueda para ver todo el inventario.</p>
@@ -285,29 +323,7 @@
                                                     <i class="fas fa-pen text-xs" aria-hidden="true"></i>
                                                 </a>
 
-                                                @if ($item->puede_darse_de_baja)
-                                                    <form action="{{ route('dispositivos.destroy', $item->id) }}" method="POST" class="inline"
-                                                        data-swal-confirm-baja-bien
-                                                        data-swal-nombre="{{ $item->nombre }}"
-                                                        data-swal-etiqueta="{{ $item->etiqueta }}">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit"
-                                                            class="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors"
-                                                            title="Dar de baja dispositivo" aria-label="Dar de baja {{ $item->nombre }}">
-                                                            <i class="fas fa-archive text-xs" aria-hidden="true"></i>
-                                                        </button>
-                                                    </form>
-                                                @else
-                                                    <button type="button"
-                                                        data-swal-locked="{{ $item->motivo_no_baja }}"
-                                                        data-swal-title="No se puede dar de baja este dispositivo"
-                                                        class="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-                                                        title="{{ $item->motivo_no_baja }}"
-                                                        aria-label="Baja bloqueada para {{ $item->nombre }}">
-                                                        <i class="fas fa-archive text-xs" aria-hidden="true"></i>
-                                                    </button>
-                                                @endif
+
 
                                                 @if ($item->puede_asignarse)
                                                     <a href="{{ route('asignaciones.create', ['tipo' => 'dispositivo', 'id' => $item->id]) }}"
@@ -400,30 +416,7 @@
                                     </a>
                                 @endif
 
-                                @if ($item->puede_darse_de_baja)
-                                    <form action="{{ route('dispositivos.destroy', $item->id) }}" method="POST" class="inline"
-                                        data-swal-confirm-baja-bien
-                                        data-swal-nombre="{{ $item->nombre }}"
-                                        data-swal-etiqueta="{{ $item->etiqueta }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200 text-xs font-medium text-amber-700 hover:bg-amber-50 transition"
-                                            aria-label="Dar de baja {{ $item->nombre }}">
-                                            <i class="fas fa-archive text-[11px]" aria-hidden="true"></i>
-                                            Dar de baja
-                                        </button>
-                                    </form>
-                                @else
-                                    <button type="button"
-                                        data-swal-locked="{{ $item->motivo_no_baja }}"
-                                        data-swal-title="No se puede dar de baja este dispositivo"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-400 hover:bg-gray-50 transition"
-                                        aria-label="Baja bloqueada para {{ $item->nombre }}">
-                                        <i class="fas fa-archive text-[11px]" aria-hidden="true"></i>
-                                        Dar de baja
-                                    </button>
-                                @endif
+
                             </div>
                         </div>
                     @endforeach

@@ -168,7 +168,27 @@
             @endif
 
             <!-- Estado Físico -->
-            @if ($dispositivo->estaAsignado())
+            @if ($dispositivo->mantenimientoActivo()->exists())
+                <div class="rounded-lg bg-purple-50/80 border border-purple-200 p-4 space-y-2">
+                    <div class="flex items-start gap-2.5">
+                        <i class="fas fa-tools text-purple-600 mt-0.5" aria-hidden="true"></i>
+                        <div class="text-xs text-purple-900">
+                            <p class="font-semibold">Estado físico protegido mientras el equipo está en mantenimiento activo</p>
+                            <p class="mt-0.5 text-purple-800">
+                                Este dispositivo se encuentra actualmente en taller / revisión técnica. Para actualizar su estado físico resultante o liberarlo, finalice o cancele el mantenimiento desde su hoja de vida.
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="estado_bloqueado_mant" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
+                            Estado Físico Actual
+                        </label>
+                        <input type="hidden" name="estado" value="{{ $dispositivo->estado }}">
+                        <input type="text" id="estado_bloqueado_mant" value="{{ $dispositivo->estado }}" readonly
+                            class="w-full border-purple-200 rounded-lg bg-white/80 text-gray-700 text-sm cursor-not-allowed">
+                    </div>
+                </div>
+            @elseif ($dispositivo->estaAsignado())
                 <div class="rounded-lg bg-amber-50/70 border border-amber-200 p-4 space-y-2">
                     <div class="flex items-start gap-2.5">
                         <i class="fas fa-lock text-amber-600 mt-0.5" aria-hidden="true"></i>
@@ -546,52 +566,6 @@
                         placeholder="Ej. Teclado retroiluminado, incluye adaptador USB-C o dirección MAC"
                         class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
                 </div>
-
-                @if ($dispositivo->tiene_especificaciones)
-                    <!-- Selector de Propósito de Edición de Especificaciones -->
-                    <div x-data="{ tipoEdicion: @js(old('tipo_edicion_hardware', 'modificacion')) }"
-                        class="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-3">
-                        <div>
-                            <span class="block text-xs font-bold text-brand-navy uppercase tracking-wider">
-                                Propósito de la Edición de Especificaciones
-                            </span>
-                            <p class="text-[11px] text-gray-500 mt-0.5">
-                                Indicá si este ajuste corresponde a un cambio físico real de piezas o solo a una corrección tipográfica.
-                            </p>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <label class="relative flex items-start p-3 rounded-lg border cursor-pointer transition"
-                                :class="tipoEdicion === 'modificacion' ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-400' : 'bg-white border-gray-200 hover:bg-gray-50'">
-                                <input type="radio" name="tipo_edicion_hardware" value="modificacion" x-model="tipoEdicion" class="mt-0.5 text-brand-navy focus:ring-brand-gold">
-                                <div class="ml-2.5 text-xs">
-                                    <span class="font-bold text-brand-navy block">Modificación física de hardware</span>
-                                    <span class="text-gray-500 text-[11px] leading-tight block mt-0.5">Upgrade o reemplazo de componentes. Genera folio en bitácora, constancia PDF y nota en el acta de devolución.</span>
-                                </div>
-                            </label>
-
-                            <label class="relative flex items-start p-3 rounded-lg border cursor-pointer transition"
-                                :class="tipoEdicion === 'correccion' ? 'bg-blue-50/80 border-blue-300 ring-1 ring-blue-400' : 'bg-white border-gray-200 hover:bg-gray-50'">
-                                <input type="radio" name="tipo_edicion_hardware" value="correccion" x-model="tipoEdicion" class="mt-0.5 text-brand-navy focus:ring-brand-gold">
-                                <div class="ml-2.5 text-xs">
-                                    <span class="font-bold text-brand-navy block">Corrección de captura / Error de dedo</span>
-                                    <span class="text-gray-500 text-[11px] leading-tight block mt-0.5">Solo corrige datos mal ingresados. No genera constancia ni afecta la bitácora física o acta de devolución.</span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <!-- Motivo (visible cuando es modificación física) -->
-                        <div x-show="tipoEdicion === 'modificacion'" class="pt-2 border-t border-gray-200/60">
-                            <label for="motivo_cambio_hardware" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                                <i class="fas fa-tools text-brand-gold-600 mr-1" aria-hidden="true"></i> Motivo de la Modificación <span class="text-xs font-normal text-gray-500 lowercase">(opcional para bitácora)</span>
-                            </label>
-                            <input type="text" name="motivo_cambio_hardware" id="motivo_cambio_hardware"
-                                value="{{ old('motivo_cambio_hardware') }}"
-                                placeholder="Ej. Se amplió memoria RAM a solicitud de gerencia o reemplazo de SSD por falla"
-                                class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
-                        </div>
-                    </div>
-                @endif
             </div>
 
             <!-- Fecha de Registro -->
