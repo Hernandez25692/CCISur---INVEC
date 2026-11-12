@@ -185,8 +185,11 @@
                                 required 
                                 class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs">
                             <option value="" disabled>Seleccione el estado físico...</option>
+                            <template x-for="est in estadosDisponibles" :key="est">
+                                <option :value="est" x-text="est" :selected="estadoSeleccionado === est"></option>
+                            </template>
                             @foreach ($estados as $est)
-                                <option value="{{ $est }}" {{ old('estado_devuelto') === $est ? 'selected' : '' }}>
+                                <option value="{{ $est }}" x-show="false" {{ old('estado_devuelto') === $est ? 'selected' : '' }}>
                                     {{ $est }}
                                 </option>
                             @endforeach
@@ -194,13 +197,13 @@
 
                         {{-- Aviso dinámico de impacto en inventario --}}
                         <div class="mt-2.5">
-                            <div x-show="esEstadoNoAsignable" class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2">
-                                <i class="fas fa-exclamation-triangle text-amber-600 mt-0.5 shrink-0" aria-hidden="true"></i>
-                                <span><strong>Impacto en Inventario:</strong> Al recibirse en este estado, el bien cambiará automáticamente a <strong>"No Aplica para asignación"</strong> hasta su reparación.</span>
+                            <div x-show="estadoSeleccionado === 'Dañado / Defectuoso'" class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs flex items-start gap-2">
+                                <i class="fas fa-arrow-circle-down text-red-600 mt-0.5 shrink-0" aria-hidden="true"></i>
+                                <span><strong>Pase directo a Bajas:</strong> Al recibirse en estado dañado, el bien pasará automáticamente al <strong>Archivo de Bajas</strong> y se liberará la custodia del empleado.</span>
                             </div>
-                            <div x-show="!esEstadoNoAsignable && estadoSeleccionado !== ''" class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
+                            <div x-show="estadoSeleccionado !== 'Dañado / Defectuoso' && estadoSeleccionado !== ''" class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
                                 <i class="fas fa-check-circle text-emerald-600 mt-0.5 shrink-0" aria-hidden="true"></i>
-                                <span><strong>Impacto en Inventario:</strong> El bien regresará a disponibilidad en inventario como <strong>"Sin Asignar"</strong> para futuras entregas.</span>
+                                <span><strong>Impacto en Inventario:</strong> <span x-text="asignacionSeleccionada?.es_area_comun ? 'El bien continuará en su área común asignada.' : 'El bien regresará a disponibilidad en bodega como \'Sin Asignar\' para futuras entregas.'"></span></span>
                             </div>
                         </div>
                     </div>
@@ -282,12 +285,14 @@
                 busqueda: '',
                 desplegableAbierto: false,
                 estadoSeleccionado: @js(old('estado_devuelto', $preseleccionado ? $preseleccionado['bien_estado'] : 'Usado / Segunda mano')),
-                estadosNoAsignables: [
-                    'Dañado / Defectuoso',
-                    'En reparación / En revisión',
-                    'Producto incompleto',
-                    'Caducado / No apto para uso'
-                ],
+                estadosDispositivo: @js(\App\Models\Devolucion::ESTADOS_DEVOLUCION_DISPOSITIVO),
+                estadosMobiliario: @js(\App\Models\Devolucion::ESTADOS_DEVOLUCION_MOBILIARIO),
+
+                get estadosDisponibles() {
+                    return (this.asignacionSeleccionada?.tipo === 'mobiliario')
+                        ? this.estadosMobiliario
+                        : this.estadosDispositivo;
+                },
 
                 get asignacionesFiltradas() {
                     const q = this.busqueda.trim().toLowerCase();
@@ -305,10 +310,6 @@
 
                         return coincideNombre || coincideEtiqueta || coincideBien || coincideArea || coincideSerie || coincideCodigo || coincideIdentidad || coincideIdentidadRaw;
                     }).slice(0, 15);
-                },
-
-                get esEstadoNoAsignable() {
-                    return this.estadosNoAsignables.includes(this.estadoSeleccionado);
                 },
 
                 seleccionarAsignacion(item) {

@@ -10,14 +10,21 @@ class Devolucion extends Model
 {
     use SoftDeletes;
 
-    public const ESTADOS_DEVOLUCION = [
-        'Con pequeños detalles / Imperfecciones leves',
+    public const ESTADOS_DEVOLUCION_DISPOSITIVO = [
         'Usado / Segunda mano',
+        'Con pequeños detalles / Imperfecciones leves',
         'Dañado / Defectuoso',
-        'En reparación / En revisión',
+    ];
+
+    public const ESTADOS_DEVOLUCION_MOBILIARIO = [
+        'Usado / Segunda mano',
+        'Con pequeños detalles / Imperfecciones leves',
+        'Dañado / Defectuoso',
         'Producto incompleto',
         'Caducado / No apto para uso',
     ];
+
+    public const ESTADOS_DEVOLUCION = self::ESTADOS_DEVOLUCION_MOBILIARIO;
 
     protected $table = 'devoluciones';
 

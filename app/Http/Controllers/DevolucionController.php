@@ -308,9 +308,13 @@ class DevolucionController extends Controller
 
             $identidadRaw = $a->empleado?->identidad ? preg_replace('/[\s\-]+/', '', $a->empleado->identidad) : '';
 
-            $bienEstadoSugerido = ($bien?->estado === 'Nuevo / En perfectas condiciones' || empty($bien?->estado))
-                ? 'Usado / Segunda mano'
-                : $bien->estado;
+            $estadosDevolucionTipo = $a->tipo === Asignacion::TIPO_DISPOSITIVO
+                ? Devolucion::ESTADOS_DEVOLUCION_DISPOSITIVO
+                : Devolucion::ESTADOS_DEVOLUCION_MOBILIARIO;
+
+            $bienEstadoSugerido = in_array($bien?->estado, $estadosDevolucionTipo, true)
+                ? $bien->estado
+                : 'Usado / Segunda mano';
 
             return [
                 'id' => $a->id,
@@ -359,6 +363,10 @@ class DevolucionController extends Controller
             $reglasFecha[] = 'after_or_equal:'.$fechaEntregaRaw;
         }
 
+        $estadosPermitidos = $asignacionPrevia?->tipo === Asignacion::TIPO_DISPOSITIVO
+            ? Devolucion::ESTADOS_DEVOLUCION_DISPOSITIVO
+            : Devolucion::ESTADOS_DEVOLUCION_MOBILIARIO;
+
         $validated = $request->validate([
             'asignacion_id' => [
                 'required',
@@ -366,7 +374,7 @@ class DevolucionController extends Controller
                 Rule::unique('devoluciones', 'asignacion_id')->withoutTrashed(),
             ],
             'fecha_devolucion' => $reglasFecha,
-            'estado_devuelto' => ['required', 'string', Rule::in(Devolucion::ESTADOS_DEVOLUCION)],
+            'estado_devuelto' => ['required', 'string', Rule::in($estadosPermitidos)],
             'recibido_por' => ['nullable', 'string', 'max:255'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
         ], [
@@ -407,9 +415,26 @@ class DevolucionController extends Controller
                 if ($item) {
                     // Actualizar estado físico del bien recibido
                     $item->estado = $validated['estado_devuelto'];
-                    // Recalcular disponibilidad automáticamente (si viene dañado/en reparación queda No Aplica; si era de área común conserva su condición)
+                    // Recalcular disponibilidad automáticamente (si viene dañado queda No Aplica; si era de área común conserva su condición)
                     $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacion->es_area_comun, false);
                     $item->save();
+
+                    // Si el bien se recibe en estado Dañado / Defectuoso, pasa directamente al archivo de bajas
+                    if ($validated['estado_devuelto'] === 'Dañado / Defectuoso') {
+                        $motivoDevolucion = ! empty($validated['observaciones'])
+                            ? 'Devolución por daño: '.$validated['observaciones']
+                            : 'Dado de baja automáticamente por recepción en estado Dañado / Defectuoso';
+
+                        $item->update([
+                            'motivo_baja' => \Illuminate\Support\Str::limit($motivoDevolucion, 480),
+                            'baja_por_user_id' => Auth::id(),
+                            'disponibilidad' => $item::DISPONIBILIDAD_NO_APLICA,
+                        ]);
+
+                        if (! $item->trashed()) {
+                            $item->delete();
+                        }
+                    }
                 }
 
                 return Devolucion::create([
@@ -422,9 +447,17 @@ class DevolucionController extends Controller
                 ]);
             });
         } catch (\Throwable $e) {
+            report($e);
+
+            $mensajeError = $e instanceof \RuntimeException
+                ? $e->getMessage()
+                : ($e instanceof \Illuminate\Database\QueryException
+                    ? 'Ocurrió un error en la base de datos al registrar la devolución. Verifique los datos ingresados.'
+                    : 'No se pudo registrar la devolución. Intente nuevamente.');
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', $e instanceof \RuntimeException ? $e->getMessage() : 'No se pudo registrar la devolución debido a un conflicto de concurrencia.');
+                ->with('error', $mensajeError);
         }
 
         return redirect()->route('devoluciones.show', $devolucion)

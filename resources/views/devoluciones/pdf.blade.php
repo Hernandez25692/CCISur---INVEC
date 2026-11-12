@@ -338,12 +338,18 @@
         </tr>
         @endif
     </table>
-    @if ($asignacion->tipo === 'dispositivo' && $asignacion->cambiosHardwareVigentes && $asignacion->cambiosHardwareVigentes->isNotEmpty())
+    @php
+        $mantenimientosCustodia = ($asignacion->tipo === 'dispositivo')
+            ? $asignacion->mantenimientos()->where('estado', '!=', 'cancelado')->get()
+            : collect();
+    @endphp
+
+    @if ($asignacion->tipo === 'dispositivo' && (($asignacion->cambiosHardwareVigentes && $asignacion->cambiosHardwareVigentes->isNotEmpty()) || $mantenimientosCustodia->isNotEmpty()))
     <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 3px solid #af9731; border-radius: 3px; padding: 4px 7px; margin-top: -3px; margin-bottom: 6px; font-size: 8px; line-height: 1.3;">
-        <strong style="color: #0f172a; text-transform: uppercase;">Nota de Trazabilidad Técnica (Modificaciones de Hardware en Custodia):</strong>
-        <span style="color: #475569;">Durante el período en poder del custodio se realizaron y autorizaron los siguientes cambios técnicos:</span>
+        <strong style="color: #0f172a; text-transform: uppercase;">Nota de Trazabilidad Técnica (Intervenciones en Custodia):</strong>
+        <span style="color: #475569;">Durante el período en poder del custodio se realizaron y autorizaron las siguientes intervenciones:</span>
         <ul style="margin: 2px 0 0 0; padding-left: 13px; color: #334155;">
-            @foreach ($asignacion->cambiosHardwareVigentes as $cambio)
+            @foreach ($asignacion->cambiosHardwareVigentes ?? [] as $cambio)
                 <li>
                     <strong>Folio #HW-{{ str_pad($cambio->id, 5, '0', STR_PAD_LEFT) }}</strong> ({{ $cambio->created_at->format('d/m/Y') }}):
                     @php
@@ -354,6 +360,18 @@
                     {{ $cambiosStr }}
                     @if ($cambio->motivo)
                         <em>(Motivo: {{ $cambio->motivo }})</em>
+                    @endif
+                </li>
+            @endforeach
+            @foreach ($mantenimientosCustodia as $mCustodia)
+                <li>
+                    <strong>Mantenimiento #{{ str_pad($mCustodia->id, 5, '0', STR_PAD_LEFT) }}</strong> ({{ $mCustodia->fecha_inicio?->format('d/m/Y') }}):
+                    Tipo: {{ $mCustodia->tipo }} · Falla: {{ $mCustodia->motivo_falla }}
+                    @if ($mCustodia->solucion_aplicada)
+                        · Solución: <em>{{ $mCustodia->solucion_aplicada }}</em>
+                    @endif
+                    @if ($mCustodia->taller_proveedor)
+                        · Taller: {{ $mCustodia->taller_proveedor }}
                     @endif
                 </li>
             @endforeach
