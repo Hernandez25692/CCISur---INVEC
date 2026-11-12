@@ -60,6 +60,11 @@
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                 Dado de baja ({{ $dispositivo->deleted_at?->format('d/m/Y') }})
                             </span>
+                        @elseif ($dispositivo->reactivadoPor)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-600/20" title="Reactivado anteriormente por {{ $dispositivo->reactivadoPor->name }}">
+                                <i class="fas fa-undo text-[10px] text-emerald-600" aria-hidden="true"></i>
+                                Reactivado por {{ $dispositivo->reactivadoPor->name }}
+                            </span>
                         @endif
                     </div>
                     <p class="text-xs text-gray-500 flex flex-wrap items-center gap-2">
@@ -110,6 +115,31 @@
                 </button>
             </div>
         </div>
+
+        @if ($dispositivo->trashed())
+            <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-900 shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <i class="fas fa-archive text-sm" aria-hidden="true"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="font-semibold text-amber-950 text-sm">Dispositivo en archivo de bajas</h3>
+                    <p class="text-amber-800">
+                        Este bien fue dado de baja el <strong>{{ $dispositivo->deleted_at?->format('d/m/Y h:i A') }}</strong>
+                        @if ($dispositivo->dadoDeBajaPor)
+                            por el usuario <strong>{{ $dispositivo->dadoDeBajaPor->name }}</strong>.
+                        @else
+                            .
+                        @endif
+                    </p>
+                    @if ($dispositivo->motivo_baja)
+                        <p class="text-amber-900 font-medium">
+                            <span class="text-amber-700 font-semibold uppercase tracking-wider text-[10px]">Motivo registrado:</span>
+                            {{ $dispositivo->motivo_baja }}
+                        </p>
+                    @endif
+                </div>
+            </div>
+        @endif
 
         @if ($dispositivo->tiene_especificaciones)
             <!-- Ficha Detallada de Hardware / Especificaciones Técnicas (Colapsable) -->

@@ -59,6 +59,11 @@
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                 Inactivo / Dado de baja ({{ $empleado->deleted_at?->format('d/m/Y') }})
                             </span>
+                        @elseif ($empleado->reactivadoPor)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-600/20" title="Reactivado anteriormente por {{ $empleado->reactivadoPor->name }}">
+                                <i class="fas fa-undo text-[10px] text-emerald-600" aria-hidden="true"></i>
+                                Reactivado por {{ $empleado->reactivadoPor->name }}
+                            </span>
                         @endif
                     </div>
                     <p class="text-xs text-gray-500">
@@ -87,6 +92,25 @@
                 </div>
             </div>
         </div>
+
+        @if ($empleado->trashed())
+            <div class="bg-amber-50 border border-amber-200/80 rounded-xl p-4 flex items-start gap-3 text-xs text-amber-900 shadow-sm">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <i class="fas fa-user-slash text-sm" aria-hidden="true"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="font-semibold text-amber-950 text-sm">Colaborador inactivo / dado de baja</h3>
+                    <p class="text-amber-800">
+                        Dado de baja el <strong>{{ $empleado->deleted_at?->format('d/m/Y h:i A') }}</strong>
+                        @if ($empleado->dadoDeBajaPor)
+                            por el usuario <strong>{{ $empleado->dadoDeBajaPor->name }}</strong>.
+                        @else
+                            .
+                        @endif
+                    </p>
+                </div>
+            </div>
+        @endif
 
         <!-- Filtros del Historial (colapsables en móvil) -->
         <div x-data="{ mostrarFiltros: @js((bool) ($hayFiltros ?? false)) }"

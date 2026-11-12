@@ -164,7 +164,13 @@
                                         <div class="text-[11px] text-gray-500">Sede {{ $e->ubicacion }}</div>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600">
-                                        {{ $e->deleted_at?->format('d/m/Y h:i A') ?? 'N/A' }}
+                                        <div>{{ $e->deleted_at?->format('d/m/Y h:i A') ?? 'N/A' }}</div>
+                                        @if ($e->dadoDeBajaPor)
+                                            <div class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                                                <i class="fas fa-user-edit text-[10px] text-gray-400" aria-hidden="true"></i>
+                                                <span>{{ $e->dadoDeBajaPor->name }}</span>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-right">
                                         <div class="inline-flex items-center justify-end gap-1.5">
@@ -216,7 +222,7 @@
                             <div class="pt-2 border-t border-gray-50 text-xs text-gray-600 space-y-0.5">
                                 <p><span class="font-semibold text-brand-navy">Gerencia:</span> {{ $e->gerencia }}</p>
                                 <p><span class="font-semibold text-brand-navy">Sede:</span> {{ $e->ubicacion }}</p>
-                                <p><span class="font-semibold text-brand-navy">Fecha de baja:</span> {{ $e->deleted_at?->format('d/m/Y h:i A') ?? 'N/A' }}</p>
+                                <p><span class="font-semibold text-brand-navy">Fecha de baja:</span> {{ $e->deleted_at?->format('d/m/Y h:i A') ?? 'N/A' }}@if ($e->dadoDeBajaPor) por {{ $e->dadoDeBajaPor->name }}@endif</p>
                             </div>
 
                             <div class="flex flex-wrap items-center justify-end gap-2 pt-2">

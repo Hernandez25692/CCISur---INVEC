@@ -188,14 +188,26 @@
                                         <div class="text-xs text-gray-900 font-mono">{{ $d->n_serie ?? 'Sin serie' }}</div>
                                         <div class="text-[11px] text-gray-500">{{ $d->marca }} {{ $d->modelo }}</div>
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
+                                    <td class="px-4 py-3">
                                         <span title="{{ $d->estado }}"
                                             class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset {{ $d->clase_estado }}">
                                             {{ $d->estado_corto }}
                                         </span>
+                                        @if ($d->motivo_baja)
+                                            <div class="text-[11px] text-gray-600 mt-1 max-w-xs" title="{{ $d->motivo_baja }}">
+                                                <i class="fas fa-comment-dots text-gray-400 mr-0.5" aria-hidden="true"></i>
+                                                {{ $d->motivo_baja }}
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600">
-                                        {{ $d->deleted_at?->format('d/m/Y h:i A') ?? 'N/A' }}
+                                        <div>{{ $d->deleted_at?->format('d/m/Y h:i A') ?? 'N/A' }}</div>
+                                        @if ($d->dadoDeBajaPor)
+                                            <div class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                                                <i class="fas fa-user-edit text-[10px] text-gray-400" aria-hidden="true"></i>
+                                                <span>{{ $d->dadoDeBajaPor->name }}</span>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-right">
                                         <div class="inline-flex items-center justify-end gap-1.5">
@@ -247,8 +259,11 @@
 
                             <div class="pt-2 border-t border-gray-50 text-xs text-gray-600 space-y-1">
                                 <p><span class="font-semibold text-brand-navy">Serie:</span> <span class="font-mono">{{ $d->n_serie ?? 'Sin serie' }}</span></p>
-                                <p><span class="font-semibold text-brand-navy">Motivo / Estado:</span> {{ $d->estado }}</p>
-                                <p><span class="font-semibold text-brand-navy">Fecha de baja:</span> {{ $d->deleted_at?->format('d/m/Y h:i A') ?? 'N/A' }}</p>
+                                <p><span class="font-semibold text-brand-navy">Estado físico:</span> {{ $d->estado }}</p>
+                                @if ($d->motivo_baja)
+                                    <p><span class="font-semibold text-brand-navy">Motivo de baja:</span> {{ $d->motivo_baja }}</p>
+                                @endif
+                                <p><span class="font-semibold text-brand-navy">Fecha de baja:</span> {{ $d->deleted_at?->format('d/m/Y h:i A') ?? 'N/A' }}@if ($d->dadoDeBajaPor) por {{ $d->dadoDeBajaPor->name }}@endif</p>
                             </div>
 
                             <div class="flex flex-wrap items-center justify-end gap-2 pt-2">

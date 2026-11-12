@@ -209,26 +209,103 @@
                 const etiqueta = form.dataset.swalEtiqueta ? ` (${form.dataset.swalEtiqueta})` : '';
 
                 if (typeof window.Swal === 'undefined') {
-                    if (window.confirm(`¿Está seguro de dar de baja «${nombre}»${etiqueta}? Pasará al archivo de bienes dados de baja.`)) {
-                        form.dataset.swalConfirmed = 'true';
-                        form.submit();
+                    const motivo = window.prompt(`¿Está seguro de dar de baja «${nombre}»${etiqueta}?\nIngrese el motivo de la baja (mínimo 3 caracteres):`);
+                    if (motivo === null) {
+                        return; // Usuario canceló
                     }
+                    const motivoTrimmed = motivo.trim();
+                    if (motivoTrimmed.length < 3) {
+                        window.alert('Debe ingresar un motivo válido de al menos 3 caracteres.');
+                        return;
+                    }
+                    let inputMotivo = form.querySelector('input[name="motivo_baja"]');
+                    if (!inputMotivo) {
+                        inputMotivo = document.createElement('input');
+                        inputMotivo.type = 'hidden';
+                        inputMotivo.name = 'motivo_baja';
+                        form.appendChild(inputMotivo);
+                    }
+                    inputMotivo.value = motivoTrimmed;
+                    form.dataset.swalConfirmed = 'true';
+                    form.submit();
                     return;
                 }
 
                 window.Swal.fire({
                     icon: 'warning',
                     title: '¿Dar de baja este bien?',
-                    text: `«${nombre}»${etiqueta} pasará al archivo de bienes dados de baja. Su historial de actas y préstamos se conservará intacto.`,
+                    html: `
+                        <p class="text-sm text-gray-600 mb-3 text-left">
+                            «<strong id="swal-baja-bien-nombre"></strong>»<span id="swal-baja-bien-etiqueta"></span> pasará al archivo de bienes dados de baja. Su historial de actas y préstamos se conservará intacto.
+                        </p>
+                        <div class="text-left">
+                            <label for="swal-select-motivo-baja" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
+                                Motivo de la baja <span class="text-red-500" aria-hidden="true">*</span>
+                            </label>
+                            <select id="swal-select-motivo-baja" aria-required="true" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 bg-white text-gray-800 focus:ring-2 focus:ring-amber-500 focus:outline-none mb-2">
+                                <option value="" disabled selected>Seleccione un motivo sugerido...</option>
+                                <option value="Daño irreparable / Falla técnica definitiva">Daño irreparable / Falla técnica definitiva</option>
+                                <option value="Obsolescencia técnica / Fin de vida útil">Obsolescencia técnica / Fin de vida útil</option>
+                                <option value="Pérdida / Extravío o Robo reportado">Pérdida / Extravío o Robo reportado</option>
+                                <option value="Donación o Descarte formal">Donación o Descarte formal</option>
+                                <option value="Reemplazo por renovación institucional">Reemplazo por renovación institucional</option>
+                                <option value="OTRO">Otro motivo personalizado...</option>
+                            </select>
+                            <textarea id="swal-text-motivo-baja" aria-label="Motivo detallado de la baja" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 text-gray-800 focus:ring-2 focus:ring-amber-500 focus:outline-none hidden" rows="2" placeholder="Describa el motivo detallado de la baja..."></textarea>
+                        </div>
+                    `,
                     showCancelButton: true,
                     confirmButtonText: 'Sí, dar de baja',
                     cancelButtonText: 'Cancelar',
                     confirmButtonColor: '#d97706',
                     cancelButtonColor: '#031940',
                     reverseButtons: true,
-                    focusCancel: true
+                    focusCancel: true,
+                    didOpen: () => {
+                        const nombreEl = document.getElementById('swal-baja-bien-nombre');
+                        const etiquetaEl = document.getElementById('swal-baja-bien-etiqueta');
+                        if (nombreEl) nombreEl.textContent = nombre;
+                        if (etiquetaEl) etiquetaEl.textContent = etiqueta;
+
+                        const select = document.getElementById('swal-select-motivo-baja');
+                        const textarea = document.getElementById('swal-text-motivo-baja');
+                        if (select) {
+                            select.addEventListener('change', () => {
+                                if (select.value === 'OTRO') {
+                                    textarea.classList.remove('hidden');
+                                    textarea.focus();
+                                } else {
+                                    textarea.classList.add('hidden');
+                                }
+                            });
+                        }
+                    },
+                    preConfirm: () => {
+                        const select = document.getElementById('swal-select-motivo-baja');
+                        const textarea = document.getElementById('swal-text-motivo-baja');
+                        let motivo = select ? select.value : '';
+                        if (motivo === 'OTRO') {
+                            motivo = textarea ? textarea.value.trim() : '';
+                            if (motivo.length < 3) {
+                                window.Swal.showValidationMessage('Por favor escriba el motivo detallado (mínimo 3 caracteres).');
+                                return false;
+                            }
+                        } else if (!motivo) {
+                            window.Swal.showValidationMessage('Debe seleccionar o escribir el motivo de la baja.');
+                            return false;
+                        }
+                        return motivo;
+                    }
                 }).then(function (result) {
-                    if (result.isConfirmed) {
+                    if (result.isConfirmed && result.value) {
+                        let inputMotivo = form.querySelector('input[name="motivo_baja"]');
+                        if (!inputMotivo) {
+                            inputMotivo = document.createElement('input');
+                            inputMotivo.type = 'hidden';
+                            inputMotivo.name = 'motivo_baja';
+                            form.appendChild(inputMotivo);
+                        }
+                        inputMotivo.value = result.value;
                         form.dataset.swalConfirmed = 'true';
                         form.submit();
                     }
