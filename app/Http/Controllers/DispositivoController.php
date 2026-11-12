@@ -54,7 +54,9 @@ class DispositivoController extends Controller
             $query->where('ubicacion', 'like', "%{$ubicacion}%");
         }
 
-        if ($request->filled('estado')) {
+        if ($request->boolean('en_taller')) {
+            $query->where('estado', 'En reparación / En revisión');
+        } elseif ($request->filled('estado')) {
             $estado = trim((string) $request->input('estado'));
             $estadoCompleto = array_search($estado, Dispositivo::ESTADOS_CORTOS, true) ?: $estado;
             $query->where(function (Builder $q) use ($estado, $estadoCompleto): void {
@@ -73,14 +75,15 @@ class DispositivoController extends Controller
             };
         }
 
-        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado', 'disponibilidad', 'incluir_bajas']))
+        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado', 'disponibilidad', 'incluir_bajas', 'en_taller']))
             ->filter(fn ($valor): bool => filled($valor) && $valor !== '0')
             ->isNotEmpty();
 
         $dispositivos = $query->latest('id')->paginate(15)->withQueryString();
         $inactivosCount = Dispositivo::onlyTrashed()->count();
+        $enTallerCount = Dispositivo::where('estado', 'En reparación / En revisión')->count();
 
-        return view('dispositivos.index', compact('dispositivos', 'hayFiltros', 'inactivosCount'));
+        return view('dispositivos.index', compact('dispositivos', 'hayFiltros', 'inactivosCount', 'enTallerCount'));
     }
 
     // Exportar inventario actual de dispositivos a Excel
@@ -230,8 +233,6 @@ class DispositivoController extends Controller
             'especificaciones.conectividad_impresion' => ['nullable', 'string', 'max:100'],
             'especificaciones.capacidad_ups' => ['nullable', 'string', 'max:50'],
             'especificaciones.notas_tecnicas' => ['nullable', 'string', 'max:500'],
-            'tipo_edicion_hardware' => ['nullable', Rule::in(['correccion', 'modificacion'])],
-            'motivo_cambio_hardware' => ['nullable', 'string', 'max:500'],
         ], [
             'n_serie.required' => 'El número de serie es obligatorio para este tipo de equipo.',
             'n_serie.unique' => 'El número de serie ingresado ya pertenece a otro dispositivo registrado (o archivado en bajas).',
@@ -241,10 +242,14 @@ class DispositivoController extends Controller
         $nuevasSpecs = $this->procesarEspecificaciones($request);
         $validated['especificaciones'] = $nuevasSpecs;
 
-        // Solo la opción explícita 'correccion' suprime la bitácora física (enfoque conservador seguro)
-        $esModificacionFisica = $request->input('tipo_edicion_hardware') !== 'correccion';
+        $tieneMantenimientoActivo = $dispositivo->mantenimientoActivo()->exists();
 
-        if ($tieneAsignacionActiva) {
+        if ($tieneMantenimientoActivo) {
+            $validated['estado'] = 'En reparación / En revisión';
+            $validated['disponibilidad'] = $tieneAsignacionActiva
+                ? Dispositivo::DISPONIBILIDAD_ASIGNADO
+                : Dispositivo::DISPONIBILIDAD_NO_APLICA;
+        } elseif ($tieneAsignacionActiva) {
             $validated['ubicacion'] = $dispositivo->ubicacion;
             $validated['estado'] = $dispositivo->estado;
             $validated['disponibilidad'] = Dispositivo::DISPONIBILIDAD_ASIGNADO;
@@ -256,22 +261,16 @@ class DispositivoController extends Controller
             );
         }
 
-        unset($validated['es_area_comun'], $validated['tipo_edicion_hardware'], $validated['motivo_cambio_hardware']);
+        unset($validated['es_area_comun']);
 
-        DB::transaction(function () use ($dispositivo, $validated, $esModificacionFisica, $nuevasSpecs, $request): void {
+        DB::transaction(function () use ($dispositivo, $validated, $nuevasSpecs): void {
             $dispositivoBloqueado = Dispositivo::lockForUpdate()->findOrFail($dispositivo->id);
             $specsAnteriores = $dispositivoBloqueado->especificaciones;
 
-            $cambiosDetectados = [];
-            if ($esModificacionFisica) {
-                $cambiosDetectados = HistorialCambioHardware::detectarCambios($specsAnteriores ?? [], $nuevasSpecs ?? []);
-            }
+            $cambiosDetectados = HistorialCambioHardware::detectarCambios($specsAnteriores ?? [], $nuevasSpecs ?? []);
 
             if (! empty($cambiosDetectados)) {
                 $asignacionActiva = $dispositivoBloqueado->asignacionesActivas()->with('empleado')->first();
-                $motivoHardware = $request->filled('motivo_cambio_hardware')
-                    ? Str::limit(trim((string) $request->input('motivo_cambio_hardware')), 500, '')
-                    : null;
 
                 HistorialCambioHardware::create([
                     'dispositivo_id' => $dispositivoBloqueado->id,
@@ -281,7 +280,7 @@ class DispositivoController extends Controller
                     'especificaciones_anteriores' => $specsAnteriores,
                     'especificaciones_nuevas' => $nuevasSpecs,
                     'cambios' => $cambiosDetectados,
-                    'motivo' => $motivoHardware,
+                    'motivo' => 'Corrección de captura / Error al ingresar datos',
                 ]);
             }
 
@@ -325,6 +324,12 @@ class DispositivoController extends Controller
             }
 
             $dispositivoActualizado->loadCount(['asignacionesActivas']);
+
+            if ($dispositivoActualizado->mantenimientoActivo()->exists()) {
+                return redirect()
+                    ->route('dispositivos.historial', $dispositivoActualizado->id)
+                    ->with('error', 'No se puede dar de baja un dispositivo que tiene un mantenimiento activo en proceso. Finalice o cancele el mantenimiento primero.');
+            }
 
             if (! $dispositivoActualizado->puede_darse_de_baja) {
                 return redirect()
@@ -454,11 +459,48 @@ class DispositivoController extends Controller
             ->withQueryString();
 
         $cambiosHardware = $dispositivo->cambiosHardware()
-            ->with(['user', 'revertidoPor', 'empleado'])
+            ->with(['user', 'revertidoPor', 'empleado', 'asignacion'])
             ->get();
         $totalCambiosHardware = $cambiosHardware->count();
         $ultimoCambioVigente = $cambiosHardware->firstWhere('revertido', false);
         $ultimoCambioVigenteId = $ultimoCambioVigente?->id;
+
+        $mantenimientos = $dispositivo->mantenimientos()
+            ->with(['user', 'empleado', 'devolucion', 'asignacion.empleado'])
+            ->get();
+        $totalMantenimientos = $mantenimientos->count();
+        $mantenimientoActivo = $mantenimientos->firstWhere('estado', \App\Models\MantenimientoDispositivo::ESTADO_EN_PROCESO);
+
+        // Construir bitácora técnica unificada
+        $eventosTecnicos = collect();
+        $totalCorrecciones = 0;
+        $totalCambiosHardwarePiezas = 0;
+
+        foreach ($mantenimientos as $mant) {
+            $eventosTecnicos->push((object) [
+                'tipo' => 'mantenimiento',
+                'fecha' => $mant->created_at,
+                'item' => $mant,
+            ]);
+        }
+
+        foreach ($cambiosHardware as $cambio) {
+            $esCorreccion = str_contains(strtolower($cambio->motivo ?? ''), 'corrección') || str_contains(strtolower($cambio->motivo ?? ''), 'error');
+            if ($esCorreccion) {
+                $totalCorrecciones++;
+            } else {
+                $totalCambiosHardwarePiezas++;
+            }
+
+            $eventosTecnicos->push((object) [
+                'tipo' => $esCorreccion ? 'correccion' : 'hardware',
+                'fecha' => $cambio->created_at,
+                'item' => $cambio,
+            ]);
+        }
+
+        $eventosTecnicos = $eventosTecnicos->sortByDesc('fecha')->values();
+        $totalEventosTecnicos = $eventosTecnicos->count();
 
         return view('dispositivos.historial', compact(
             'dispositivo',
@@ -468,7 +510,14 @@ class DispositivoController extends Controller
             'hayFiltros',
             'cambiosHardware',
             'totalCambiosHardware',
-            'ultimoCambioVigenteId'
+            'ultimoCambioVigenteId',
+            'mantenimientos',
+            'totalMantenimientos',
+            'mantenimientoActivo',
+            'eventosTecnicos',
+            'totalEventosTecnicos',
+            'totalCorrecciones',
+            'totalCambiosHardwarePiezas'
         ));
     }
 

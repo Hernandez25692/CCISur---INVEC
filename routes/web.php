@@ -53,6 +53,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dispositivos/{dispositivo}/historial', [\App\Http\Controllers\DispositivoController::class, 'historial'])->withTrashed()->name('dispositivos.historial');
     Route::post('/dispositivos/cambios-hardware/{cambio}/revertir', [\App\Http\Controllers\DispositivoController::class, 'revertirCambioHardware'])->name('dispositivos.cambios-hardware.revertir');
     Route::get('/dispositivos/cambios-hardware/{cambio}/constancia-pdf', [\App\Http\Controllers\DispositivoController::class, 'constanciaCambioHardwarePdf'])->name('dispositivos.cambios-hardware.pdf');
+    Route::post('/dispositivos/{dispositivo}/mantenimientos', [\App\Http\Controllers\MantenimientoDispositivoController::class, 'store'])->withTrashed()->name('dispositivos.mantenimientos.store');
+    Route::post('/dispositivos/mantenimientos/{mantenimiento}/finalizar', [\App\Http\Controllers\MantenimientoDispositivoController::class, 'finalizar'])->name('dispositivos.mantenimientos.finalizar');
+    Route::post('/dispositivos/mantenimientos/{mantenimiento}/cancelar', [\App\Http\Controllers\MantenimientoDispositivoController::class, 'cancelar'])->name('dispositivos.mantenimientos.cancelar');
     Route::resource('dispositivos', DispositivoController::class);
 
     Route::get('/empleados/bajas', [\App\Http\Controllers\EmpleadoController::class, 'bajas'])->name('empleados.bajas');

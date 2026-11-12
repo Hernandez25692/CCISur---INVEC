@@ -230,6 +230,23 @@ class Dispositivo extends Model
         return $this->hasMany(HistorialCambioHardware::class, 'dispositivo_id')->latest('id');
     }
 
+    public function mantenimientos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MantenimientoDispositivo::class, 'dispositivo_id')->latest('fecha_inicio')->latest('id');
+    }
+
+    public function mantenimientoActivo(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(MantenimientoDispositivo::class, 'dispositivo_id')
+            ->where('estado', MantenimientoDispositivo::ESTADO_EN_PROCESO)
+            ->latest('id');
+    }
+
+    public function estaEnMantenimiento(): bool
+    {
+        return $this->estado === 'En reparación / En revisión';
+    }
+
     /**
      * Determina la categoría de hardware según el tipo de dispositivo para la UI reactiva.
      */
@@ -240,12 +257,18 @@ class Dispositivo extends Model
 
     public static function obtenerCategoriaHardware(?string $tipo): string
     {
-        return match ($tipo) {
-            'Laptop', 'Computadora de escritorio', 'Servidor', 'Tablet' => 'computadora',
-            'Switch de red', 'Router', 'Access Point (AP)' => 'red',
-            'Monitor', 'Pantalla interactiva' => 'pantalla',
-            'Impresora', 'Escáner' => 'impresion',
-            'No-break / UPS' => 'ups',
+        if (! $tipo) {
+            return 'general';
+        }
+
+        $normalizado = mb_strtolower(trim($tipo));
+
+        return match ($normalizado) {
+            'laptop', 'computadora de escritorio', 'servidor', 'tablet', 'computadora', 'pc' => 'computadora',
+            'switch de red', 'switch', 'router', 'access point (ap)', 'access point', 'ap' => 'red',
+            'monitor', 'pantalla interactiva', 'pantalla', 'proyector' => 'pantalla',
+            'impresora', 'escáner', 'escaner' => 'impresion',
+            'no-break / ups', 'no-break', 'ups' => 'ups',
             default => 'general',
         };
     }

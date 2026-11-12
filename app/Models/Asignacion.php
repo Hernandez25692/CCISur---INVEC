@@ -88,7 +88,20 @@ class Asignacion extends Model
 
     public function cambiosHardwareVigentes(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(HistorialCambioHardware::class, 'asignacion_id')->where('revertido', false);
+        return $this->hasMany(HistorialCambioHardware::class, 'asignacion_id')
+            ->where('revertido', false)
+            ->where(function (\Illuminate\Database\Eloquent\Builder $q): void {
+                $q->whereNull('motivo')
+                    ->orWhere(function (\Illuminate\Database\Eloquent\Builder $sub): void {
+                        $sub->where('motivo', 'not like', '%Corrección de captura%')
+                            ->where('motivo', 'not like', '%Error al ingresar datos%');
+                    });
+            });
+    }
+
+    public function mantenimientos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MantenimientoDispositivo::class, 'asignacion_id');
     }
 
     public function getNombreBienAttribute(): string

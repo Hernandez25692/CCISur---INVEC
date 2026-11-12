@@ -241,6 +241,11 @@ class AsignacionController extends Controller
             $itemPreseleccionado = $tipo === Asignacion::TIPO_MOBILIARIO
                 ? Mobiliario::find($id_referencia)
                 : Dispositivo::find($id_referencia);
+
+            if ($itemPreseleccionado && ! $itemPreseleccionado->puede_asignarse) {
+                $itemPreseleccionado = null;
+                $id_referencia = null;
+            }
         }
 
         $destinoSugerido = ($itemPreseleccionado && $itemPreseleccionado->esEquipoAreaComun())

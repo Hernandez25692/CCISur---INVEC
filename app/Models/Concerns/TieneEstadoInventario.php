@@ -50,7 +50,7 @@ trait TieneEstadoInventario
         'Con pequeños detalles / Imperfecciones leves' => 'Detalles leves',
         'Usado / Segunda mano' => 'Usado',
         'Dañado / Defectuoso' => 'Dañado',
-        'En reparación / En revisión' => 'En reparación',
+        'En reparación / En revisión' => 'Mantenimiento / Reparación',
         'Producto incompleto' => 'Incompleto',
         'Caducado / No apto para uso' => 'Caducado',
     ];
