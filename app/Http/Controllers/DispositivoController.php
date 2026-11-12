@@ -301,11 +301,23 @@ class DispositivoController extends Controller
     }
 
     // Dar de baja registro (Soft Delete)
-    public function destroy(Dispositivo $dispositivo): RedirectResponse
+    public function destroy(Request $request, Dispositivo $dispositivo): RedirectResponse
     {
         Gate::authorize('admin');
 
-        return DB::transaction(function () use ($dispositivo): RedirectResponse {
+        $request->merge([
+            'motivo_baja' => trim((string) $request->input('motivo_baja')),
+        ]);
+
+        $request->validate([
+            'motivo_baja' => ['required', 'string', 'min:3', 'max:500'],
+        ], [
+            'motivo_baja.required' => 'Debe ingresar o seleccionar el motivo de la baja del dispositivo.',
+            'motivo_baja.min' => 'El motivo de la baja debe contener al menos 3 caracteres.',
+            'motivo_baja.max' => 'El motivo de la baja no puede exceder los 500 caracteres.',
+        ]);
+
+        return DB::transaction(function () use ($dispositivo, $request): RedirectResponse {
             $dispositivoActualizado = Dispositivo::lockForUpdate()->find($dispositivo->id);
 
             if (! $dispositivoActualizado) {
@@ -320,6 +332,11 @@ class DispositivoController extends Controller
                     ->with('error', $dispositivoActualizado->motivo_no_baja ?? 'No se puede dar de baja este dispositivo.');
             }
 
+            $dispositivoActualizado->update([
+                'motivo_baja' => (string) $request->input('motivo_baja'),
+                'baja_por_user_id' => Auth::id(),
+            ]);
+
             $dispositivoActualizado->delete();
 
             return redirect()->route('dispositivos.index')->with('success', 'Dispositivo dado de baja correctamente.');
@@ -329,7 +346,7 @@ class DispositivoController extends Controller
     // Listar dispositivos dados de baja
     public function bajas(Request $request): View
     {
-        $query = Dispositivo::onlyTrashed()->withCount(['asignacionesActivas', 'asignaciones']);
+        $query = Dispositivo::onlyTrashed()->with(['dadoDeBajaPor'])->withCount(['asignacionesActivas', 'asignaciones']);
 
         if ($request->filled('nombre')) {
             $termino = addcslashes(trim((string) $request->input('nombre')), '%_\\');
@@ -381,19 +398,33 @@ class DispositivoController extends Controller
     {
         Gate::authorize('admin');
 
-        $dispositivo = Dispositivo::onlyTrashed()->findOrFail($id);
-        $dispositivo->restore();
+        return DB::transaction(function () use ($id): RedirectResponse {
+            $dispositivo = Dispositivo::onlyTrashed()->lockForUpdate()->find($id);
 
-        // Al restaurar, recalcular disponibilidad según su estado físico actual
-        $dispositivo->disponibilidad = Dispositivo::calcularDisponibilidad($dispositivo->estado, false, false);
-        $dispositivo->save();
+            if (! $dispositivo) {
+                return redirect()->route('dispositivos.bajas')->with('info', 'El dispositivo ya fue reactivado o no se encuentra en bajas.');
+            }
 
-        return redirect()->route('dispositivos.bajas')->with('success', "Dispositivo {$dispositivo->etiqueta} reactivado correctamente.");
+            $dispositivo->restore();
+
+            $dispositivo->update([
+                'motivo_baja' => null,
+                'baja_por_user_id' => null,
+                'reactivado_por_user_id' => Auth::id(),
+            ]);
+
+            // Al restaurar, recalcular disponibilidad según su estado físico actual
+            $dispositivo->disponibilidad = Dispositivo::calcularDisponibilidad($dispositivo->estado, false, false);
+            $dispositivo->save();
+
+            return redirect()->route('dispositivos.bajas')->with('success', "Dispositivo {$dispositivo->etiqueta} reactivado correctamente.");
+        });
     }
 
     // Hoja de Vida / Historial del bien
     public function historial(Request $request, Dispositivo $dispositivo): View
     {
+        $dispositivo->load(['dadoDeBajaPor', 'reactivadoPor']);
         $dispositivo->loadCount(['asignacionesActivas', 'asignaciones']);
 
         $totalAsignaciones = (int) $dispositivo->asignaciones_count;

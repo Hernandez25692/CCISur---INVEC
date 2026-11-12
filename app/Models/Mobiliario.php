@@ -28,6 +28,14 @@ class Mobiliario extends Model
         'Otro',
     ];
 
+    public const MOTIVOS_BAJA_SUGERIDOS = [
+        'Daño irreparable / Falla técnica definitiva',
+        'Obsolescencia técnica / Fin de vida útil',
+        'Pérdida / Extravío o Robo reportado',
+        'Donación o Descarte formal',
+        'Reemplazo por renovación institucional',
+    ];
+
     protected $fillable = [
         'nombre',
         'tipo',
@@ -36,6 +44,9 @@ class Mobiliario extends Model
         'disponibilidad',
         'fecha_registro',
         'etiqueta',
+        'motivo_baja',
+        'baja_por_user_id',
+        'reactivado_por_user_id',
     ];
 
     protected $casts = [

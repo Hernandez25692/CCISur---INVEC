@@ -73,7 +73,7 @@ class MobiliarioExport implements FromQuery, ShouldAutoSize, WithHeadings, WithM
             };
         }
 
-        return $query->latest('id');
+        return $query->with(['dadoDeBajaPor'])->latest('id');
     }
 
     public function headings(): array
@@ -87,6 +87,8 @@ class MobiliarioExport implements FromQuery, ShouldAutoSize, WithHeadings, WithM
             'Disponibilidad',
             'Fecha de Registro',
             'Condición / Estatus',
+            'Motivo de Baja',
+            'Dado de Baja Por',
         ];
     }
 
@@ -106,6 +108,12 @@ class MobiliarioExport implements FromQuery, ShouldAutoSize, WithHeadings, WithM
             $mobiliario->trashed()
                 ? 'Dado de baja ('.$mobiliario->deleted_at?->format('d/m/Y').')'
                 : 'Activo en inventario',
+            $mobiliario->trashed()
+                ? ($mobiliario->motivo_baja ?? 'Sin motivo registrado')
+                : 'No aplica',
+            $mobiliario->trashed()
+                ? ($mobiliario->dadoDeBajaPor?->name ?? 'Usuario no registrado')
+                : 'No aplica',
         ];
     }
 

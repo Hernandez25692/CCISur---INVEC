@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -36,6 +37,8 @@ class Empleado extends Model
         'nombre_completo',
         'gerencia',
         'ubicacion',
+        'baja_por_user_id',
+        'reactivado_por_user_id',
     ];
 
     public static function normalizarIdentidad(?string $identidad): string
@@ -56,6 +59,16 @@ class Empleado extends Model
     public function asignaciones(): HasMany
     {
         return $this->hasMany(Asignacion::class);
+    }
+
+    public function dadoDeBajaPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'baja_por_user_id');
+    }
+
+    public function reactivadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reactivado_por_user_id');
     }
 
     public function asignacionesActivas(): HasMany

@@ -82,7 +82,7 @@ class DispositivosExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             };
         }
 
-        return $query->latest('id');
+        return $query->with(['dadoDeBajaPor'])->latest('id');
     }
 
     public function headings(): array
@@ -101,6 +101,8 @@ class DispositivosExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'Disponibilidad',
             'Fecha de Registro',
             'Condición / Estatus',
+            'Motivo de Baja',
+            'Dado de Baja Por',
         ];
     }
 
@@ -127,6 +129,12 @@ class DispositivosExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $dispositivo->trashed()
                 ? 'Dado de baja ('.$dispositivo->deleted_at?->format('d/m/Y').')'
                 : 'Activo en inventario',
+            $dispositivo->trashed()
+                ? ($dispositivo->motivo_baja ?? 'Sin motivo registrado')
+                : 'No aplica',
+            $dispositivo->trashed()
+                ? ($dispositivo->dadoDeBajaPor?->name ?? 'Usuario no registrado')
+                : 'No aplica',
         ];
     }
 

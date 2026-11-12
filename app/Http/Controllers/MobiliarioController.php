@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -184,11 +185,23 @@ class MobiliarioController extends Controller
     }
 
     // Dar de baja registro (Soft Delete)
-    public function destroy(Mobiliario $mobiliario): RedirectResponse
+    public function destroy(Request $request, Mobiliario $mobiliario): RedirectResponse
     {
         Gate::authorize('admin');
 
-        return DB::transaction(function () use ($mobiliario): RedirectResponse {
+        $request->merge([
+            'motivo_baja' => trim((string) $request->input('motivo_baja')),
+        ]);
+
+        $request->validate([
+            'motivo_baja' => ['required', 'string', 'min:3', 'max:500'],
+        ], [
+            'motivo_baja.required' => 'Debe ingresar o seleccionar el motivo de la baja del mobiliario.',
+            'motivo_baja.min' => 'El motivo de la baja debe contener al menos 3 caracteres.',
+            'motivo_baja.max' => 'El motivo de la baja no puede exceder los 500 caracteres.',
+        ]);
+
+        return DB::transaction(function () use ($mobiliario, $request): RedirectResponse {
             $mobiliarioActualizado = Mobiliario::lockForUpdate()->find($mobiliario->id);
 
             if (! $mobiliarioActualizado) {
@@ -203,6 +216,11 @@ class MobiliarioController extends Controller
                     ->with('error', $mobiliarioActualizado->motivo_no_baja ?? 'No se puede dar de baja este mueble.');
             }
 
+            $mobiliarioActualizado->update([
+                'motivo_baja' => (string) $request->input('motivo_baja'),
+                'baja_por_user_id' => Auth::id(),
+            ]);
+
             $mobiliarioActualizado->delete();
 
             return redirect()->route('mobiliario.index')->with('success', 'Mobiliario dado de baja correctamente.');
@@ -212,7 +230,7 @@ class MobiliarioController extends Controller
     // Listar mobiliario dado de baja
     public function bajas(Request $request): View
     {
-        $query = Mobiliario::onlyTrashed()->withCount(['asignacionesActivas', 'asignaciones']);
+        $query = Mobiliario::onlyTrashed()->with(['dadoDeBajaPor'])->withCount(['asignacionesActivas', 'asignaciones']);
 
         if ($request->filled('nombre')) {
             $termino = addcslashes(trim((string) $request->input('nombre')), '%_\\');
@@ -255,19 +273,33 @@ class MobiliarioController extends Controller
     {
         Gate::authorize('admin');
 
-        $mobiliario = Mobiliario::onlyTrashed()->findOrFail($id);
-        $mobiliario->restore();
+        return DB::transaction(function () use ($id): RedirectResponse {
+            $mobiliario = Mobiliario::onlyTrashed()->lockForUpdate()->find($id);
 
-        // Al restaurar, recalcular disponibilidad según su estado físico actual
-        $mobiliario->disponibilidad = Mobiliario::calcularDisponibilidad($mobiliario->estado, false, false);
-        $mobiliario->save();
+            if (! $mobiliario) {
+                return redirect()->route('mobiliario.bajas')->with('info', 'El mobiliario ya fue reactivado o no se encuentra en bajas.');
+            }
 
-        return redirect()->route('mobiliario.bajas')->with('success', "Mobiliario {$mobiliario->etiqueta} reactivado correctamente.");
+            $mobiliario->restore();
+
+            $mobiliario->update([
+                'motivo_baja' => null,
+                'baja_por_user_id' => null,
+                'reactivado_por_user_id' => Auth::id(),
+            ]);
+
+            // Al restaurar, recalcular disponibilidad según su estado físico actual
+            $mobiliario->disponibilidad = Mobiliario::calcularDisponibilidad($mobiliario->estado, false, false);
+            $mobiliario->save();
+
+            return redirect()->route('mobiliario.bajas')->with('success', "Mobiliario {$mobiliario->etiqueta} reactivado correctamente.");
+        });
     }
 
     // Hoja de Vida / Historial del bien
     public function historial(Request $request, Mobiliario $mobiliario): View
     {
+        $mobiliario->load(['dadoDeBajaPor', 'reactivadoPor']);
         $mobiliario->loadCount(['asignacionesActivas', 'asignaciones']);
 
         $totalAsignaciones = (int) $mobiliario->asignaciones_count;

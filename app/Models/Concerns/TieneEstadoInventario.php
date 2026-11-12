@@ -3,7 +3,9 @@
 namespace App\Models\Concerns;
 
 use App\Models\Asignacion;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait TieneEstadoInventario
@@ -105,6 +107,16 @@ trait TieneEstadoInventario
     public function asignacionesActivas(): HasMany
     {
         return $this->asignaciones()->whereDoesntHave('devolucion');
+    }
+
+    public function dadoDeBajaPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'baja_por_user_id');
+    }
+
+    public function reactivadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reactivado_por_user_id');
     }
 
     public function estaAsignado(): bool

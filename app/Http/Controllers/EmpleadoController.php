@@ -7,6 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -194,22 +195,34 @@ class EmpleadoController extends Controller
     {
         Gate::authorize('admin');
 
-        $empleado->loadCount(['asignacionesActivas']);
+        return DB::transaction(function () use ($empleado): RedirectResponse {
+            $empleadoActualizado = Empleado::lockForUpdate()->find($empleado->id);
 
-        if (! $empleado->puede_darse_de_baja) {
-            return redirect()
-                ->route('empleados.index')
-                ->with('error', $empleado->motivo_no_baja ?? 'No se puede dar de baja a este colaborador.');
-        }
+            if (! $empleadoActualizado) {
+                return redirect()->route('empleados.index')->with('error', 'El colaborador ya no existe.');
+            }
 
-        $empleado->delete();
+            $empleadoActualizado->loadCount(['asignacionesActivas']);
 
-        return redirect()->route('empleados.index')->with('success', 'Colaborador dado de baja correctamente.');
+            if (! $empleadoActualizado->puede_darse_de_baja) {
+                return redirect()
+                    ->route('empleados.index')
+                    ->with('error', $empleadoActualizado->motivo_no_baja ?? 'No se puede dar de baja a este colaborador.');
+            }
+
+            $empleadoActualizado->update([
+                'baja_por_user_id' => Auth::id(),
+            ]);
+
+            $empleadoActualizado->delete();
+
+            return redirect()->route('empleados.index')->with('success', 'Colaborador dado de baja correctamente.');
+        });
     }
 
     public function bajas(Request $request): View
     {
-        $query = Empleado::onlyTrashed()->withCount(['asignacionesActivas', 'asignaciones']);
+        $query = Empleado::onlyTrashed()->with(['dadoDeBajaPor'])->withCount(['asignacionesActivas', 'asignaciones']);
 
         if ($request->filled('buscar')) {
             $terminoRaw = trim((string) $request->input('buscar'));
@@ -248,14 +261,27 @@ class EmpleadoController extends Controller
     {
         Gate::authorize('admin');
 
-        $empleado = Empleado::onlyTrashed()->findOrFail($id);
-        $empleado->restore();
+        return DB::transaction(function () use ($id): RedirectResponse {
+            $empleado = Empleado::onlyTrashed()->lockForUpdate()->find($id);
 
-        return redirect()->route('empleados.bajas')->with('success', "Colaborador {$empleado->nombre_completo} reactivado correctamente.");
+            if (! $empleado) {
+                return redirect()->route('empleados.bajas')->with('info', 'El colaborador ya se encuentra activo o no existe en el archivo de bajas.');
+            }
+
+            $empleado->restore();
+
+            $empleado->update([
+                'baja_por_user_id' => null,
+                'reactivado_por_user_id' => Auth::id(),
+            ]);
+
+            return redirect()->route('empleados.bajas')->with('success', "Colaborador {$empleado->nombre_completo} reactivado correctamente.");
+        });
     }
 
     public function historial(Request $request, Empleado $empleado): View
     {
+        $empleado->load(['dadoDeBajaPor', 'reactivadoPor']);
         $empleado->loadCount(['asignacionesActivas', 'asignaciones']);
 
         $totalActivos = (int) $empleado->asignaciones_activas_count;
