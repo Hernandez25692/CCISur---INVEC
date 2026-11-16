@@ -579,13 +579,13 @@
                 @enderror
             </div>
 
-            <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+            <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-gray-100 sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 -mx-6 px-6 z-10 shadow-xs">
                 <a href="{{ $cancelarUrl }}"
-                    class="text-sm font-medium text-gray-600 hover:text-brand-navy transition">
+                    class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-brand-navy transition w-full sm:w-auto text-center">
                     ← Cancelar
                 </a>
                 <button type="submit"
-                    class="inline-flex items-center gap-2 bg-brand-gold text-brand-navy px-5 py-2.5 rounded-lg hover:bg-brand-gold-400 font-semibold text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                    class="inline-flex items-center justify-center gap-2 bg-brand-gold text-brand-navy px-5 py-2.5 rounded-lg hover:bg-brand-gold-400 font-semibold text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition w-full sm:w-auto">
                     Actualizar Dispositivo
                 </button>
             </div>

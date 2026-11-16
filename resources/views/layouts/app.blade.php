@@ -51,25 +51,25 @@
     <!-- Alertas accesibles de respaldo -->
     @if (session('success'))
         <div id="flash-success" role="status"
-            class="fixed bottom-6 right-6 bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl shadow-md z-50 flex items-center gap-2.5 text-sm font-medium">
-            <i class="fas fa-check-circle text-emerald-600" aria-hidden="true"></i>
-            <span>{{ session('success') }}</span>
+            class="fixed inset-x-4 bottom-4 sm:inset-x-auto sm:right-6 sm:bottom-6 max-w-[calc(100vw-2rem)] sm:max-w-md bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl shadow-md z-50 flex items-center gap-2.5 text-sm font-medium">
+            <i class="fas fa-check-circle text-emerald-600 shrink-0" aria-hidden="true"></i>
+            <span class="break-words">{{ session('success') }}</span>
         </div>
     @endif
 
     @if (session('error'))
         <div id="flash-error" role="alert"
-            class="fixed bottom-6 right-6 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-xl shadow-md z-50 flex items-center gap-2.5 text-sm font-medium max-w-md">
+            class="fixed inset-x-4 bottom-4 sm:inset-x-auto sm:right-6 sm:bottom-6 max-w-[calc(100vw-2rem)] sm:max-w-md bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-xl shadow-md z-50 flex items-center gap-2.5 text-sm font-medium">
             <i class="fas fa-exclamation-circle text-red-600 shrink-0" aria-hidden="true"></i>
-            <span>{{ session('error') }}</span>
+            <span class="break-words">{{ session('error') }}</span>
         </div>
     @endif
 
     @if ($errors->any())
         <div id="flash-errors" role="alert"
-            class="fixed bottom-6 left-6 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-xl shadow-md z-50 max-w-md">
+            class="fixed inset-x-4 bottom-4 sm:inset-x-auto sm:left-6 sm:bottom-6 max-w-[calc(100vw-2rem)] sm:max-w-md bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-xl shadow-md z-50">
             <strong class="font-semibold text-sm">¡Revisá los datos ingresados!</strong>
-            <ul class="mt-1.5 list-disc list-inside text-xs space-y-0.5">
+            <ul class="mt-1.5 list-disc list-inside text-xs space-y-0.5 break-words">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach

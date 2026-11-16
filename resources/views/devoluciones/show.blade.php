@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-6 space-y-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="py-6 space-y-6 max-w-4xl mx-auto">
         {{-- Navegación superior y acción principal --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -10,7 +10,7 @@
                     <span>/</span>
                     <span class="text-brand-navy font-semibold">{{ $correlativo }}</span>
                 </nav>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Acta de Devolución de Bien</h1>
                     @if ($devolucion->trashed())
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20">
@@ -28,11 +28,11 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 {{-- Único botón de descarga/impresión oficial --}}
                 <a href="{{ route('devoluciones.pdf', $devolucion) }}"
                     target="_blank"
-                    class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-brand-navy hover:bg-brand-navy-800 text-white rounded-lg text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-brand-navy hover:bg-brand-navy-700 text-white rounded-lg text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
                     <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
@@ -84,7 +84,7 @@
                         <h2 class="text-xl sm:text-2xl font-bold mt-1 text-white">Acta Formal de Devolución y Recepción</h2>
                         <p class="text-xs text-gray-300 mt-0.5">Sistema Integrado de Control de Inventario (INVEC)</p>
                     </div>
-                    <div class="bg-brand-navy-800/80 px-4 py-2.5 rounded-xl border border-brand-gold/30 text-left sm:text-right shrink-0">
+                    <div class="bg-brand-navy-900/80 px-4 py-2.5 rounded-xl border border-brand-gold/30 text-left sm:text-right shrink-0">
                         <p class="text-[10px] uppercase font-bold tracking-wider text-brand-gold">Correlativo Oficial de Acta</p>
                         <p class="font-mono text-base sm:text-lg font-extrabold text-white tracking-wide mt-0.5">
                             {{ $correlativo }}
@@ -138,7 +138,7 @@
                     <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Especificaciones del Bien Devuelto</h3>
                     @if ($item)
                         <div class="border border-gray-200 rounded-xl overflow-hidden">
-                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex flex-wrap justify-between items-center gap-2">
                                 <div class="flex items-center gap-2">
                                     <span class="font-mono text-sm font-bold text-brand-navy">{{ $item->etiqueta ?? 'Sin Placa' }}</span>
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider {{ $asignacion->tipo === 'dispositivo' ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800' }}">
@@ -173,7 +173,7 @@
                                 @endif
                                 <div>
                                     <span class="text-gray-500 block">Estado Físico en Devolución:</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold mt-0.5 ring-1 ring-inset {{ \App\Models\Dispositivo::ESTADOS_CLASES[$devolucion->estado_devuelto] ?? 'bg-gray-100 text-gray-700' }}">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold mt-0.5 ring-1 ring-inset {{ \App\Models\Dispositivo::ESTADOS_CLASES[$devolucion->estado_devuelto] ?? 'bg-gray-100 text-gray-700' }}">
                                         {{ $devolucion->estado_devuelto ?? $item->estado }}
                                     </span>
                                     @if (! empty($devolucion->estado_anterior))
@@ -184,7 +184,7 @@
                                 </div>
                                 <div>
                                     <span class="text-gray-500 block">Disponibilidad Actual en Inventario:</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-2xs font-bold mt-0.5 ring-1 ring-inset {{ \App\Models\Dispositivo::DISPONIBILIDADES_CLASES[$item->disponibilidad] ?? 'bg-gray-100 text-gray-700' }}">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold mt-0.5 ring-1 ring-inset {{ \App\Models\Dispositivo::DISPONIBILIDADES_CLASES[$item->disponibilidad] ?? 'bg-gray-100 text-gray-700' }}">
                                         {{ $item->disponibilidad }}
                                     </span>
                                 </div>
@@ -277,7 +277,7 @@
                 </div>
 
                 {{-- Cláusula de Finiquito --}}
-                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed text-justify">
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed text-left sm:text-justify">
                     <p class="font-bold text-brand-navy mb-1">Constancia de Recepción y Finiquito:</p>
                     Por medio de la presente acta se hace constar que el custodio ha entregado formalmente a la <strong>Cámara de Comercio e Industrias del Sur (CCISUR)</strong> el bien antes descrito, quedando plenamente liberado de la custodia material y responsabilidad directa sobre el mismo a partir de la fecha suscrita.
                 </div>

@@ -182,7 +182,7 @@
 
             <div class="flex flex-wrap items-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100">
                 <button type="button" @click="tabActiva = 'historial'"
-                    class="px-3.5 py-2 rounded-lg bg-brand-navy-50 border border-brand-navy-200/50 flex items-center gap-2.5 hover:bg-brand-navy-100/60 transition cursor-pointer text-left">
+                    class="px-3.5 py-2 rounded-lg bg-brand-navy-50 border border-brand-navy-100 flex items-center gap-2.5 hover:bg-brand-navy-100/60 transition cursor-pointer text-left">
                     <i class="fas fa-hand-holding text-brand-navy text-xs" aria-hidden="true"></i>
                     <div class="text-xs">
                         <span class="text-brand-navy font-medium">Asignaciones:</span>
@@ -627,19 +627,19 @@
                         @foreach ($asignaciones as $item)
                             <div class="p-4 space-y-3">
                                 <div class="flex items-start justify-between gap-2">
-                                    <div>
+                                    <div class="min-w-0 flex-1">
                                         @if ($item->es_area_comun)
-                                            <span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-800 text-xs font-semibold rounded mb-1">
+                                            <span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-800 text-xs font-semibold rounded mb-1 shrink-0">
                                                 <i class="fas fa-building text-[10px] mr-1" aria-hidden="true"></i>Área Común
                                             </span>
-                                            <h3 class="text-sm font-bold text-gray-900">{{ $item->area }}</h3>
-                                            <p class="text-xs text-amber-700 font-medium">Uso Compartido Institucional</p>
+                                            <h3 class="text-sm font-bold text-gray-900 break-words">{{ $item->area }}</h3>
+                                            <p class="text-xs text-amber-700 font-medium break-words">Uso Compartido Institucional</p>
                                         @else
-                                            <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
+                                            <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1 shrink-0">
                                                 {{ $item->empleado?->codigo ?? '' }}
                                             </span>
-                                            <h3 class="text-sm font-bold text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</h3>
-                                            <p class="text-xs text-gray-500">Área: {{ $item->area }}</p>
+                                            <h3 class="text-sm font-bold text-gray-900 break-words">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</h3>
+                                            <p class="text-xs text-gray-500 break-words">Área: {{ $item->area }}</p>
                                         @endif
                                     </div>
                                     @if ($item->devolucion)
@@ -721,20 +721,20 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             @if (! $dispositivo->trashed())
                                 <a href="{{ route('dispositivos.edit', ['dispositivo' => $dispositivo->id, 'from' => 'historial']) }}"
-                                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold shadow-2xs transition">
+                                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold shadow-sm transition">
                                     <i class="fas fa-pen text-brand-gold-600 text-xs" aria-hidden="true"></i>
                                     Editar Ficha
                                 </a>
                             @endif
                             @if ($mantenimientoActivo)
                                 <button type="button" @click="modalFinalizar = true"
-                                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-xs hover:bg-emerald-700 transition cursor-pointer">
+                                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-sm hover:bg-emerald-700 transition cursor-pointer">
                                     <i class="fas fa-check-circle text-xs" aria-hidden="true"></i>
                                     Finalizar Mantenimiento
                                 </button>
                             @else
                                 <button type="button" @click="modalMantenimiento = true"
-                                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold shadow-xs hover:bg-amber-600 transition cursor-pointer">
+                                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold shadow-sm hover:bg-amber-600 transition cursor-pointer">
                                     <i class="fas fa-tools text-xs" aria-hidden="true"></i>
                                     Enviar a Taller / Revisión
                                 </button>
@@ -747,22 +747,22 @@
                 <div class="pt-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-1.5 flex-wrap">
                         <button type="button" @click="filtroTecnico = 'todos'"
-                            :class="filtroTecnico === 'todos' ? 'bg-brand-navy text-white shadow-xs' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                            :class="filtroTecnico === 'todos' ? 'bg-brand-navy text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
                             class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer">
                             Todos ({{ $totalEventosTecnicos }})
                         </button>
                         <button type="button" @click="filtroTecnico = 'mantenimiento'"
-                            :class="filtroTecnico === 'mantenimiento' ? 'bg-amber-600 text-white shadow-xs' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                            :class="filtroTecnico === 'mantenimiento' ? 'bg-amber-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
                             class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer">
                             <i class="fas fa-tools text-[10px] mr-1"></i> Mantenimientos ({{ $totalMantenimientos }})
                         </button>
                         <button type="button" @click="filtroTecnico = 'hardware'"
-                            :class="filtroTecnico === 'hardware' ? 'bg-purple-600 text-white shadow-xs' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                            :class="filtroTecnico === 'hardware' ? 'bg-purple-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
                             class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer">
                             <i class="fas fa-microchip text-[10px] mr-1"></i> Cambios de Hardware ({{ $totalCambiosHardwarePiezas }})
                         </button>
                         <button type="button" @click="filtroTecnico = 'correccion'"
-                            :class="filtroTecnico === 'correccion' ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                            :class="filtroTecnico === 'correccion' ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
                             class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer">
                             <i class="fas fa-pen text-[10px] mr-1"></i> Correcciones ({{ $totalCorrecciones }})
                         </button>
@@ -967,8 +967,8 @@
                                         <thead class="bg-gray-50 text-gray-600">
                                             <tr>
                                                 <th scope="col" class="px-3.5 py-2 text-left font-semibold uppercase tracking-wider w-1/4">Componente</th>
-                                                <th scope="col" class="px-3.5 py-2 text-left font-semibold uppercase tracking-wider w-3/8 text-red-700">Especificación Anterior</th>
-                                                <th scope="col" class="px-3.5 py-2 text-left font-semibold uppercase tracking-wider w-3/8 text-emerald-700">Nueva Especificación</th>
+                                                <th scope="col" class="px-3.5 py-2 text-left font-semibold uppercase tracking-wider w-[37.5%] text-red-700">Especificación Anterior</th>
+                                                <th scope="col" class="px-3.5 py-2 text-left font-semibold uppercase tracking-wider w-[37.5%] text-emerald-700">Nueva Especificación</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-100 bg-white">
@@ -1029,7 +1029,7 @@
 
         <!-- MODAL: Ingresar a Mantenimiento -->
         <div x-show="modalMantenimiento" x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
@@ -1109,144 +1109,144 @@
                         <div class="flex items-center gap-1.5 flex-wrap mb-2">
                             @if ($catHw === 'red')
                                 <button type="button" @click="agregarChip('Puerto Ethernet / LAN dañado o flojo')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔌 Puerto Ethernet
                                 </button>
                                 <button type="button" @click="agregarChip('Falla eléctrica / no enciende')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚡ No enciende
                                 </button>
                                 <button type="button" @click="agregarChip('Caídas intermitentes / señal Wi-Fi inestable')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     📶 Falla Wi-Fi / Caídas
                                 </button>
                                 <button type="button" @click="agregarChip('Bucle de reinicio constante (Boot loop)')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔄 Reinicios en bucle
                                 </button>
                                 <button type="button" @click="agregarChip('Sin acceso a interfaz / IP no responde')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚙️ Sin acceso / Bloqueado
                                 </button>
                                 <button type="button" @click="agregarChip('Limpieza preventiva y revisión térmica')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🧹 Limpieza
                                 </button>
                             @elseif ($catHw === 'pantalla')
                                 <button type="button" @click="agregarChip('Problema de encendido / no arranca')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚡ No enciende
                                 </button>
                                 <button type="button" @click="agregarChip('Sin señal de video / pantalla negra')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     📺 Sin video
                                 </button>
                                 <button type="button" @click="agregarChip('Líneas en panel / parpadeo de imagen')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🌈 Líneas / Parpadeo
                                 </button>
                                 <button type="button" @click="agregarChip('Puerto HDMI / VGA / DisplayPort dañado')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔌 Puerto HDMI / Video
                                 </button>
                                 <button type="button" @click="agregarChip('Botonera o panel táctil no responde')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔘 Botonera / Menú
                                 </button>
                                 <button type="button" @click="agregarChip('Limpieza externa y calibración')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🧹 Limpieza
                                 </button>
                             @elseif ($catHw === 'impresion')
                                 <button type="button" @click="agregarChip('Atasco continuo de papel')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     📄 Atasco de papel
                                 </button>
                                 <button type="button" @click="agregarChip('Mala calidad de impresión / manchas o rayas')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🖋️ Calidad / Rayas
                                 </button>
                                 <button type="button" @click="agregarChip('Error de cabezal o cartucho de tinta/tóner')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚙️ Error cabezal
                                 </button>
                                 <button type="button" @click="agregarChip('Rodillo de arrastre desgastado / no jala papel')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🖨️ Rodillos
                                 </button>
                                 <button type="button" @click="agregarChip('Falla eléctrica / no enciende')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚡ No enciende
                                 </button>
                                 <button type="button" @click="agregarChip('Limpieza preventiva y lubricación')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🧹 Mantenimiento
                                 </button>
                             @elseif ($catHw === 'ups')
                                 <button type="button" @click="agregarChip('Batería agotada / no retiene carga')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔋 Batería no retiene carga
                                 </button>
                                 <button type="button" @click="agregarChip('Pitido constante / alarma de falla activa')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔊 Alarma constante
                                 </button>
                                 <button type="button" @click="agregarChip('Problema de encendido / no suministra corriente')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚡ No enciende
                                 </button>
                                 <button type="button" @click="agregarChip('Sobrecarga o apagado súbito')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚠️ Sobrecarga
                                 </button>
                                 <button type="button" @click="agregarChip('Tomas de corriente dañadas o con falso contacto')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔌 Tomas flojas
                                 </button>
                             @elseif ($catHw === 'computadora')
                                 <button type="button" @click="agregarChip('Limpieza preventiva y ventiladores')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🧹 Limpieza
                                 </button>
                                 <button type="button" @click="agregarChip('Cambio de pasta térmica')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ❄️ Pasta térmica
                                 </button>
                                 <button type="button" @click="agregarChip('Batería no retiene carga / degradada')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔋 Batería
                                 </button>
                                 <button type="button" @click="agregarChip('Falla en disco / lentitud extrema')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     💾 Disco
                                 </button>
                                 <button type="button" @click="agregarChip('Problema de encendido / no arranca')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚡ No enciende
                                 </button>
                                 <button type="button" @click="agregarChip('Falla de pantalla / sin video')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🖥️ Pantalla
                                 </button>
                                 <button type="button" @click="agregarChip('Puerto o conector de carga flojo/dañado')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔌 Conector
                                 </button>
                             @else
                                 <button type="button" @click="agregarChip('Problema de encendido / no responde')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚡ No enciende
                                 </button>
                                 <button type="button" @click="agregarChip('Cable o conector dañado')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🔌 Conector / Cable
                                 </button>
                                 <button type="button" @click="agregarChip('Falla física o botón deteriorado')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     ⚙️ Botón / Pieza rota
                                 </button>
                                 <button type="button" @click="agregarChip('Limpieza preventiva y mantenimiento')"
-                                    class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
+                                    class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-amber-100 text-gray-700 hover:text-amber-900 border border-gray-200 transition cursor-pointer">
                                     🧹 Limpieza
                                 </button>
                             @endif
@@ -1267,13 +1267,13 @@
                             class="w-full text-xs rounded-lg border-gray-300 focus:border-brand-gold focus:ring-brand-gold shadow-sm">
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 shrink-0 sticky bottom-0 bg-white -mx-6 -mb-6 px-6 pb-6 shadow-xs z-10">
+                    <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-4 border-t border-gray-100 shrink-0 sticky bottom-0 bg-white -mx-6 -mb-6 px-6 pb-6 shadow-sm z-10">
                         <button type="button" @click="modalMantenimiento = false"
-                            class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer">
+                            class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer w-full sm:w-auto text-center">
                             Cancelar
                         </button>
                         <button type="submit"
-                            class="px-4 py-2 rounded-lg bg-brand-navy text-white text-xs font-semibold shadow-sm hover:bg-brand-navy-700 transition cursor-pointer">
+                            class="px-4 py-2 rounded-lg bg-brand-navy text-white text-xs font-semibold shadow-sm hover:bg-brand-navy-700 transition cursor-pointer w-full sm:w-auto text-center">
                             Ingresar a Mantenimiento
                         </button>
                     </div>
@@ -1284,7 +1284,7 @@
         @if ($mantenimientoActivo)
             <!-- MODAL: Finalizar Mantenimiento -->
             <div x-show="modalFinalizar" x-cloak
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
                 x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0"
                 x-transition:enter-end="opacity-100"
@@ -1311,7 +1311,7 @@
                             <label class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-2">
                                 Resultado del Trabajo Técnico <span class="text-red-500">*</span>
                             </label>
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition"
                                     :class="resultadoMantenimiento === 'reparado' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-900 ring-2 ring-emerald-500/20' : 'border-gray-200 hover:bg-gray-50 text-gray-700'">
                                     <input type="radio" name="resultado" value="reparado" x-model="resultadoMantenimiento" class="text-emerald-600 focus:ring-emerald-500">
@@ -1366,128 +1366,128 @@
                                 <div class="flex items-center gap-1.5 flex-wrap mb-2">
                                     @if ($catHw === 'red')
                                         <button type="button" @click="agregarSolucion('Actualización de firmware y parches de seguridad')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔄 Firmware actualizado
                                         </button>
                                         <button type="button" @click="agregarSolucion('Restablecimiento a valores de fábrica y reconfiguración de red')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ⚙️ Reconfiguración de red
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reparación / resoldado de puerto Ethernet LAN/WAN')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔌 Puerto LAN reparado
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reemplazo de fuente de poder / adaptador de voltaje', true)"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ⚡ Fuente / Adaptador nuevo
                                         </button>
                                         <button type="button" @click="agregarSolucion('Limpieza interna y disipación de calor')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🧹 Limpieza interna
                                         </button>
                                     @elseif ($catHw === 'pantalla')
                                         <button type="button" @click="agregarSolucion('Reparación de circuito / fuente de poder')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ⚡ Fuente reparada
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reemplazo de conector HDMI / VGA')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔌 Puerto de video
                                         </button>
                                         <button type="button" @click="agregarSolucion('Ajuste de cables flexibles y panel')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             📺 Ajuste panel / flex
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reparación de botonera / menú')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔘 Botonera reparada
                                         </button>
                                         <button type="button" @click="agregarSolucion('Limpieza y calibración')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🧹 Limpieza general
                                         </button>
                                     @elseif ($catHw === 'impresion')
                                         <button type="button" @click="agregarSolucion('Limpieza profunda y purga de inyectores/cabezales')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🧹 Purga de cabezales
                                         </button>
                                         <button type="button" @click="agregarSolucion('Limpieza y acondicionamiento de rodillos de arrastre')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🖨️ Rodillos mantenidos
                                         </button>
                                         <button type="button" @click="agregarSolucion('Extracción de atasco y calibración de bandeja')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             📄 Desatasco y calibración
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reseteo de contador de almohadillas')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔄 Reseteo almohadillas
                                         </button>
                                         <button type="button" @click="agregarSolucion('Mantenimiento general, limpieza interna y engrase')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ⚙️ Lubricación y limpieza
                                         </button>
                                     @elseif ($catHw === 'ups')
                                         <button type="button" @click="agregarSolucion('Reemplazo de batería(s) interna(s) selladas', true)"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔋 Batería(s) nueva(s)
                                         </button>
                                         <button type="button" @click="agregarSolucion('Calibración de inversor y prueba de carga')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ⚡ Calibración y prueba
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reparación de tomas eléctricas y terminales de contacto')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔌 Tomas reparadas
                                         </button>
                                         <button type="button" @click="agregarSolucion('Limpieza interna y revisión de circuitos')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🧹 Limpieza interna
                                         </button>
                                     @elseif ($catHw === 'computadora')
                                         <button type="button" @click="agregarSolucion('Limpieza interna y ventiladores')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🧹 Limpieza interna
                                         </button>
                                         <button type="button" @click="agregarSolucion('Cambio de pasta térmica de alta conductividad')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ❄️ Pasta térmica
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reemplazo de batería por nueva original', true)"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔋 Batería nueva
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reemplazo / Upgrade de unidad de almacenamiento (SSD)', true)"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             💾 Cambio de disco
                                         </button>
                                         <button type="button" @click="agregarSolucion('Ampliación de memoria RAM', true)"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ⚡ Aumento de RAM
                                         </button>
                                         <button type="button" @click="agregarSolucion('Formateo y reinstalación de sistema operativo')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             💻 Reinstalación SO
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reparación de conector de carga')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔌 Conector reparado
                                         </button>
                                     @else
                                         <button type="button" @click="agregarSolucion('Reparación eléctrica de componentes de poder')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ⚡ Reparación eléctrica
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reemplazo de cableado o terminales flojas', true)"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🔌 Cable / Conector nuevo
                                         </button>
                                         <button type="button" @click="agregarSolucion('Reparación física y ajuste de mecanismos')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             ⚙️ Ajuste de piezas
                                         </button>
                                         <button type="button" @click="agregarSolucion('Limpieza preventiva y mantenimiento operativo')"
-                                            class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
+                                            class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-900 border border-gray-200 transition cursor-pointer">
                                             🧹 Limpieza y mantenimiento
                                         </button>
                                     @endif
@@ -1665,13 +1665,13 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 shrink-0 sticky bottom-0 bg-white -mx-6 -mb-6 px-6 pb-6 shadow-xs z-10">
+                        <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-4 border-t border-gray-100 shrink-0 sticky bottom-0 bg-white -mx-6 -mb-6 px-6 pb-6 shadow-sm z-10">
                             <button type="button" @click="modalFinalizar = false"
-                                class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer">
+                                class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition cursor-pointer w-full sm:w-auto text-center">
                                 Cancelar
                             </button>
                             <button type="submit"
-                                class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-sm hover:bg-emerald-700 transition cursor-pointer"
+                                class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-sm hover:bg-emerald-700 transition cursor-pointer w-full sm:w-auto text-center"
                                 :class="resultadoMantenimiento === 'irreparable' ? '!bg-red-600 hover:!bg-red-700' : ''">
                                 <span x-text="resultadoMantenimiento === 'reparado' ? 'Guardar y Devolver a Operación' : 'Confirmar y Trasladar a Bajas'"></span>
                             </button>

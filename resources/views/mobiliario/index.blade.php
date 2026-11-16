@@ -6,7 +6,7 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Inventario de Mobiliario</h1>
                 <p class="mt-1 text-sm text-gray-500">Gestión y control de muebles y equipamiento institucional</p>
             </div>
-            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
+            <div class="flex flex-wrap xl:flex-nowrap items-center gap-2 sm:gap-2.5 shrink-0 pb-1 xl:pb-0">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroMobiliarioForm'); if (f) { const oldAction = f.action; f.action = '{{ route('mobiliario.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('mobiliario.exportar', request()->query()) }}'; }"
                     class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer whitespace-nowrap shrink-0"
@@ -252,28 +252,26 @@
                                     <td class="px-4 py-3 whitespace-nowrap text-right font-medium">
                                         <div class="inline-flex items-center justify-end gap-1.5">
                                             <a href="{{ route('mobiliario.historial', $item->id) }}"
-                                                class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
+                                                class="p-2 sm:p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
                                                 title="Hoja de vida / Historial de asignaciones" aria-label="Historial de {{ $item->nombre }}">
                                                 <i class="fas fa-history text-xs text-brand-gold-600" aria-hidden="true"></i>
                                             </a>
 
                                             @can('admin')
                                                 <a href="{{ route('mobiliario.edit', $item->id) }}"
-                                                    class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
+                                                    class="p-2 sm:p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
                                                     title="Editar" aria-label="Editar {{ $item->nombre }}">
                                                     <i class="fas fa-pen text-xs" aria-hidden="true"></i>
                                                 </a>
 
-
-
                                                 @if ($item->puede_asignarse)
                                                     <a href="{{ route('asignaciones.create', ['tipo' => 'mobiliario', 'id' => $item->id]) }}"
-                                                        class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                                        class="p-2 sm:p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                                                         title="Asignar mueble" aria-label="Asignar {{ $item->nombre }}">
                                                         <i class="fas fa-plus-circle text-sm" aria-hidden="true"></i>
                                                     </a>
                                                 @else
-                                                    <span class="p-1.5 rounded-lg text-brand-gold-600"
+                                                    <span class="p-2 sm:p-1.5 rounded-lg text-brand-gold-600"
                                                         title="{{ $item->disponibilidad_real === \App\Models\Mobiliario::DISPONIBILIDAD_NO_APLICA ? 'No aplica para asignación' : 'Actualmente asignado' }}"
                                                         aria-label="{{ $item->disponibilidad_real === \App\Models\Mobiliario::DISPONIBILIDAD_NO_APLICA ? 'No aplica para asignación' : 'Actualmente asignado' }}">
                                                         <i class="fas fa-info-circle text-sm" aria-hidden="true"></i>
@@ -293,25 +291,25 @@
                     @foreach ($mobiliarios as $item)
                         <div class="p-4 space-y-3">
                             <div class="flex items-start justify-between gap-2">
-                                <div>
+                                <div class="min-w-0 flex-1">
                                     <a href="{{ route('mobiliario.historial', $item->id) }}"
-                                        class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy hover:bg-brand-navy hover:text-brand-gold text-xs font-mono font-medium rounded mb-1 transition-colors"
+                                        class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy hover:bg-brand-navy hover:text-brand-gold text-xs font-mono font-medium rounded mb-1 transition-colors shrink-0"
                                         title="Ver hoja de vida e historial">
                                         {{ $item->etiqueta }}
                                     </a>
                                     <div class="flex items-center gap-1.5 flex-wrap">
                                         <a href="{{ route('mobiliario.historial', $item->id) }}"
-                                            class="text-sm font-bold text-brand-navy hover:text-brand-gold-700 transition"
+                                            class="text-sm font-bold text-brand-navy hover:text-brand-gold-700 transition break-words"
                                             title="Ver hoja de vida e historial">
                                             <span>{{ $item->nombre }}</span>
                                         </a>
                                         @if ($item->trashed())
-                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800 shrink-0">
                                                 Dado de baja
                                             </span>
                                         @endif
                                     </div>
-                                    <p class="text-xs text-gray-500 capitalize">{{ $item->tipo }} · {{ $item->ubicacion }}</p>
+                                    <p class="text-xs text-gray-500 capitalize break-words mt-0.5">{{ $item->tipo }} · {{ $item->ubicacion }}</p>
                                 </div>
                                 <span title="{{ $item->disponibilidad_real }}"
                                     class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full ring-1 ring-inset shrink-0 {{ $item->clase_disponibilidad }}">

@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-6 space-y-6 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8" x-data="devolucionForm()">
+    <div class="py-6 space-y-6 max-w-4xl mx-auto" x-data="devolucionForm()">
         {{-- Encabezado con breadcrumb --}}
         <div>
             <nav class="flex items-center gap-2 text-xs text-gray-500 mb-1" aria-label="Breadcrumb">
@@ -9,13 +9,13 @@
                 <span>/</span>
                 <span class="text-brand-navy font-semibold">Nueva Devolución</span>
             </nav>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-brand-navy tracking-tight">Registrar Devolución de Bien</h1>
                     <p class="text-xs sm:text-sm text-gray-500 mt-1">Recepción formal de bienes institucionales y actualización automática de inventario</p>
                 </div>
                 <a href="{{ route('devoluciones.index') }}"
-                    class="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-600 hover:text-brand-navy hover:bg-gray-50 text-xs font-semibold rounded-lg shadow-xs transition">
+                    class="inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-300 text-gray-600 hover:text-brand-navy hover:bg-gray-50 text-xs font-semibold rounded-lg shadow-sm transition shrink-0 w-full sm:w-auto">
                     <i class="fas fa-list text-xs" aria-hidden="true"></i>
                     Ver Listado
                 </a>
@@ -84,30 +84,31 @@
                             <button type="button" 
                                     @click="seleccionarAsignacion(item)"
                                     class="w-full text-left p-3.5 hover:bg-gray-50 transition-colors flex items-center justify-between">
-                                <div class="flex items-start gap-3">
+                                <div class="flex items-start gap-3 min-w-0 flex-1">
                                     <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs"
                                          :class="item.tipo === 'dispositivo' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-amber-50 text-amber-700 border border-amber-200'">
                                         <i :class="item.tipo === 'dispositivo' ? 'fas fa-laptop' : 'fas fa-chair'"></i>
                                     </div>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-xs font-bold text-gray-900" x-text="item.destinatario"></span>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                            <span class="text-xs font-bold text-gray-900 truncate" x-text="item.destinatario"></span>
                                             <span x-show="item.colaborador_codigo" class="text-[10px] font-mono font-bold bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded" x-text="item.colaborador_codigo"></span>
-                                            <span class="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                                            <span class="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0"
                                                   :class="item.es_area_comun ? 'bg-amber-50 text-amber-800' : 'bg-gray-100 text-gray-600'"
                                                   x-text="item.es_area_comun ? 'Área Común' : 'Colaborador'"></span>
                                         </div>
                                         <div class="text-[11px] text-gray-500 mt-0.5 flex flex-wrap items-center gap-1.5">
-                                            <span class="font-mono font-semibold text-brand-navy bg-gray-100 px-1.5 py-0.2 rounded border border-gray-200" x-text="item.bien_etiqueta"></span>
-                                            <span class="font-medium text-gray-700" x-text="item.bien_nombre"></span>
+                                            <span class="font-mono font-semibold text-brand-navy bg-gray-100 px-1.5 py-0.2 rounded border border-gray-200 shrink-0" x-text="item.bien_etiqueta"></span>
+                                            <span class="font-medium text-gray-700 break-words" x-text="item.bien_nombre"></span>
                                             <span class="text-gray-400">&bull;</span>
-                                            <span x-text="item.area"></span>
+                                            <span class="truncate" x-text="item.area"></span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="text-right shrink-0 ml-4">
-                                    <span class="text-xs font-semibold text-brand-navy bg-brand-navy-50 px-2.5 py-1 rounded-md border border-brand-navy/10 hover:bg-brand-navy hover:text-white transition">
-                                        Seleccionar &rarr;
+                                <div class="text-right shrink-0 ml-2 sm:ml-4">
+                                    <span class="text-[11px] sm:text-xs font-semibold text-brand-navy bg-brand-navy-50 px-2 sm:px-2.5 py-1 rounded-md border border-brand-navy/10 hover:bg-brand-navy hover:text-white transition">
+                                        <span class="hidden sm:inline">Seleccionar &rarr;</span>
+                                        <span class="sm:hidden"><i class="fas fa-chevron-right text-[10px]"></i></span>
                                     </span>
                                 </div>
                             </button>
@@ -135,20 +136,20 @@
                               x-text="asignacionSeleccionada?.tipo_label"></span>
                     </div>
 
-                    <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+                    <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Etiqueta / Placa</span>
                             <span class="text-xs font-mono font-bold text-brand-navy" x-text="asignacionSeleccionada?.bien_etiqueta"></span>
                         </div>
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs sm:col-span-2 md:col-span-1">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm sm:col-span-2 lg:col-span-1">
                             <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Elemento / Bien</span>
                             <span class="text-xs font-semibold text-gray-900 truncate block" x-text="asignacionSeleccionada?.bien_nombre"></span>
                         </div>
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Categoría</span>
                             <span class="text-xs font-medium text-gray-700 truncate block" x-text="asignacionSeleccionada?.bien_categoria"></span>
                         </div>
-                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                             <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Estado al Asignar</span>
                             <span class="text-xs font-medium text-gray-600 block mt-0.5" x-text="asignacionSeleccionada?.bien_estado"></span>
                         </div>
@@ -259,16 +260,16 @@
                 </div>
 
                 {{-- Botones de pie --}}
-                <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+                <div class="pt-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
                     <a href="{{ route('devoluciones.index') }}" 
-                       class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition">
+                       class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 transition w-full sm:w-auto">
                         Cancelar
                     </a>
 
                     <button type="submit" 
                             :disabled="!asignacionSeleccionada"
-                            :class="!asignacionSeleccionada ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-brand-navy hover:bg-brand-navy-800'"
-                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-semibold text-white shadow-xs focus:ring-2 focus:ring-brand-gold transition">
+                            :class="!asignacionSeleccionada ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-brand-navy hover:bg-brand-navy-700'"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-semibold text-white shadow-sm focus:ring-2 focus:ring-brand-gold transition w-full sm:w-auto">
                         <i class="fas fa-check text-xs"></i>
                         Confirmar y Emitir Acta
                     </button>

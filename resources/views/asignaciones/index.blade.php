@@ -6,7 +6,7 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Gestión de Asignaciones</h1>
                 <p class="mt-1 text-sm text-gray-500">Control de bienes institucionales actualmente en uso y custodia</p>
             </div>
-            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
+            <div class="flex flex-wrap xl:flex-nowrap items-center gap-2 sm:gap-2.5 shrink-0 pb-1 xl:pb-0">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroAsignacionesForm'); if (f) { const oldAction = f.action; f.action = '{{ route('asignaciones.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('asignaciones.exportar', request()->query()) }}'; }"
                     class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer whitespace-nowrap shrink-0"
@@ -34,73 +34,107 @@
             </div>
         </div>
 
-        {{-- Tarjetas de métricas rápidas (Inventario activo) --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {{-- Tarjetas de métricas rápidas (Inventario activo) - 2x2 en móvil con títulos legibles --}}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {{-- Activas en uso --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Activas en Uso</p>
-                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($totalActivas) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                        <i class="fas fa-hand-holding text-lg" aria-hidden="true"></i>
+            <div class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight min-h-[2rem] flex items-center">
+                        Activas en Uso
+                    </p>
+                    <div class="mt-1 sm:mt-2 flex items-center justify-between">
+                        <p class="text-xl sm:text-2xl font-bold text-brand-navy">{{ number_format($totalActivas) }}</p>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i class="fas fa-hand-holding text-sm sm:text-lg" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Bienes bajo custodia</span>
+                <div class="mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center gap-1.5 text-[10px] sm:text-xs text-emerald-700 font-medium">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span class="truncate">Bienes bajo custodia</span>
                 </div>
             </div>
 
             {{-- Dispositivos Activos --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dispositivos Activos</p>
-                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($totalDispositivos) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                        <i class="fas fa-laptop text-lg" aria-hidden="true"></i>
+            <div class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight min-h-[2rem] flex items-center">
+                        Dispositivos Activos
+                    </p>
+                    <div class="mt-1 sm:mt-2 flex items-center justify-between">
+                        <p class="text-xl sm:text-2xl font-bold text-brand-navy">{{ number_format($totalDispositivos) }}</p>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <i class="fas fa-laptop text-sm sm:text-lg" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500">Equipos de computación y red</p>
+                <p class="mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 text-[10px] sm:text-xs text-gray-500 truncate">
+                    Equipos computación y red
+                </p>
             </div>
 
             {{-- Mobiliario Activo --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mobiliario Activo</p>
-                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($totalMobiliario) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                        <i class="fas fa-chair text-lg" aria-hidden="true"></i>
+            <div class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight min-h-[2rem] flex items-center">
+                        Mobiliario Activo
+                    </p>
+                    <div class="mt-1 sm:mt-2 flex items-center justify-between">
+                        <p class="text-xl sm:text-2xl font-bold text-brand-navy">{{ number_format($totalMobiliario) }}</p>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                            <i class="fas fa-chair text-sm sm:text-lg" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500">Muebles y estaciones de trabajo</p>
+                <p class="mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 text-[10px] sm:text-xs text-gray-500 truncate">
+                    Muebles y estaciones trabajo
+                </p>
             </div>
 
             {{-- Custodios / Colaboradores --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Colaboradores con Bienes</p>
-                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($totalCustodios) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-                        <i class="fas fa-users text-lg" aria-hidden="true"></i>
+            <div class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight min-h-[2rem] flex items-center">
+                        Colaboradores con Bienes
+                    </p>
+                    <div class="mt-1 sm:mt-2 flex items-center justify-between">
+                        <p class="text-xl sm:text-2xl font-bold text-brand-navy">{{ number_format($totalCustodios) }}</p>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                            <i class="fas fa-users text-sm sm:text-lg" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500">Personal con actas activas</p>
+                <p class="mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 text-[10px] sm:text-xs text-gray-500 truncate">
+                    Personal con actas activas
+                </p>
             </div>
         </div>
 
-        {{-- Formulario de búsqueda y filtros --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        @php
+            $hayFiltros = request()->anyFilled(['buscar', 'tipo', 'sede', 'fecha_inicio', 'fecha_fin']) || (request('estado_acta', 'activas') !== 'activas');
+        @endphp
+
+        {{-- Formulario de búsqueda y filtros (colapsable en móvil) --}}
+        <div x-data="{ mostrarFiltros: @js((bool) $hayFiltros) }"
+            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <button type="button" @click="mostrarFiltros = !mostrarFiltros"
+                :aria-expanded="mostrarFiltros.toString()"
+                class="sm:hidden w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-brand-navy bg-gray-50/70 hover:bg-gray-100/70 transition">
+                <span class="inline-flex items-center gap-2">
+                    <i class="fas fa-sliders-h text-brand-gold text-xs" aria-hidden="true"></i>
+                    Filtros de búsqueda
+                    @if ($hayFiltros)
+                        <span class="px-2 py-0.5 text-[11px] rounded-full bg-brand-gold text-brand-navy font-bold">Activos</span>
+                    @endif
+                </span>
+                <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform duration-200"
+                    :class="{ 'rotate-180': mostrarFiltros }" aria-hidden="true"></i>
+            </button>
+
             <form id="filtroAsignacionesForm" method="GET" action="{{ route('asignaciones.index') }}"
                 x-data="{ fechaInicio: '{{ request('fecha_inicio') }}', fechaFin: '{{ request('fecha_fin') }}' }"
-                class="space-y-3">
+                :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
+                class="{{ $hayFiltros ? 'block' : 'hidden' }} sm:block p-4 sm:p-5 space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-end">
                     {{-- Buscador general --}}
                     <div>
@@ -172,15 +206,15 @@
                 </div>
 
                 {{-- Botones de acción claramente visibles --}}
-                <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-3 border-t border-gray-100">
                     <a href="{{ route('asignaciones.index') }}"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition shadow-2xs"
+                        class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition shadow-sm w-full sm:w-auto"
                         title="Restablecer todos los filtros">
                         <i class="fas fa-undo text-[11px] text-gray-500" aria-hidden="true"></i>
                         <span>Limpiar</span>
                     </a>
                     <button type="submit"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition cursor-pointer"
+                        class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold transition cursor-pointer w-full sm:w-auto"
                         title="Aplicar filtros de búsqueda">
                         <i class="fas fa-filter text-[11px]" aria-hidden="true"></i>
                         <span>Filtrar</span>
@@ -189,7 +223,7 @@
             </form>
         </div>
 
-        {{-- Tabla de asignaciones activas --}}
+        {{-- Tabla y Tarjetas de Asignaciones --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             @if ($asignaciones->total() > 0)
                 <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
@@ -207,7 +241,8 @@
                 </div>
             @endif
 
-            <div class="overflow-x-auto">
+            {{-- Vista de Tabla para Escritorio y Tablet (md+) --}}
+            <div class="hidden md:block overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
                     <thead class="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider">
                         <tr>
@@ -323,7 +358,7 @@
                                             {{-- Botón rápido: Devolver Bien --}}
                                             @can('admin')
                                                 <a href="{{ route('devoluciones.create', ['asignacion_id' => $item->id]) }}"
-                                                    class="inline-flex items-center justify-center px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded hover:bg-emerald-600 hover:text-white text-xs font-semibold shadow-2xs transition"
+                                                    class="inline-flex items-center justify-center px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-300 rounded hover:bg-emerald-600 hover:text-white text-xs font-semibold shadow-sm transition"
                                                     title="Registrar Devolución de este bien">
                                                     <i class="fas fa-undo text-xs mr-1" aria-hidden="true"></i>
                                                     Devolver
@@ -380,7 +415,7 @@
                                     @if (request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']))
                                         <div class="mt-3">
                                             <a href="{{ route('asignaciones.index') }}"
-                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-brand-navy hover:bg-gray-50 transition shadow-2xs">
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-brand-navy hover:bg-gray-50 transition shadow-sm">
                                                 <i class="fas fa-undo text-[11px]" aria-hidden="true"></i> Limpiar filtros y ver todas
                                             </a>
                                         </div>
@@ -390,6 +425,121 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Vista de Tarjetas para Móvil (< md) --}}
+            <div class="md:hidden divide-y divide-gray-100">
+                @forelse ($asignaciones as $item)
+                    @php
+                        $referencia = $item->tipo === 'mobiliario' ? $item->mobiliario : $item->dispositivo;
+                    @endphp
+                    <div class="p-4 space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                                    <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-brand-navy-50 text-brand-navy border border-brand-navy/10 shrink-0">
+                                        #{{ $item->id }}
+                                    </span>
+                                    <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-brand-navy border border-gray-200 shrink-0">
+                                        {{ $referencia->etiqueta ?? 'Sin Placa' }}
+                                    </span>
+                                    @if ($item->tipo === 'dispositivo')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 shrink-0">
+                                            <i class="fas fa-laptop text-[9px]" aria-hidden="true"></i> Dispositivo
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20 shrink-0">
+                                            <i class="fas fa-chair text-[9px]" aria-hidden="true"></i> Mobiliario
+                                        </span>
+                                    @endif
+                                </div>
+                                <h3 class="text-sm font-bold text-gray-900 break-words mt-1">
+                                    {{ $referencia->nombre ?? 'N/A' }}
+                                </h3>
+                                @if ($item->tipo === 'dispositivo' && !empty($referencia?->n_serie))
+                                    <p class="text-[11px] font-mono text-gray-500 break-all mt-0.5">S/N: {{ $referencia->n_serie }}</p>
+                                @endif
+                            </div>
+                            @if ($item->trashed())
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20 shrink-0">
+                                    <i class="fas fa-ban text-[9px]" aria-hidden="true"></i> Anulada
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 shrink-0">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Activa
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- Info del Custodio y Ubicación --}}
+                        <div class="bg-gray-50/80 rounded-lg p-2.5 text-xs space-y-1.5 border border-gray-100">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-400 text-xs shrink-0"><i class="fas fa-user-circle" aria-hidden="true"></i></span>
+                                @if ($item->es_area_comun)
+                                    <span class="font-semibold text-amber-900">Área Común (Uso Compartido)</span>
+                                @elseif ($item->empleado)
+                                    <span class="font-semibold text-brand-navy truncate">{{ $item->empleado->nombre_completo }}</span>
+                                    <span class="text-gray-400 font-mono text-[11px] shrink-0">({{ $item->empleado->codigo }})</span>
+                                @else
+                                    <span class="text-gray-400 italic">Sin custodio</span>
+                                @endif
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-200/50">
+                                <span class="truncate"><i class="fas fa-map-marker-alt text-gray-400 mr-1" aria-hidden="true"></i>{{ $item->area }}</span>
+                                <span class="shrink-0"><i class="far fa-calendar-alt text-gray-400 mr-1" aria-hidden="true"></i>{{ $item->fecha_entrega?->format('d/m/Y') ?? 'S/F' }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Acciones en móvil con botones táctiles cómodos --}}
+                        <div class="flex items-center justify-between gap-2 pt-1 border-t border-gray-50">
+                            <div class="flex items-center gap-1.5">
+                                <a href="{{ route('asignaciones.show', $item->id) }}"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition"
+                                    title="Ver detalle del acta">
+                                    <i class="fas fa-eye text-[11px]" aria-hidden="true"></i> Ver
+                                </a>
+                                <a href="{{ route('asignaciones.pdf', $item->id) }}" target="_blank"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 text-xs font-semibold hover:bg-purple-100 transition"
+                                    title="Descargar PDF">
+                                    <i class="fas fa-file-pdf text-[11px]" aria-hidden="true"></i> PDF
+                                </a>
+                            </div>
+
+                            @can('admin')
+                                @if (! $item->trashed())
+                                    <div class="flex items-center gap-1.5">
+                                        <a href="{{ route('devoluciones.create', ['asignacion_id' => $item->id]) }}"
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition shadow-sm"
+                                            title="Registrar devolución de este bien">
+                                            <i class="fas fa-undo text-[10px]" aria-hidden="true"></i> Devolver
+                                        </a>
+
+                                        @if ($item->puedeSerAnuladaPor(auth()->user()))
+                                            <button type="button"
+                                                class="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition btn-anular"
+                                                title="Anular asignación"
+                                                data-id="{{ $item->id }}"
+                                                data-nombre="{{ $referencia->nombre ?? 'Bien' }}"
+                                                data-etiqueta="{{ $referencia->etiqueta ?? 'Sin etiqueta' }}">
+                                                <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                @endif
+                            @endcan
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-8 text-center">
+                        <div class="mx-auto w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-2">
+                            <i class="fas fa-inbox text-lg" aria-hidden="true"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-gray-700">No se encontraron asignaciones activas</p>
+                        <p class="text-[11px] text-gray-400 mt-1">
+                            {{ request()->anyFilled(['buscar', 'tipo', 'fecha_inicio', 'fecha_fin']) ? 'Pruebe ajustando los filtros.' : 'No hay asignaciones registradas.' }}
+                        </p>
+                    </div>
+                @endforelse
             </div>
 
             {{-- Paginación --}}

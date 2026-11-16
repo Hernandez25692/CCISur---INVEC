@@ -75,15 +75,17 @@ class DispositivoController extends Controller
             };
         }
 
-        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado', 'disponibilidad', 'incluir_bajas', 'en_taller']))
+        $hayFiltrosFormulario = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado', 'disponibilidad', 'incluir_bajas']))
             ->filter(fn ($valor): bool => filled($valor) && $valor !== '0')
             ->isNotEmpty();
+
+        $hayFiltros = $hayFiltrosFormulario || $request->boolean('en_taller');
 
         $dispositivos = $query->latest('id')->paginate(15)->withQueryString();
         $inactivosCount = Dispositivo::onlyTrashed()->count();
         $enTallerCount = Dispositivo::where('estado', 'En reparación / En revisión')->count();
 
-        return view('dispositivos.index', compact('dispositivos', 'hayFiltros', 'inactivosCount', 'enTallerCount'));
+        return view('dispositivos.index', compact('dispositivos', 'hayFiltros', 'hayFiltrosFormulario', 'inactivosCount', 'enTallerCount'));
     }
 
     // Exportar inventario actual de dispositivos a Excel

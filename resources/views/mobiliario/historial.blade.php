@@ -94,7 +94,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100">
-                <div class="px-3.5 py-2 rounded-lg bg-brand-navy-50 border border-brand-navy-200/50 flex items-center gap-2.5">
+                <div class="px-3.5 py-2 rounded-lg bg-brand-navy-50 border border-brand-navy-100 flex items-center gap-2.5">
                     <i class="fas fa-hand-holding text-brand-navy text-xs" aria-hidden="true"></i>
                     <div class="text-xs">
                         <span class="text-brand-navy font-medium">Asignaciones totales:</span>
@@ -167,13 +167,13 @@
                             placeholder="Ej. Claudia, EM001 o Contabilidad">
                     </div>
 
-                    <div class="flex items-end justify-end gap-2.5">
+                    <div class="flex flex-col-reverse sm:flex-row sm:items-end sm:justify-end gap-2.5">
                         <a href="{{ route('mobiliario.historial', $mobiliario->id) }}"
-                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
+                            class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition w-full sm:w-auto">
                             Limpiar
                         </a>
                         <button type="submit"
-                            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition w-full sm:w-auto">
                             <i class="fas fa-search text-xs" aria-hidden="true"></i>
                             Filtrar
                         </button>
@@ -310,19 +310,19 @@
                     @foreach ($asignaciones as $item)
                         <div class="p-4 space-y-3">
                             <div class="flex items-start justify-between gap-2">
-                                <div>
+                                <div class="min-w-0 flex-1">
                                     @if ($item->es_area_comun)
-                                        <span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-800 text-xs font-semibold rounded mb-1">
+                                        <span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-800 text-xs font-semibold rounded mb-1 shrink-0">
                                             <i class="fas fa-building text-[10px] mr-1" aria-hidden="true"></i>Área Común
                                         </span>
-                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->area }}</h3>
-                                        <p class="text-xs text-amber-700 font-medium">Uso Compartido Institucional</p>
+                                        <h3 class="text-sm font-bold text-gray-900 break-words">{{ $item->area }}</h3>
+                                        <p class="text-xs text-amber-700 font-medium break-words">Uso Compartido Institucional</p>
                                     @else
-                                        <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1">
+                                        <span class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy text-xs font-mono font-medium rounded mb-1 shrink-0">
                                             {{ $item->empleado?->codigo ?? '' }}
                                         </span>
-                                        <h3 class="text-sm font-bold text-gray-900">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</h3>
-                                        <p class="text-xs text-gray-500">Área: {{ $item->area }}</p>
+                                        <h3 class="text-sm font-bold text-gray-900 break-words">{{ $item->empleado?->nombre_completo ?? 'N/A' }}</h3>
+                                        <p class="text-xs text-gray-500 break-words">Área: {{ $item->area }}</p>
                                     @endif
                                 </div>
                                 @if ($item->devolucion)

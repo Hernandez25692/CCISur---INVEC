@@ -6,7 +6,7 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Actas de Devolución</h1>
                 <p class="mt-1 text-sm text-gray-500">Control formal de recepciones, estado físico del bien y finiquito de responsabilidad</p>
             </div>
-            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
+            <div class="flex flex-wrap xl:flex-nowrap items-center gap-2 sm:gap-2.5 shrink-0">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroDevolucionesForm'); if (f) { const oldAction = f.action; f.action = '{{ route('devoluciones.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('devoluciones.exportar', request()->query()) }}'; }"
                     class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer whitespace-nowrap shrink-0"
@@ -53,65 +53,79 @@
             </div>
         @endif
 
-        {{-- Tarjetas de Métricas ejecutivas --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {{-- Tarjetas de Métricas ejecutivas (2x2 en móvil con títulos legibles) --}}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {{-- Total Devoluciones --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Devoluciones</p>
-                        <p class="text-2xl font-bold text-brand-navy mt-1">{{ number_format($metricas['total']) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-lg bg-brand-navy/10 text-brand-navy flex items-center justify-center">
-                        <i class="fas fa-file-invoice text-lg" aria-hidden="true"></i>
+            <div class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight min-h-[2rem] flex items-center">
+                        Total Devoluciones
+                    </p>
+                    <div class="mt-1 sm:mt-2 flex items-center justify-between">
+                        <p class="text-xl sm:text-2xl font-bold text-brand-navy">{{ number_format($metricas['total']) }}</p>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-brand-navy/10 text-brand-navy flex items-center justify-center shrink-0">
+                            <i class="fas fa-file-invoice text-sm sm:text-lg" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500">Actas de entrega formal emitidas</p>
+                <p class="mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 text-[10px] sm:text-xs text-gray-500 truncate">
+                    Actas de entrega emitidas
+                </p>
             </div>
 
             {{-- Devoluciones Este Mes --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Devoluciones del Mes</p>
-                        <p class="text-2xl font-bold text-blue-600 mt-1">{{ number_format($metricas['mes']) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                        <i class="fas fa-calendar-check text-lg" aria-hidden="true"></i>
+            <div class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight min-h-[2rem] flex items-center">
+                        Devoluciones del Mes
+                    </p>
+                    <div class="mt-1 sm:mt-2 flex items-center justify-between">
+                        <p class="text-xl sm:text-2xl font-bold text-blue-600">{{ number_format($metricas['mes']) }}</p>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <i class="fas fa-calendar-check text-sm sm:text-lg" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-gray-500">Registradas durante el mes en curso</p>
+                <p class="mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 text-[10px] sm:text-xs text-gray-500 truncate">
+                    Registradas mes en curso
+                </p>
             </div>
 
             {{-- Recibidos Operativos --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Recibidos Operativos</p>
-                        <p class="text-2xl font-bold text-emerald-600 mt-1">{{ number_format($metricas['buen_estado']) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                        <i class="fas fa-check-double text-lg" aria-hidden="true"></i>
+            <div class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight min-h-[2rem] flex items-center">
+                        Recibidos Operativos
+                    </p>
+                    <div class="mt-1 sm:mt-2 flex items-center justify-between">
+                        <p class="text-xl sm:text-2xl font-bold text-emerald-600">{{ number_format($metricas['buen_estado']) }}</p>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i class="fas fa-check-double text-sm sm:text-lg" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>Disponibles en inventario</span>
+                <div class="mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center gap-1.5 text-[10px] sm:text-xs text-emerald-700 font-medium">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span class="truncate">Disponibles inventario</span>
                 </div>
             </div>
 
             {{-- Dañados o En Revisión --}}
-            <div class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dañados / En Revisión</p>
-                        <p class="text-2xl font-bold text-red-600 mt-1">{{ number_format($metricas['no_asignables']) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
-                        <i class="fas fa-tools text-lg" aria-hidden="true"></i>
+            <div class="p-3 sm:p-4 rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col justify-between">
+                <div>
+                    <p class="text-[11px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight min-h-[2rem] flex items-center">
+                        Dañados / En Revisión
+                    </p>
+                    <div class="mt-1 sm:mt-2 flex items-center justify-between">
+                        <p class="text-xl sm:text-2xl font-bold text-red-600">{{ number_format($metricas['no_asignables']) }}</p>
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                            <i class="fas fa-tools text-sm sm:text-lg" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-red-600 font-medium">No aplican para asignación</p>
+                <p class="mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 text-[10px] sm:text-xs text-red-600 font-medium truncate">
+                    No aplican para asignación
+                </p>
             </div>
         </div>
 
@@ -232,7 +246,7 @@
                         <span>Limpiar</span>
                     </a>
                     <button type="submit"
-                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-xs hover:bg-brand-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-gold transition cursor-pointer"
+                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-sm hover:bg-brand-navy-700 focus:outline-none focus:ring-2 focus:ring-brand-gold transition cursor-pointer"
                         title="Aplicar filtros de búsqueda">
                         <i class="fas fa-filter text-[11px]" aria-hidden="true"></i>
                         <span>Filtrar</span>
@@ -259,7 +273,8 @@
                 </div>
             @endif
 
-            <div class="overflow-x-auto">
+            {{-- Tabla para pantallas medianas y grandes (>= md) --}}
+            <div class="hidden md:block overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
                     <thead class="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider">
                         <tr>
@@ -447,6 +462,129 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Tarjetas para pantallas móviles (< md) --}}
+            <div class="md:hidden divide-y divide-gray-100">
+                @forelse ($devoluciones as $dev)
+                    @php
+                        $asig = $dev->asignacion;
+                        $item = $asig ? ($asig->tipo === \App\Models\Asignacion::TIPO_MOBILIARIO 
+                            ? ($asig->mobiliario ?? \App\Models\Mobiliario::withTrashed()->find($asig->id_referencia)) 
+                            : ($asig->dispositivo ?? \App\Models\Dispositivo::withTrashed()->find($asig->id_referencia))) : null;
+
+                        $correlativo = 'DEV-INV-' . ($dev->fecha_devolucion ? $dev->fecha_devolucion->format('Y') : date('Y')) . '-' . str_pad((string) $dev->id, 4, '0', STR_PAD_LEFT);
+                        $clasesEstado = \App\Models\Dispositivo::ESTADOS_CLASES[$dev->estado_devuelto] ?? 'bg-gray-50 text-gray-700 ring-gray-600/20';
+                    @endphp
+                    <div class="p-4 space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                                    <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-brand-navy-50 text-brand-navy border border-brand-navy/10 shrink-0">
+                                        {{ $correlativo }}
+                                    </span>
+                                    <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-brand-navy border border-gray-200 shrink-0">
+                                        {{ $item->etiqueta ?? 'Sin Placa' }}
+                                    </span>
+                                    @if ($asig && $asig->tipo === 'dispositivo')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 shrink-0">
+                                            <i class="fas fa-laptop text-[9px]" aria-hidden="true"></i> Dispositivo
+                                        </span>
+                                    @elseif ($asig && $asig->tipo === 'mobiliario')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20 shrink-0">
+                                            <i class="fas fa-chair text-[9px]" aria-hidden="true"></i> Mobiliario
+                                        </span>
+                                    @endif
+                                </div>
+                                <h3 class="text-sm font-bold text-gray-900 break-words mt-1">
+                                    {{ $item->nombre ?? 'Bien Devuelto' }}
+                                </h3>
+                                @if ($asig && $asig->tipo === 'dispositivo' && !empty($item?->marca))
+                                    <p class="text-[11px] text-gray-500 break-words mt-0.5">
+                                        {{ $item->marca }} {{ $item->modelo ?? '' }}
+                                    </p>
+                                @endif
+                            </div>
+                            @if ($dev->trashed())
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20 shrink-0">
+                                    <i class="fas fa-ban text-[9px]" aria-hidden="true"></i> Anulada
+                                </span>
+                            @else
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium ring-1 ring-inset {{ $clasesEstado }} shrink-0">
+                                    {{ $dev->estado_devuelto ?? 'No especificado' }}
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- Custodio Saliente y Fecha --}}
+                        <div class="bg-gray-50/80 rounded-lg p-2.5 text-xs space-y-1.5 border border-gray-100">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-400 text-xs shrink-0"><i class="fas fa-user-circle" aria-hidden="true"></i></span>
+                                @if ($asig && $asig->es_area_comun)
+                                    <span class="font-semibold text-amber-900">Área Común: {{ $asig->area }}</span>
+                                @elseif ($asig && $asig->empleado)
+                                    <span class="font-semibold text-brand-navy truncate">{{ $asig->empleado->nombre_completo }}</span>
+                                    <span class="text-gray-400 font-mono text-[11px] shrink-0">({{ $asig->empleado->codigo }})</span>
+                                @else
+                                    <span class="text-gray-400 italic">Asignación no disponible</span>
+                                @endif
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-200/50">
+                                <span class="truncate"><i class="fas fa-map-marker-alt text-gray-400 mr-1" aria-hidden="true"></i>{{ $asig->area ?? 'Sin área' }}</span>
+                                <span class="shrink-0"><i class="far fa-calendar-alt text-gray-400 mr-1" aria-hidden="true"></i>{{ $dev->fecha_devolucion ? $dev->fecha_devolucion->format('d/m/Y') : 'S/F' }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Acciones en móvil con botones cómodos --}}
+                        <div class="flex items-center justify-between gap-2 pt-1 border-t border-gray-50">
+                            <div class="flex items-center gap-1.5">
+                                <a href="{{ route('devoluciones.show', $dev->id) }}"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition"
+                                    title="Ver detalle del acta">
+                                    <i class="fas fa-eye text-[11px]" aria-hidden="true"></i> Ver
+                                </a>
+                                <a href="{{ route('devoluciones.pdf', $dev->id) }}" target="_blank"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 text-xs font-semibold hover:bg-purple-100 transition"
+                                    title="Descargar PDF">
+                                    <i class="fas fa-file-pdf text-[11px]" aria-hidden="true"></i> PDF
+                                </a>
+                            </div>
+
+                            @can('admin')
+                                @if (! $dev->trashed())
+                                    <div>
+                                        @if ($dev->puedeSerAnuladaPor(auth()->user()))
+                                            <button type="button"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-red-600 hover:bg-red-50 text-xs font-semibold transition btn-anular"
+                                                title="Anular acta de devolución"
+                                                data-id="{{ $dev->id }}"
+                                                data-correlativo="{{ $correlativo }}"
+                                                data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
+                                                data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}">
+                                                <i class="fas fa-trash-alt text-xs" aria-hidden="true"></i> Anular
+                                            </button>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 text-gray-300 text-xs cursor-not-allowed"
+                                                title="{{ $dev->motivoNoAnulable(auth()->user()) ?? 'Plazo de anulación expirado' }}">
+                                                <i class="fas fa-lock text-xs" aria-hidden="true"></i> Bloqueada
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
+                            @endcan
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-8 text-center">
+                        <div class="mx-auto w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-2">
+                            <i class="fas fa-inbox text-lg" aria-hidden="true"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-gray-700">No hay actas de devolución registradas</p>
+                        <p class="text-[11px] text-gray-400 mt-1">
+                            {{ $hayFiltros ? 'No se encontraron actas con los filtros aplicados.' : 'No hay registros disponibles.' }}
+                        </p>
+                    </div>
+                @endforelse
             </div>
 
             {{-- Paginación --}}

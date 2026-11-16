@@ -6,7 +6,7 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Inventario de Dispositivos</h1>
                 <p class="mt-1 text-sm text-gray-500">Gestión y control de equipos tecnológicos e informáticos institucionales</p>
             </div>
-            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
+            <div class="flex flex-wrap xl:flex-nowrap items-center gap-2 sm:gap-2.5 shrink-0 pb-1 xl:pb-0">
                 <button type="button"
                     onclick="const f = document.getElementById('filtroDispositivosForm'); if (f) { const oldAction = f.action; f.action = '{{ route('dispositivos.exportar') }}'; f.submit(); f.action = oldAction; } else { window.location.href = '{{ route('dispositivos.exportar', request()->query()) }}'; }"
                     class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition cursor-pointer whitespace-nowrap shrink-0"
@@ -46,7 +46,7 @@
         </div>
 
         <!-- Filtros de búsqueda (colapsables en móvil, visibles siempre desde sm+) -->
-        <div x-data="{ mostrarFiltros: @js((bool) ($hayFiltros ?? false)) }"
+        <div x-data="{ mostrarFiltros: @js((bool) ($hayFiltrosFormulario ?? false)) }"
             class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <button type="button" @click="mostrarFiltros = !mostrarFiltros"
                 :aria-expanded="mostrarFiltros.toString()"
@@ -54,7 +54,7 @@
                 <span class="inline-flex items-center gap-2">
                     <i class="fas fa-sliders-h text-brand-gold text-xs" aria-hidden="true"></i>
                     Filtros de búsqueda
-                    @if ($hayFiltros ?? false)
+                    @if ($hayFiltrosFormulario ?? false)
                         <span class="px-2 py-0.5 text-[11px] rounded-full bg-brand-gold text-brand-navy font-bold">Activos</span>
                     @endif
                 </span>
@@ -64,7 +64,7 @@
 
             <form id="filtroDispositivosForm" method="GET" action="{{ route('dispositivos.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
-                class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
+                class="{{ ($hayFiltrosFormulario ?? false) ? 'block' : 'hidden' }} sm:block p-5">
                 @if (request()->boolean('en_taller'))
                     <input type="hidden" name="en_taller" value="1">
                 @endif
@@ -185,7 +185,7 @@
                             </span>
                         @endif
                     </div>
-                    @if ($hayFiltros ?? false)
+                    @if ($hayFiltrosFormulario ?? false)
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-gold-50 text-brand-navy font-medium">
                             <i class="fas fa-filter text-[10px]" aria-hidden="true"></i>
                             Filtros aplicados
@@ -311,28 +311,26 @@
                                     <td class="px-4 py-3 whitespace-nowrap text-right font-medium">
                                         <div class="inline-flex items-center justify-end gap-1.5">
                                             <a href="{{ route('dispositivos.historial', $item->id) }}"
-                                                class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
+                                                class="p-2 sm:p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
                                                 title="Hoja de vida / Historial de asignaciones" aria-label="Historial de {{ $item->nombre }}">
                                                 <i class="fas fa-history text-xs text-brand-gold-600" aria-hidden="true"></i>
                                             </a>
 
                                             @can('admin')
                                                 <a href="{{ route('dispositivos.edit', $item->id) }}"
-                                                    class="p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
+                                                    class="p-2 sm:p-1.5 rounded-lg text-brand-navy hover:bg-brand-navy-50 transition-colors"
                                                     title="Editar" aria-label="Editar {{ $item->nombre }}">
                                                     <i class="fas fa-pen text-xs" aria-hidden="true"></i>
                                                 </a>
 
-
-
                                                 @if ($item->puede_asignarse)
                                                     <a href="{{ route('asignaciones.create', ['tipo' => 'dispositivo', 'id' => $item->id]) }}"
-                                                        class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                                        class="p-2 sm:p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors"
                                                         title="Asignar dispositivo" aria-label="Asignar {{ $item->nombre }}">
                                                         <i class="fas fa-plus-circle text-sm" aria-hidden="true"></i>
                                                     </a>
                                                 @else
-                                                    <span class="p-1.5 rounded-lg text-brand-gold-600"
+                                                    <span class="p-2 sm:p-1.5 rounded-lg text-brand-gold-600"
                                                         title="{{ $item->disponibilidad_real === \App\Models\Dispositivo::DISPONIBILIDAD_NO_APLICA ? 'No aplica para asignación' : 'Actualmente asignado' }}"
                                                         aria-label="{{ $item->disponibilidad_real === \App\Models\Dispositivo::DISPONIBILIDAD_NO_APLICA ? 'No aplica para asignación' : 'Actualmente asignado' }}">
                                                         <i class="fas fa-info-circle text-sm" aria-hidden="true"></i>
@@ -352,32 +350,32 @@
                     @foreach ($dispositivos as $item)
                         <div class="p-4 space-y-3">
                             <div class="flex items-start justify-between gap-2">
-                                <div>
+                                <div class="min-w-0 flex-1">
                                     <div class="flex flex-wrap items-center gap-1.5 mb-1">
                                         <a href="{{ route('dispositivos.historial', $item->id) }}"
-                                            class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy hover:bg-brand-navy hover:text-brand-gold text-xs font-mono font-medium rounded transition-colors"
+                                            class="inline-block px-2 py-0.5 bg-brand-navy-50 text-brand-navy hover:bg-brand-navy hover:text-brand-gold text-xs font-mono font-medium rounded transition-colors shrink-0"
                                             title="Ver hoja de vida y especificaciones">
                                             {{ $item->etiqueta ?? 'N/A' }}
                                         </a>
-                                        <span class="text-xs font-mono text-gray-500">Serie: {{ $item->n_serie ?? 'Sin serie' }}</span>
+                                        <span class="text-xs font-mono text-gray-500 break-all">Serie: {{ $item->n_serie ?? 'Sin serie' }}</span>
                                     </div>
                                     <div class="flex items-center gap-1.5 flex-wrap">
                                         <a href="{{ route('dispositivos.historial', $item->id) }}"
-                                            class="text-sm font-bold text-brand-navy hover:text-brand-gold-700 transition"
+                                            class="text-sm font-bold text-brand-navy hover:text-brand-gold-700 transition break-words"
                                             title="Ver hoja de vida y detalles completos">
                                             <span>{{ $item->nombre }}</span>
                                         </a>
                                         @if ($item->trashed())
-                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800 shrink-0">
                                                 Dado de baja
                                             </span>
                                         @endif
                                     </div>
-                                    <p class="text-xs text-gray-500">{{ $item->tipo }} · {{ $item->marca }} {{ $item->modelo }} · {{ $item->ubicacion }}</p>
+                                    <p class="text-xs text-gray-500 break-words mt-0.5">{{ $item->tipo }} · {{ $item->marca }} {{ $item->modelo }} · {{ $item->ubicacion }}</p>
                                     @if ($item->especificaciones_texto)
-                                        <p class="text-[11px] text-gray-600 font-medium mt-1 flex items-center gap-1">
-                                            <i class="fas fa-microchip text-[10px] text-brand-navy" aria-hidden="true"></i>
-                                            {{ $item->especificaciones_texto }}
+                                        <p class="text-[11px] text-gray-600 font-medium mt-1 flex items-center gap-1 min-w-0 break-words">
+                                            <i class="fas fa-microchip text-[10px] text-brand-navy shrink-0" aria-hidden="true"></i>
+                                            <span class="break-words">{{ $item->especificaciones_texto }}</span>
                                         </p>
                                     @endif
                                 </div>
