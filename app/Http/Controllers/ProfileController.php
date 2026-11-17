@@ -26,14 +26,20 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if (! $user->esSuperAdmin()) {
+            abort(403, 'Por políticas de auditoría institucional, únicamente un Superadministrador puede modificar los datos de usuario.');
         }
 
-        $request->user()->actualizado_por = $request->user()->id;
-        $request->user()->save();
+        $user->fill($request->validated());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->actualizado_por = $user->id;
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

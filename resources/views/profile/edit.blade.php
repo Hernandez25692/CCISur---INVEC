@@ -4,7 +4,13 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-brand-navy">Mi Perfil</h1>
-                <p class="mt-1 text-sm text-gray-500">Gestiona la información de tu cuenta institucional y actualiza tus credenciales de acceso</p>
+                <p class="mt-1 text-sm text-gray-500">
+                    @if (auth()->user()->esSuperAdmin())
+                        Gestiona la información de tu cuenta institucional y actualiza tus credenciales de acceso
+                    @else
+                        Actualiza tu contraseña de acceso institucional
+                    @endif
+                </p>
             </div>
             <div>
                 @if (auth()->user()->esSuperAdmin())
@@ -50,63 +56,154 @@
                     </div>
                     <div>
                         <h2 class="text-lg font-semibold text-brand-navy">Información de la Cuenta</h2>
-                        <p class="text-xs text-gray-500">Actualiza tu nombre completo y dirección de correo electrónico</p>
+                        <p class="text-xs text-gray-500">
+                            @if ($user->esSuperAdmin())
+                                Actualiza tu nombre completo y dirección de correo electrónico institucional
+                            @else
+                                Datos institucionales registrados en INVEC (protegidos por auditoría)
+                            @endif
+                        </p>
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('profile.update') }}" class="space-y-5">
-                    @csrf
-                    @method('PATCH')
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <!-- Nombre Completo -->
-                        <div>
-                            <label for="name" class="block text-sm font-semibold text-brand-navy">Nombre Completo</label>
-                            <input type="text" name="name" id="name" value="{{ old('name', $user->name) }}" required
-                                class="mt-1.5 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('name') border-red-500 @enderror">
-                            @error('name')
-                                <p class="text-red-600 text-xs mt-1 font-medium">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Correo Electrónico -->
-                        <div>
-                            <label for="email" class="block text-sm font-semibold text-brand-navy">Correo Electrónico</label>
-                            <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}" required
-                                class="mt-1.5 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('email') border-red-500 @enderror">
-                            @error('email')
-                                <p class="text-red-600 text-xs mt-1 font-medium">{{ $message }}</p>
-                            @enderror
-                        </div>
+                @if ($user->esSuperAdmin())
+                    <!-- Formulario de edición para Superadministrador -->
+                    <div class="mb-5 rounded-xl border border-purple-200 bg-purple-50/60 p-3.5 text-xs text-purple-900 flex items-start gap-2.5">
+                        <i class="fas fa-crown text-amber-500 text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+                        <span class="leading-relaxed">
+                            Como <strong>Superadministrador</strong>, puedes modificar tu nombre y correo en este perfil. Para cambiar el nombre de otros usuarios, hazlo desde el <a href="{{ route('usuarios.index') }}" class="underline font-semibold hover:text-purple-700">panel de Gestión de Usuarios</a>.
+                        </span>
                     </div>
 
-                    <!-- Datos informativos del sistema -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-3 border-t border-gray-100">
-                        <div>
-                            <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol de Permisos</span>
-                            <p class="text-sm font-semibold text-brand-navy mt-1">
-                                {{ $user->rol_nombre }}
+                    <form method="POST" action="{{ route('profile.update') }}" class="space-y-5">
+                        @csrf
+                        @method('PATCH')
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <!-- Nombre Completo -->
+                            <div>
+                                <label for="name" class="block text-sm font-semibold text-brand-navy">Nombre Completo</label>
+                                <input type="text" name="name" id="name" value="{{ old('name', $user->name) }}" required
+                                    class="mt-1.5 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('name') border-red-500 @enderror">
+                                @error('name')
+                                    <p class="text-red-600 text-xs mt-1 font-medium">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Correo Electrónico -->
+                            <div>
+                                <label for="email" class="block text-sm font-semibold text-brand-navy">Correo Electrónico</label>
+                                <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}" required
+                                    class="mt-1.5 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('email') border-red-500 @enderror">
+                                @error('email')
+                                    <p class="text-red-600 text-xs mt-1 font-medium">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Datos informativos del sistema -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-3 border-t border-gray-100">
+                            <div>
+                                <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol de Permisos</span>
+                                <p class="text-sm font-semibold text-brand-navy mt-1">
+                                    {{ $user->rol_nombre }}
+                                </p>
+                                <p class="text-xs text-gray-400 mt-0.5">Control total del sistema institucional.</p>
+                            </div>
+
+                            <div>
+                                <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha de Creación</span>
+                                <p class="text-sm font-semibold text-brand-navy mt-1">
+                                    {{ $user->created_at?->format('d/m/Y h:i A') ?? 'N/A' }}
+                                </p>
+                                <p class="text-xs text-gray-400 mt-0.5">Miembro institucional registrado en INVEC.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end pt-4 border-t border-gray-100">
+                            <button type="submit"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
+                                <i class="fas fa-save text-xs" aria-hidden="true"></i>
+                                Guardar Información
+                            </button>
+                        </div>
+                    </form>
+                @else
+                    <!-- Vista de solo lectura para usuarios regulares (Administrador y Solo Lectura) -->
+                    <div class="mb-5 rounded-xl border border-blue-200 bg-blue-50/70 p-4 text-xs text-blue-900 flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="fas fa-shield-alt text-sm" aria-hidden="true"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="font-semibold text-brand-navy text-sm">Información de identidad protegida por auditoría</p>
+                            <p class="text-gray-600 leading-relaxed">
+                                Por motivos de trazabilidad y orden en los registros de auditoría del sistema (asignaciones, devoluciones y bajas de inventario), los usuarios no pueden editar su nombre ni correo. Únicamente un <span class="font-semibold text-brand-navy">Superadministrador</span> tiene autorización para modificar datos de identidad.
                             </p>
-                            <p class="text-xs text-gray-400 mt-0.5">El rol solo puede ser modificado por un Administrador desde el panel de usuarios.</p>
-                        </div>
-
-                        <div>
-                            <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha de Creación</span>
-                            <p class="text-sm font-semibold text-brand-navy mt-1">
-                                {{ $user->created_at?->format('d/m/Y h:i A') ?? 'N/A' }}
+                            <p class="text-gray-500">
+                                Desde este perfil únicamente puedes actualizar tu <a href="#seccion-password" class="text-brand-navy font-semibold underline hover:text-brand-gold transition">contraseña de acceso</a>. Si requieres corregir tu nombre, solicita la modificación a un Superadministrador.
                             </p>
-                            <p class="text-xs text-gray-400 mt-0.5">Miembro institucional registrado en INVEC.</p>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end pt-4 border-t border-gray-100">
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-gold text-brand-navy text-sm font-semibold shadow-sm hover:bg-brand-gold-400 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 transition">
-                            <i class="fas fa-save text-xs" aria-hidden="true"></i>
-                            Guardar Información
-                        </button>
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <!-- Nombre Completo (Solo Lectura) -->
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-semibold text-brand-navy">Nombre Completo</label>
+                                    <span class="text-xs text-gray-400 font-normal flex items-center gap-1">
+                                        <i class="fas fa-lock text-[10px]" aria-hidden="true"></i> Solo lectura
+                                    </span>
+                                </div>
+                                <div class="relative mt-1.5">
+                                    <input type="text" value="{{ $user->name }}" readonly disabled
+                                        class="block w-full rounded-lg border-gray-200 bg-gray-50 text-gray-700 shadow-sm cursor-not-allowed select-none pl-3.5 pr-10 focus:ring-0 focus:border-gray-200 font-medium">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                                        <i class="fas fa-lock text-xs" aria-hidden="true"></i>
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-gray-400 mt-1">Este nombre se refleja en todas tus acciones y firmas de auditoría.</p>
+                            </div>
+
+                            <!-- Correo Electrónico (Solo Lectura) -->
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-semibold text-brand-navy">Correo Electrónico</label>
+                                    <span class="text-xs text-gray-400 font-normal flex items-center gap-1">
+                                        <i class="fas fa-lock text-[10px]" aria-hidden="true"></i> Solo lectura
+                                    </span>
+                                </div>
+                                <div class="relative mt-1.5">
+                                    <input type="email" value="{{ $user->email }}" readonly disabled
+                                        class="block w-full rounded-lg border-gray-200 bg-gray-50 text-gray-700 shadow-sm cursor-not-allowed select-none pl-3.5 pr-10 focus:ring-0 focus:border-gray-200 font-medium">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                                        <i class="fas fa-lock text-xs" aria-hidden="true"></i>
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-gray-400 mt-1">Dirección vinculada para inicio de sesión institucional.</p>
+                            </div>
+                        </div>
+
+                        <!-- Datos informativos del sistema -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-3 border-t border-gray-100">
+                            <div>
+                                <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol de Permisos</span>
+                                <p class="text-sm font-semibold text-brand-navy mt-1">
+                                    {{ $user->rol_nombre }}
+                                </p>
+                                <p class="text-xs text-gray-400 mt-0.5">El rol solo puede ser modificado por un Superadministrador.</p>
+                            </div>
+
+                            <div>
+                                <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha de Creación</span>
+                                <p class="text-sm font-semibold text-brand-navy mt-1">
+                                    {{ $user->created_at?->format('d/m/Y h:i A') ?? 'N/A' }}
+                                </p>
+                                <p class="text-xs text-gray-400 mt-0.5">Miembro institucional registrado en INVEC.</p>
+                            </div>
+                        </div>
                     </div>
-                </form>
+                @endif
             </div>
         </div>
 

@@ -9,6 +9,15 @@ use Illuminate\Validation\Rule;
 class ProfileUpdateRequest extends FormRequest
 {
     /**
+     * Por políticas de trazabilidad y auditoría institucional, únicamente un
+     * Superadministrador puede modificar los datos de usuario (nombre y correo).
+     */
+    public function authorize(): bool
+    {
+        return (bool) $this->user()?->esSuperAdmin();
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
