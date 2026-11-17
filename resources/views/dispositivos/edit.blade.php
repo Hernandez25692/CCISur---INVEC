@@ -210,17 +210,28 @@
                 </div>
             @else
                 <div>
+                    @php
+                        $tieneHistorialAsignaciones = $dispositivo->asignaciones()->exists();
+                    @endphp
                     <label for="estado" class="block text-sm font-medium text-brand-navy">Estado Físico</label>
                     <select name="estado" id="estado" required
                         class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('estado') border-red-500 @enderror">
-                        @foreach (\App\Models\Dispositivo::ESTADOS as $est)
+                        @foreach (\App\Models\Dispositivo::ESTADOS_MANUALES as $est)
+                            @if ($est === \App\Models\Dispositivo::ESTADO_NUEVO && $tieneHistorialAsignaciones)
+                                @continue
+                            @endif
                             <option value="{{ $est }}" @selected(old('estado', $dispositivo->estado) === $est)>
                                 {{ $est }}
                             </option>
                         @endforeach
                     </select>
+                    @if ($tieneHistorialAsignaciones)
+                        <p class="mt-1 text-xs text-amber-700">
+                            <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>El estado <strong>Nuevo</strong> no está disponible porque este dispositivo ya cuenta con historial de asignaciones previas.
+                        </p>
+                    @endif
                     <p class="mt-1 text-xs text-gray-500">
-                        Si seleccionás un estado de daño, reparación, incompleto o caducado, la disponibilidad pasará automáticamente a <strong>No Aplica para asignación</strong>.
+                        Si seleccionás <strong>Dañado / Defectuoso</strong>, el dispositivo pasará directamente al <strong>Archivo de Bajas</strong>.
                     </p>
                     @error('estado')
                         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>

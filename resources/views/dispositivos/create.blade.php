@@ -124,14 +124,14 @@
                 <select name="estado" id="estado" required
                     class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('estado') border-red-500 @enderror">
                     <option value="">-- Seleccionar estado --</option>
-                    @foreach (\App\Models\Dispositivo::ESTADOS as $est)
+                    @foreach (\App\Models\Dispositivo::ESTADOS_MANUALES as $est)
                         <option value="{{ $est }}" @selected(old('estado') === $est)>
                             {{ $est }}
                         </option>
                     @endforeach
                 </select>
                 <p class="mt-1 text-xs text-gray-500">
-                    La disponibilidad se calculará automáticamente: los equipos en buen estado quedarán como <strong>Sin Asignar</strong> y los dañados o en reparación como <strong>No Aplica para asignación</strong>.
+                    La disponibilidad se calculará automáticamente: los equipos en buen estado quedarán como <strong>Sin Asignar</strong>. Si seleccionás <strong>Dañado / Defectuoso</strong>, el dispositivo se registrará y pasará automáticamente al <strong>Archivo de Bajas</strong>.
                 </p>
                 @error('estado')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>

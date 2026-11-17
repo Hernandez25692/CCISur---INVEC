@@ -14,7 +14,7 @@
                     <i class="fas fa-file-excel text-sm" aria-hidden="true"></i>
                     <span>Exportar Excel</span>
                 </button>
-                <a href="{{ request()->boolean('en_taller') ? route('dispositivos.index', request()->except('en_taller', 'page')) : route('dispositivos.index', array_merge(request()->except('page'), ['en_taller' => 1])) }}"
+                <a href="{{ request()->boolean('en_taller') ? route('dispositivos.index', request()->except('en_taller', 'page')) : route('dispositivos.index', array_merge(request()->except('page', 'estado'), ['en_taller' => 1])) }}"
                     class="inline-flex items-center justify-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg border {{ request()->boolean('en_taller') ? 'border-amber-500 bg-amber-50 text-amber-900 ring-2 ring-amber-400 font-bold' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold' }} text-xs sm:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition whitespace-nowrap shrink-0"
                     title="{{ request()->boolean('en_taller') ? 'Quitar filtro de taller' : 'Filtrar dispositivos actualmente en taller o mantenimiento técnico' }}">
                     <i class="fas fa-tools text-xs {{ request()->boolean('en_taller') ? 'text-amber-600' : 'text-gray-500' }}" aria-hidden="true"></i>
@@ -65,7 +65,7 @@
             <form id="filtroDispositivosForm" method="GET" action="{{ route('dispositivos.index') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ ($hayFiltrosFormulario ?? false) ? 'block' : 'hidden' }} sm:block p-5">
-                @if (request()->boolean('en_taller'))
+                @if (request()->boolean('en_taller') && ! request()->filled('estado'))
                     <input type="hidden" name="en_taller" value="1">
                 @endif
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

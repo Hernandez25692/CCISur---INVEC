@@ -47,7 +47,7 @@
             <form id="filtroDispositivosBajasForm" method="GET" action="{{ route('dispositivos.bajas') }}"
                 :class="{ 'block': mostrarFiltros, 'hidden': !mostrarFiltros }"
                 class="{{ ($hayFiltros ?? false) ? 'block' : 'hidden' }} sm:block p-5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label for="filtro_nombre" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
                             Nombre, serie o etiqueta
@@ -88,19 +88,6 @@
                             <option value="">Todas</option>
                             @foreach (\App\Models\Dispositivo::UBICACIONES as $ubicacion)
                                 <option value="{{ $ubicacion }}" @selected(request('ubicacion') === $ubicacion)>{{ $ubicacion }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="filtro_estado" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
-                            Motivo / Estado físico
-                        </label>
-                        <select id="filtro_estado" name="estado"
-                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
-                            <option value="">Todos los estados</option>
-                            @foreach (\App\Models\Dispositivo::ESTADOS_ELIMINABLES as $estado)
-                                <option value="{{ $estado }}" @selected(request('estado') === $estado)>{{ $estado }}</option>
                             @endforeach
                         </select>
                     </div>

@@ -28,20 +28,13 @@
                             data-swal-nombre="{{ $dispositivo->nombre }}"
                             data-swal-etiqueta="{{ $dispositivo->etiqueta }}">
                             @csrf
+                            <input type="hidden" name="from" value="historial">
                             <button type="submit"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold shadow-sm hover:bg-emerald-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition cursor-pointer">
                                 <i class="fas fa-undo text-xs" aria-hidden="true"></i>
                                 Reactivar Dispositivo
                             </button>
                         </form>
-
-                        @unless ($mantenimientoActivo)
-                            <button type="button" @click="modalMantenimiento = true"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-white text-xs font-semibold shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 transition cursor-pointer">
-                                <i class="fas fa-tools text-xs" aria-hidden="true"></i>
-                                Enviar a Revisión / Taller
-                            </button>
-                        @endunless
                     @else
                         <a href="{{ route('dispositivos.edit', ['dispositivo' => $dispositivo->id, 'from' => 'historial']) }}"
                             class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-brand-navy text-xs font-semibold shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-gold transition">
@@ -49,13 +42,7 @@
                             Editar Dispositivo
                         </a>
 
-                        @if ($mantenimientoActivo)
-                            <button type="button" @click="modalFinalizar = true"
-                                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition cursor-pointer">
-                                <i class="fas fa-check-circle text-xs" aria-hidden="true"></i>
-                                Finalizar Mantenimiento
-                            </button>
-                        @else
+                        @if (! $mantenimientoActivo)
                             <button type="button" @click="modalMantenimiento = true"
                                 class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-white text-xs font-semibold shadow-sm hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 transition cursor-pointer">
                                 <i class="fas fa-tools text-xs" aria-hidden="true"></i>
@@ -118,8 +105,14 @@
                             Finalizar Mantenimiento
                         </button>
                         <form action="{{ route('dispositivos.mantenimientos.cancelar', $mantenimientoActivo->id) }}" method="POST"
-                            onsubmit="return confirm('¿Está seguro de cancelar este registro de mantenimiento? El dispositivo volverá a su estado previo.');">
+                            data-swal-confirm-cancelar-mantenimiento
+                            data-swal-bien="{{ $dispositivo->nombre }}"
+                            data-swal-etiqueta="{{ $dispositivo->etiqueta }}"
+                            data-swal-estado-anterior="{{ $mantenimientoActivo->estado_fisico_anterior ?? $dispositivo->estado }}"
+                            data-swal-tiene-custodio="{{ ! empty($mantenimientoActivo->custodio_texto) ? 'true' : 'false' }}"
+                            data-swal-custodio-nombre="{{ $mantenimientoActivo->custodio_texto ?? '' }}">
                             @csrf
+                            <input type="hidden" name="from" value="historial">
                             <button type="submit"
                                 class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition cursor-pointer"
                                 title="Cancelar registro si fue un error">
@@ -717,30 +710,6 @@
                             Historial cronológico unificado de ingresos a taller, mantenimientos, cambios de hardware y correcciones
                         </p>
                     </div>
-                    @can('admin')
-                        <div class="flex items-center gap-2 flex-wrap">
-                            @if (! $dispositivo->trashed())
-                                <a href="{{ route('dispositivos.edit', ['dispositivo' => $dispositivo->id, 'from' => 'historial']) }}"
-                                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold shadow-sm transition">
-                                    <i class="fas fa-pen text-brand-gold-600 text-xs" aria-hidden="true"></i>
-                                    Editar Ficha
-                                </a>
-                            @endif
-                            @if ($mantenimientoActivo)
-                                <button type="button" @click="modalFinalizar = true"
-                                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-sm hover:bg-emerald-700 transition cursor-pointer">
-                                    <i class="fas fa-check-circle text-xs" aria-hidden="true"></i>
-                                    Finalizar Mantenimiento
-                                </button>
-                            @else
-                                <button type="button" @click="modalMantenimiento = true"
-                                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold shadow-sm hover:bg-amber-600 transition cursor-pointer">
-                                    <i class="fas fa-tools text-xs" aria-hidden="true"></i>
-                                    Enviar a Taller / Revisión
-                                </button>
-                            @endif
-                        </div>
-                    @endcan
                 </div>
 
                 <!-- Filtros rápidos de la Bitácora -->
@@ -807,26 +776,6 @@
                                             {{ $m->fecha_inicio?->format('d/m/Y h:i A') ?? 'N/A' }}
                                         </span>
                                     </div>
-
-                                    @if ($m->esta_en_proceso)
-                                        <div class="flex items-center gap-2">
-                                            @can('admin')
-                                                <button type="button" @click="modalFinalizar = true"
-                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer shadow-xs">
-                                                    <i class="fas fa-check-circle text-xs" aria-hidden="true"></i>
-                                                    Finalizar
-                                                </button>
-                                                <form action="{{ route('dispositivos.mantenimientos.cancelar', $m->id) }}" method="POST" class="inline"
-                                                    onsubmit="return confirm('¿Está seguro de cancelar este mantenimiento? El dispositivo volverá a su estado previo.');">
-                                                    @csrf
-                                                    <button type="submit"
-                                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 text-xs font-semibold transition cursor-pointer">
-                                                        Cancelar
-                                                    </button>
-                                                </form>
-                                            @endcan
-                                        </div>
-                                    @endif
                                 </div>
 
                                 <!-- Detalles del Mantenimiento -->
@@ -1027,8 +976,9 @@
             @endif
         </div>
 
-        <!-- MODAL: Ingresar a Mantenimiento -->
-        <div x-show="modalMantenimiento" x-cloak
+        @unless ($dispositivo->trashed())
+            <!-- MODAL: Ingresar a Mantenimiento -->
+            <div x-show="modalMantenimiento" x-cloak
             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0"
@@ -1280,6 +1230,7 @@
                 </form>
             </div>
         </div>
+        @endunless
 
         @if ($mantenimientoActivo)
             <!-- MODAL: Finalizar Mantenimiento -->
@@ -1493,8 +1444,9 @@
                                     @endif
                                 </div>
 
-                                <textarea id="solucion_aplicada" name="solucion_aplicada" rows="2" required
+                                <textarea id="solucion_aplicada" name="solucion_aplicada" rows="2"
                                     x-model="solucionTexto"
+                                    :required="resultadoMantenimiento === 'reparado'"
                                     placeholder="Describa el trabajo realizado o use los atajos superiores..."
                                     class="w-full text-xs rounded-lg border-gray-300 focus:border-brand-gold focus:ring-brand-gold shadow-sm"></textarea>
                             </div>
@@ -1512,10 +1464,8 @@
                                     @if ($puedeConservarNuevo)
                                         <option value="Nuevo / En perfectas condiciones" selected>Nuevo / En perfectas condiciones (Conservar estado original)</option>
                                         <option value="Usado / Segunda mano">Usado / Segunda mano</option>
-                                        <option value="Con pequeños detalles / Imperfecciones leves">Con pequeños detalles / Imperfecciones leves</option>
                                     @else
                                         <option value="Usado / Segunda mano" selected>Usado / Segunda mano (Recomendado)</option>
-                                        <option value="Con pequeños detalles / Imperfecciones leves">Con pequeños detalles / Imperfecciones leves</option>
                                     @endif
                                 </select>
                                 @if ($puedeConservarNuevo)
@@ -1628,10 +1578,6 @@
                                     <p class="text-[11px] text-emerald-800">
                                         El dispositivo continuará asignado normalmente a <strong>{{ $mantenimientoActivo->custodio_texto }}</strong> sin requerir trámites ni actas adicionales.
                                     </p>
-                                @elseif ($dispositivo->trashed())
-                                    <p class="text-[11px] text-emerald-800">
-                                        ¡El equipo se reactivará automáticamente y volverá al inventario disponible para futuras asignaciones!
-                                    </p>
                                 @else
                                     <p class="text-[11px] text-emerald-800">
                                         El dispositivo volverá a estar disponible en bodega.
@@ -1647,6 +1593,7 @@
                                     Diagnóstico Técnico de Falla Irreparable <span class="text-red-500">*</span>
                                 </label>
                                 <textarea id="diagnostico_falla" name="diagnostico_falla" rows="3"
+                                    :required="resultadoMantenimiento === 'irreparable'"
                                     placeholder="Detalle por qué no tiene solución (ej: cortocircuito definitivo en motherboard, costo de reemplazo supera el valor del equipo)..."
                                     class="w-full text-xs rounded-lg border-gray-300 focus:border-brand-gold focus:ring-brand-gold shadow-sm"></textarea>
                             </div>

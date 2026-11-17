@@ -202,7 +202,11 @@
                                 <i class="fas fa-arrow-circle-down text-red-600 mt-0.5 shrink-0" aria-hidden="true"></i>
                                 <span><strong>Pase directo a Bajas:</strong> Al recibirse en estado dañado, el bien pasará automáticamente al <strong>Archivo de Bajas</strong> y se liberará la custodia del empleado.</span>
                             </div>
-                            <div x-show="estadoSeleccionado !== 'Dañado / Defectuoso' && estadoSeleccionado !== ''" class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
+                            <div x-show="estadoSeleccionado === 'En reparación / En revisión'" class="p-3 rounded-lg bg-purple-50 border border-purple-200 text-purple-800 text-xs flex items-start gap-2">
+                                <i class="fas fa-tools text-purple-600 mt-0.5 shrink-0" aria-hidden="true"></i>
+                                <span><strong>Traslado a Mantenimiento:</strong> El bien quedará en revisión o taller técnico (no disponible para asignación) y se liberará la custodia del empleado.</span>
+                            </div>
+                            <div x-show="estadoSeleccionado === 'Usado / Segunda mano'" class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
                                 <i class="fas fa-check-circle text-emerald-600 mt-0.5 shrink-0" aria-hidden="true"></i>
                                 <span><strong>Impacto en Inventario:</strong> <span x-text="asignacionSeleccionada?.es_area_comun ? 'El bien continuará en su área común asignada.' : 'El bien regresará a disponibilidad en bodega como \'Sin Asignar\' para futuras entregas.'"></span></span>
                             </div>

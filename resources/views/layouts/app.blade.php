@@ -312,6 +312,17 @@
                 });
             });
 
+            // Función utilitaria para sanitizar valores interpolados en HTML de SweetAlert2
+            function escapeSwal(str) {
+                if (!str) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
             // Confirmación SweetAlert2 para reactivar un bien
             document.addEventListener('submit', function (event) {
                 const form = event.target.closest('form[data-swal-confirm-reactivar-bien]');
@@ -335,7 +346,45 @@
                 window.Swal.fire({
                     icon: 'question',
                     title: '¿Reactivar este bien?',
-                    text: `«${nombre}»${etiqueta} volverá a aparecer en el inventario general. Recuerde verificar su estado físico y disponibilidad.`,
+                    html: `
+                        <div class="text-left text-xs text-gray-600 space-y-3 mt-2">
+                            <p>«<strong>${escapeSwal(nombre)}</strong>»${escapeSwal(etiqueta)} volverá a aparecer en el inventario activo.</p>
+                            <div class="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                                <label class="flex items-start gap-2 cursor-pointer font-semibold text-amber-950 text-xs">
+                                    <input type="checkbox" id="swal_enviar_a_taller" class="mt-0.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+                                    <span>¿Enviar directamente a Taller / Revisión técnica tras reactivar?</span>
+                                </label>
+                                <div id="swal_motivo_taller_wrapper" class="hidden mt-2.5">
+                                    <label class="block text-[11px] font-medium text-amber-900 mb-1">Motivo o falla a revisar (opcional):</label>
+                                    <input type="text" id="swal_motivo_taller" placeholder="Ej. Reingreso a taller para reemplazo de componentes..."
+                                        class="w-full text-xs rounded-lg border border-amber-300 p-2 focus:ring-amber-500 focus:border-amber-500 bg-white">
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    didOpen: () => {
+                        const checkTaller = document.getElementById('swal_enviar_a_taller');
+                        const wrapper = document.getElementById('swal_motivo_taller_wrapper');
+                        const inputMotivo = document.getElementById('swal_motivo_taller');
+                        if (checkTaller && wrapper) {
+                            checkTaller.addEventListener('change', () => {
+                                if (checkTaller.checked) {
+                                    wrapper.classList.remove('hidden');
+                                    inputMotivo?.focus();
+                                } else {
+                                    wrapper.classList.add('hidden');
+                                }
+                            });
+                        }
+                    },
+                    preConfirm: () => {
+                        const checkTaller = document.getElementById('swal_enviar_a_taller');
+                        const inputMotivo = document.getElementById('swal_motivo_taller');
+                        return {
+                            enviarATaller: checkTaller ? checkTaller.checked : false,
+                            motivoTaller: inputMotivo ? inputMotivo.value.trim() : ''
+                        };
+                    },
                     showCancelButton: true,
                     confirmButtonText: 'Sí, reactivar',
                     cancelButtonText: 'Cancelar',
@@ -344,6 +393,109 @@
                     reverseButtons: true
                 }).then(function (result) {
                     if (result.isConfirmed) {
+                        if (result.value && result.value.enviarATaller) {
+                            let inputTaller = form.querySelector('input[name="enviar_a_taller"]');
+                            if (!inputTaller) {
+                                inputTaller = document.createElement('input');
+                                inputTaller.type = 'hidden';
+                                inputTaller.name = 'enviar_a_taller';
+                                form.appendChild(inputTaller);
+                            }
+                            inputTaller.value = '1';
+
+                            let inputMotivo = form.querySelector('input[name="motivo_taller"]');
+                            if (!inputMotivo) {
+                                inputMotivo = document.createElement('input');
+                                inputMotivo.type = 'hidden';
+                                inputMotivo.name = 'motivo_taller';
+                                form.appendChild(inputMotivo);
+                            }
+                            inputMotivo.value = result.value.motivoTaller;
+                        }
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                });
+            });
+
+            // Confirmación SweetAlert2 para cancelar registro de mantenimiento
+            document.addEventListener('submit', function (event) {
+                const form = event.target.closest('form[data-swal-confirm-cancelar-mantenimiento]');
+                if (!form || form.dataset.swalConfirmed === 'true') {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const bien = form.dataset.swalBien || 'este bien';
+                const etiqueta = form.dataset.swalEtiqueta ? ` (${form.dataset.swalEtiqueta})` : '';
+                const estadoAnterior = form.dataset.swalEstadoAnterior || 'su estado previo';
+                const tieneCustodio = form.dataset.swalTieneCustodio === 'true';
+                const custodioNombre = form.dataset.swalCustodioNombre || 'el colaborador';
+
+                if (typeof window.Swal === 'undefined') {
+                    if (window.confirm(`¿Cancelar este registro de mantenimiento para «${bien}»${etiqueta}? El bien volverá a estado: ${estadoAnterior}.`)) {
+                        form.dataset.swalConfirmed = 'true';
+                        form.submit();
+                    }
+                    return;
+                }
+
+                const custodiaTexto = tieneCustodio
+                    ? `<li class="flex items-start gap-1.5"><i class="fas fa-user-check text-emerald-600 mt-0.5"></i> <span>La custodia de <strong>${escapeSwal(custodioNombre)}</strong> se mantendrá activa sin alteraciones.</span></li>`
+                    : `<li class="flex items-start gap-1.5"><i class="fas fa-warehouse text-blue-600 mt-0.5"></i> <span>El bien volverá a quedar disponible en bodega institucional.</span></li>`;
+
+                window.Swal.fire({
+                    icon: 'warning',
+                    title: '¿Cancelar Mantenimiento?',
+                    html: `
+                        <div class="text-left text-xs text-gray-600 space-y-3 mt-2">
+                            <p>Estás a punto de anular el ticket de taller de «<strong>${escapeSwal(bien)}</strong>»${escapeSwal(etiqueta)}.</p>
+
+                            <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 text-amber-900 space-y-1.5">
+                                <p class="font-semibold text-xs flex items-center gap-1.5">
+                                    <i class="fas fa-info-circle text-amber-600"></i> Acciones automáticas al cancelar:
+                                </p>
+                                <ul class="space-y-1 text-[11px] text-amber-800 list-none pl-1">
+                                    <li class="flex items-start gap-1.5"><i class="fas fa-ban text-amber-600 mt-0.5"></i> <span>El ticket quedará marcado como <strong>Cancelado</strong> en la bitácora técnica.</span></li>
+                                    <li class="flex items-start gap-1.5"><i class="fas fa-undo text-amber-600 mt-0.5"></i> <span>El bien retornará a su estado físico previo: <strong>${escapeSwal(estadoAnterior)}</strong>.</span></li>
+                                    ${custodiaTexto}
+                                </ul>
+                            </div>
+
+                            <div>
+                                <label for="swal_motivo_cancelacion" class="block font-semibold text-gray-700 mb-1">
+                                    Motivo de cancelación (opcional):
+                                </label>
+                                <input type="text" id="swal_motivo_cancelacion" placeholder="Ej. Registro ingresado por error, no requería taller..."
+                                    class="w-full text-xs rounded-lg border border-gray-300 p-2 focus:ring-brand-gold focus:border-brand-navy bg-white">
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, cancelar mantenimiento',
+                    cancelButtonText: 'Volver',
+                    confirmButtonColor: '#b91c1c',
+                    cancelButtonColor: '#031940',
+                    reverseButtons: true,
+                    preConfirm: () => {
+                        const inputMotivo = document.getElementById('swal_motivo_cancelacion');
+                        return {
+                            motivoCancelacion: inputMotivo ? inputMotivo.value.trim() : ''
+                        };
+                    }
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        if (result.value && result.value.motivoCancelacion) {
+                            let inputMotivo = form.querySelector('input[name="motivo_cancelacion"]');
+                            if (!inputMotivo) {
+                                inputMotivo = document.createElement('input');
+                                inputMotivo.type = 'hidden';
+                                inputMotivo.name = 'motivo_cancelacion';
+                                form.appendChild(inputMotivo);
+                            }
+                            inputMotivo.value = result.value.motivoCancelacion;
+                        }
                         form.dataset.swalConfirmed = 'true';
                         form.submit();
                     }
@@ -444,7 +596,7 @@
                     const tituloSuper = esDeshabilitar ? '¿Desactivar Superadministrador?' : '¿Activar Superadministrador?';
                     const htmlSuper = `
                         <p class="text-sm text-gray-600 mb-3">
-                            Estás a punto de ${esDeshabilitar ? 'desactivar' : 'activar'} la cuenta con privilegios de Superadministrador de <strong>«${nombre}»</strong>.
+                            Estás a punto de ${esDeshabilitar ? 'desactivar' : 'activar'} la cuenta con privilegios de Superadministrador de <strong>«${escapeSwal(nombre)}»</strong>.
                         </p>
                         <p class="text-xs text-purple-900 bg-purple-50 p-3 rounded-lg border border-purple-200 text-left font-medium">
                             <i class="fas fa-crown text-amber-500 mr-1.5"></i> <strong>Autorización requerida:</strong> Por seguridad institucional, ingresa tu contraseña actual de Superadministrador para autorizar esta acción.
