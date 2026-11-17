@@ -43,6 +43,7 @@ class MantenimientoDispositivo extends Model
         'fecha_fin',
         'solucion_aplicada',
         'estado_fisico_anterior',
+        'es_area_comun',
         'estado_fisico_resultante',
         'devolucion_id',
     ];
@@ -50,6 +51,7 @@ class MantenimientoDispositivo extends Model
     protected $casts = [
         'fecha_inicio' => 'datetime',
         'fecha_fin' => 'datetime',
+        'es_area_comun' => 'boolean',
     ];
 
     public function dispositivo(): BelongsTo

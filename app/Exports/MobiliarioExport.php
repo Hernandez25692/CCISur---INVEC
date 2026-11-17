@@ -62,6 +62,8 @@ class MobiliarioExport implements FromQuery, ShouldAutoSize, WithHeadings, WithM
                     ->orWhere('estado', $estado)
                     ->orWhere('estado', 'like', "{$estado}%");
             });
+        } elseif ($this->request->boolean('en_taller')) {
+            $query->where('estado', 'En reparación / En revisión');
         }
 
         if ($this->request->filled('disponibilidad')) {

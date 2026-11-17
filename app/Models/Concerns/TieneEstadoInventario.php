@@ -22,37 +22,41 @@ trait TieneEstadoInventario
         self::DISPONIBILIDAD_NO_APLICA,
     ];
 
+    public const ESTADO_NUEVO = 'Nuevo / En perfectas condiciones';
+
+    public const ESTADO_USADO = 'Usado / Segunda mano';
+
+    public const ESTADO_EN_REPARACION = 'En reparación / En revisión';
+
+    public const ESTADO_DEFECTUOSO = 'Dañado / Defectuoso';
+
     public const ESTADOS = [
         'Nuevo / En perfectas condiciones',
-        'Con pequeños detalles / Imperfecciones leves',
+        'Usado / Segunda mano',
+        'En reparación / En revisión',
+        'Dañado / Defectuoso',
+    ];
+
+    public const ESTADOS_MANUALES = [
+        'Nuevo / En perfectas condiciones',
         'Usado / Segunda mano',
         'Dañado / Defectuoso',
-        'En reparación / En revisión',
-        'Producto incompleto',
-        'Caducado / No apto para uso',
     ];
 
     public const ESTADOS_NO_ASIGNABLES = [
         'Dañado / Defectuoso',
         'En reparación / En revisión',
-        'Producto incompleto',
-        'Caducado / No apto para uso',
     ];
 
     public const ESTADOS_ELIMINABLES = [
         'Dañado / Defectuoso',
-        'Producto incompleto',
-        'Caducado / No apto para uso',
     ];
 
     public const ESTADOS_CORTOS = [
         'Nuevo / En perfectas condiciones' => 'Nuevo',
-        'Con pequeños detalles / Imperfecciones leves' => 'Detalles leves',
         'Usado / Segunda mano' => 'Usado',
+        'En reparación / En revisión' => 'En mantenimiento',
         'Dañado / Defectuoso' => 'Dañado',
-        'En reparación / En revisión' => 'Mantenimiento / Reparación',
-        'Producto incompleto' => 'Incompleto',
-        'Caducado / No apto para uso' => 'Caducado',
     ];
 
     public const DISPONIBILIDADES_CORTAS = [
@@ -63,12 +67,9 @@ trait TieneEstadoInventario
 
     public const ESTADOS_CLASES = [
         'Nuevo / En perfectas condiciones' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-        'Con pequeños detalles / Imperfecciones leves' => 'bg-sky-50 text-sky-700 ring-sky-600/20',
-        'Usado / Segunda mano' => 'bg-amber-50 text-amber-700 ring-amber-600/20',
-        'Dañado / Defectuoso' => 'bg-red-50 text-red-700 ring-red-600/20',
+        'Usado / Segunda mano' => 'bg-blue-50 text-blue-700 ring-blue-600/20',
         'En reparación / En revisión' => 'bg-purple-50 text-purple-700 ring-purple-600/20',
-        'Producto incompleto' => 'bg-orange-50 text-orange-700 ring-orange-600/20',
-        'Caducado / No apto para uso' => 'bg-gray-100 text-gray-700 ring-gray-600/20',
+        'Dañado / Defectuoso' => 'bg-red-50 text-red-700 ring-red-600/20',
     ];
 
     public const DISPONIBILIDADES_CLASES = [
@@ -144,7 +145,9 @@ trait TieneEstadoInventario
 
     public function getPuedeDarseDeBajaAttribute(): bool
     {
-        return ! $this->estaAsignado() && $this->esEstadoDescartable();
+        $enMantenimiento = method_exists($this, 'estaEnMantenimiento') && $this->estaEnMantenimiento();
+
+        return ! $this->estaAsignado() && ! $enMantenimiento && $this->esEstadoDescartable();
     }
 
     public function getMotivoNoBajaAttribute(): ?string
@@ -155,8 +158,12 @@ trait TieneEstadoInventario
             return "Este {$etiquetaBien} tiene una asignación activa actualmente. Debe registrar primero su devolución antes de darlo de baja.";
         }
 
+        if (method_exists($this, 'estaEnMantenimiento') && $this->estaEnMantenimiento()) {
+            return "Este {$etiquetaBien} se encuentra actualmente en taller / mantenimiento. Debe finalizar o cancelar el mantenimiento antes de darlo de baja.";
+        }
+
         if (! $this->esEstadoDescartable()) {
-            return "No se puede dar de baja un {$etiquetaBien} en estado «{$this->estado}». Solo se pueden dar de baja bienes descartados (Dañado / Defectuoso, Producto incompleto o Caducado / No apto para uso).";
+            return "No se puede dar de baja un {$etiquetaBien} en estado «{$this->estado}». Solo se pueden dar de baja bienes en estado «Dañado / Defectuoso».";
         }
 
         return null;
@@ -204,7 +211,9 @@ trait TieneEstadoInventario
 
     public function getPuedeAsignarseAttribute(): bool
     {
-        return ! $this->estaAsignado() && self::esEstadoAsignable((string) $this->estado);
+        $enMantenimiento = method_exists($this, 'estaEnMantenimiento') && $this->estaEnMantenimiento();
+
+        return ! $this->estaAsignado() && ! $enMantenimiento && self::esEstadoAsignable((string) $this->estado);
     }
 
     public function puedeAsignarseA(string $destino): bool

@@ -52,4 +52,25 @@ class Mobiliario extends Model
     protected $casts = [
         'fecha_registro' => 'date',
     ];
+
+    public function mantenimientos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MantenimientoMobiliario::class, 'mobiliario_id')->latest('fecha_inicio')->latest('id');
+    }
+
+    public function mantenimientoActivo(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(MantenimientoMobiliario::class, 'mobiliario_id')
+            ->where('estado', MantenimientoMobiliario::ESTADO_EN_PROCESO)
+            ->latest('id');
+    }
+
+    public function estaEnMantenimiento(): bool
+    {
+        if ($this->relationLoaded('mantenimientoActivo')) {
+            return $this->mantenimientoActivo !== null;
+        }
+
+        return $this->mantenimientoActivo()->exists();
+    }
 }

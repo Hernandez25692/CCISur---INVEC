@@ -63,9 +63,7 @@ class DispositivosExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $query->where('ubicacion', 'like', "%{$ubicacion}%");
         }
 
-        if ($this->request->boolean('en_taller')) {
-            $query->where('estado', 'En reparación / En revisión');
-        } elseif ($this->request->filled('estado')) {
+        if ($this->request->filled('estado')) {
             $estado = trim((string) $this->request->input('estado'));
             $estadoCompleto = array_search($estado, Dispositivo::ESTADOS_CORTOS, true) ?: $estado;
             $query->where(function (Builder $q) use ($estado, $estadoCompleto): void {
@@ -73,6 +71,8 @@ class DispositivosExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
                     ->orWhere('estado', $estado)
                     ->orWhere('estado', 'like', "{$estado}%");
             });
+        } elseif ($this->request->boolean('en_taller')) {
+            $query->where('estado', 'En reparación / En revisión');
         }
 
         if ($this->request->filled('disponibilidad')) {

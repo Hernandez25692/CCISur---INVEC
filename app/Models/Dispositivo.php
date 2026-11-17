@@ -244,7 +244,11 @@ class Dispositivo extends Model
 
     public function estaEnMantenimiento(): bool
     {
-        return $this->estado === 'En reparación / En revisión';
+        if ($this->relationLoaded('mantenimientoActivo')) {
+            return $this->mantenimientoActivo !== null;
+        }
+
+        return $this->mantenimientoActivo()->exists();
     }
 
     /**
