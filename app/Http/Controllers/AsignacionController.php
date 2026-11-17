@@ -443,14 +443,18 @@ class AsignacionController extends Controller
                 return 'Acción denegada: No se puede anular una asignación que ya cuenta con un acta de devolución formal registrada.';
             }
 
+            $item = $asignacionBloqueada->tipo === Asignacion::TIPO_MOBILIARIO
+                ? Mobiliario::where('id', $asignacionBloqueada->id_referencia)->lockForUpdate()->first()
+                : Dispositivo::where('id', $asignacionBloqueada->id_referencia)->lockForUpdate()->first();
+
+            if ($item && $item->estaEnMantenimiento()) {
+                return 'Acción denegada: No se puede anular la asignación mientras el bien se encuentre en taller o mantenimiento activo.';
+            }
+
             $asignacionBloqueada->motivo_anulacion = $validated['motivo_anulacion'];
             $asignacionBloqueada->anulado_por_user_id = $request->user()->id;
             $asignacionBloqueada->save();
             $asignacionBloqueada->delete();
-
-            $item = $asignacionBloqueada->tipo === Asignacion::TIPO_MOBILIARIO
-                ? Mobiliario::where('id', $asignacionBloqueada->id_referencia)->lockForUpdate()->first()
-                : Dispositivo::where('id', $asignacionBloqueada->id_referencia)->lockForUpdate()->first();
 
             if ($item) {
                 $item->disponibilidad = $item::calcularDisponibilidad($item->estado, (bool) $asignacionBloqueada->es_area_comun, $item->estaAsignado());
@@ -502,6 +506,10 @@ class AsignacionController extends Controller
                 return 'Acción denegada: El bien ya cuenta con una asignación activa actualmente en el inventario.';
             }
 
+            if ($item->estaEnMantenimiento()) {
+                return 'Acción denegada: El bien se encuentra actualmente en taller o mantenimiento activo.';
+            }
+
             if (! $item::esEstadoAsignable($item->estado)) {
                 return 'Acción denegada: El bien se encuentra en un estado físico no asignable ('.$item->estado.').';
             }
@@ -519,6 +527,11 @@ class AsignacionController extends Controller
                 }
             }
 
+            $adminName = Auth::user()?->name ?? 'Administración';
+            $anuladoPorName = $asignacion->anuladoPor()->withTrashed()->first()?->name ?? ($asignacion->anuladoPor?->name ?? 'Administración');
+            $fechaReactivacion = now()->format('d/m/Y h:i A');
+            $notaReactivacion = "[Reactivación {$fechaReactivacion} por {$adminName}]: Acta reactivada tras haber sido anulada previamente por {$anuladoPorName}.";
+            $asignacion->observaciones = trim(($asignacion->observaciones ?? '')."\n".$notaReactivacion);
             $asignacion->motivo_anulacion = null;
             $asignacion->anulado_por_user_id = null;
             $asignacion->save();

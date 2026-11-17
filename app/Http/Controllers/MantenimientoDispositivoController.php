@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Asignacion;
 use App\Models\Devolucion;
 use App\Models\Dispositivo;
 use App\Models\MantenimientoDispositivo;
@@ -41,6 +42,11 @@ class MantenimientoDispositivoController extends Controller
         return DB::transaction(function () use ($dispositivo, $validated): RedirectResponse {
             $dispositivoBloqueado = Dispositivo::withTrashed()->lockForUpdate()->findOrFail($dispositivo->id);
 
+            // Bloquear ingreso a taller si el dispositivo está en el archivo de bajas (🔴-1)
+            if ($dispositivoBloqueado->trashed()) {
+                return redirect()->back()->with('error', 'No se puede ingresar a mantenimiento un dispositivo dado de baja. Debe reactivarlo formalmente desde el Archivo de Bajas antes de enviarlo a taller.');
+            }
+
             // Verificar si ya tiene un mantenimiento activo en proceso
             if ($dispositivoBloqueado->mantenimientoActivo()->exists()) {
                 return redirect()->back()->with('error', 'Este dispositivo ya tiene un mantenimiento activo en proceso.');
@@ -48,6 +54,7 @@ class MantenimientoDispositivoController extends Controller
 
             $asignacionActiva = $dispositivoBloqueado->asignacionesActivas()->first();
             $estadoAnterior = $dispositivoBloqueado->estado;
+            $esAreaComun = (bool) ($asignacionActiva?->es_area_comun ?? $dispositivoBloqueado->esEquipoAreaComun());
 
             MantenimientoDispositivo::create([
                 'dispositivo_id' => $dispositivoBloqueado->id,
@@ -60,18 +67,17 @@ class MantenimientoDispositivoController extends Controller
                 'estado' => MantenimientoDispositivo::ESTADO_EN_PROCESO,
                 'fecha_inicio' => now(),
                 'estado_fisico_anterior' => $estadoAnterior,
+                'es_area_comun' => $esAreaComun,
             ]);
 
-            // Si el dispositivo está activo en inventario, actualizar su estado físico a "En reparación / En revisión"
-            if (! $dispositivoBloqueado->trashed()) {
-                $dispositivoBloqueado->estado = 'En reparación / En revisión';
-                $dispositivoBloqueado->disponibilidad = Dispositivo::calcularDisponibilidad(
-                    $dispositivoBloqueado->estado,
-                    $dispositivoBloqueado->esEquipoAreaComun(),
-                    $asignacionActiva !== null
-                );
-                $dispositivoBloqueado->save();
-            }
+            // Actualizar estado físico a "En reparación / En revisión" preservando condición de área común
+            $dispositivoBloqueado->estado = 'En reparación / En revisión';
+            $dispositivoBloqueado->disponibilidad = Dispositivo::calcularDisponibilidad(
+                $dispositivoBloqueado->estado,
+                $esAreaComun,
+                $asignacionActiva !== null
+            );
+            $dispositivoBloqueado->save();
 
             return redirect()->route('dispositivos.historial', $dispositivoBloqueado->id)
                 ->with('success', "Dispositivo {$dispositivoBloqueado->etiqueta} ingresado a taller / mantenimiento correctamente.");
@@ -97,7 +103,6 @@ class MantenimientoDispositivoController extends Controller
 
             $estadosPermitidos = [
                 'Usado / Segunda mano',
-                'Con pequeños detalles / Imperfecciones leves',
             ];
 
             if ($puedeConservarNuevo) {
@@ -151,6 +156,13 @@ class MantenimientoDispositivoController extends Controller
                 $asignacionActiva = null;
                 if ($mantenimientoBloqueado->asignacion_id) {
                     $asignacionActiva = Asignacion::lockForUpdate()->find($mantenimientoBloqueado->asignacion_id);
+                } else {
+                    $asignacionActiva = Asignacion::where('tipo', Asignacion::TIPO_DISPOSITIVO)
+                        ->where('id_referencia', $mantenimientoBloqueado->dispositivo_id)
+                        ->whereNull('deleted_at')
+                        ->whereDoesntHave('devolucion')
+                        ->lockForUpdate()
+                        ->first();
                 }
 
                 $dispositivo = Dispositivo::withTrashed()->lockForUpdate()->findOrFail($mantenimientoBloqueado->dispositivo_id);
@@ -159,10 +171,20 @@ class MantenimientoDispositivoController extends Controller
                     $estadoResultante = (string) $request->input('estado_fisico_resultante');
                     $solucion = (string) $request->input('solucion_aplicada');
 
+                    // Revalidar atómicamente dentro del bloqueo pesimista contra TOCTOU (🟡-2)
+                    $puedeConservarNuevo = ($mantenimientoBloqueado->estado_fisico_anterior === 'Nuevo / En perfectas condiciones') && ! $dispositivo->tieneHistorialAsignaciones();
+                    if ($estadoResultante === 'Nuevo / En perfectas condiciones' && ! $puedeConservarNuevo) {
+                        $estadoResultante = 'Usado / Segunda mano';
+                    }
+
+                    $operador = Auth::user()?->name ?? 'Administración TI';
+                    $fechaCierre = now()->format('d/m/Y h:i A');
+                    $solucionConFirma = $solucion."\n[Finalizado por {$operador} el {$fechaCierre}]";
+
                     $mantenimientoBloqueado->update([
                         'estado' => MantenimientoDispositivo::ESTADO_REPARADO,
                         'fecha_fin' => now(),
-                        'solucion_aplicada' => $solucion,
+                        'solucion_aplicada' => $solucionConFirma,
                         'estado_fisico_resultante' => $estadoResultante,
                     ]);
 
@@ -211,28 +233,15 @@ class MantenimientoDispositivoController extends Controller
                         }
                     }
 
-                    // Si el dispositivo estaba en bajas, reactivarlo automáticamente (alta)
-                    if ($dispositivo->trashed()) {
-                        $dispositivo->restore();
-                        $dispositivo->update([
-                            'reactivado_por_user_id' => Auth::id(),
-                            'motivo_baja' => null,
-                            'baja_por_user_id' => null,
-                            'estado' => $estadoResultante,
-                            'disponibilidad' => Dispositivo::DISPONIBILIDAD_SIN_ASIGNAR,
-                        ]);
+                    // Recalcular disponibilidad según asignaciones realmente activas y condición de área común (🔴-2 & 🟡-1)
+                    $tieneCustodiaActiva = $dispositivo->asignacionesActivas()->exists();
+                    $esAreaComun = (bool) ($mantenimientoBloqueado->es_area_comun || ($asignacionActiva?->es_area_comun ?? $dispositivo->esEquipoAreaComun()));
 
-                        return redirect()->route('dispositivos.historial', $dispositivo->id)
-                            ->with('success', "Dispositivo {$dispositivo->etiqueta} reparado exitosamente{$mensajeHw} y reactivado automáticamente en el inventario disponible.");
-                    }
-
-                    // Si estaba activo, mantener la custodia del colaborador si la tenía
-                    $tieneAsignacion = $asignacionActiva !== null || $dispositivo->asignacionesActivas()->exists();
                     $dispositivo->estado = $estadoResultante;
                     $dispositivo->disponibilidad = Dispositivo::calcularDisponibilidad(
                         $dispositivo->estado,
-                        $dispositivo->esEquipoAreaComun(),
-                        $tieneAsignacion
+                        $esAreaComun,
+                        $tieneCustodiaActiva
                     );
                     $dispositivo->save();
 
@@ -242,27 +251,43 @@ class MantenimientoDispositivoController extends Controller
 
                 // CASO: Daño irreparable (sin solución)
                 $diagnostico = (string) $request->input('diagnostico_falla');
+                $operador = Auth::user()?->name ?? 'Administración TI';
+                $fechaCierre = now()->format('d/m/Y h:i A');
 
                 $mantenimientoBloqueado->update([
                     'estado' => MantenimientoDispositivo::ESTADO_IRREPARABLE,
                     'fecha_fin' => now(),
-                    'solucion_aplicada' => "Sin solución / Irreparable: {$diagnostico}",
+                    'solucion_aplicada' => "Sin solución / Irreparable: {$diagnostico}\n[Dictamen emitido por {$operador} el {$fechaCierre}]",
                     'estado_fisico_resultante' => 'Dañado / Defectuoso',
                 ]);
 
-                // Si estaba asignado a un colaborador, registrar la devolución formal
-                $asignacionADevolver = $asignacionActiva ?? $dispositivo->asignacionesActivas()->lockForUpdate()->first();
-                if ($asignacionADevolver && ! $asignacionADevolver->devolucion()->exists()) {
-                    $devolucion = Devolucion::create([
-                        'asignacion_id' => $asignacionADevolver->id,
-                        'fecha_devolucion' => now()->toDateString(),
-                        'estado_devuelto' => 'Dañado / Defectuoso',
-                        'estado_anterior' => $mantenimientoBloqueado->estado_fisico_anterior ?? $dispositivo->estado,
-                        'recibido_por' => Auth::user()->name ?? 'Administración TI',
-                        'observaciones' => \Illuminate\Support\Str::limit("Devuelto por daño irreparable en revisión técnica: {$diagnostico}", 950),
-                    ]);
+                // Si estaba asignado o tiene devolución previa, sincronizar trazabilidad de devolución (🟡-13)
+                $asignacionADevolver = $asignacionActiva;
+                if ($asignacionADevolver) {
+                    $devolucionExistente = $asignacionADevolver->devolucion()->lockForUpdate()->first();
+                    if ($devolucionExistente) {
+                        $devolucionExistente->update([
+                            'estado_devuelto' => 'Dañado / Defectuoso',
+                            'observaciones' => \Illuminate\Support\Str::limit(
+                                rtrim($devolucionExistente->observaciones ?? '')."\n[Actualización Taller] Declarado irreparable: {$diagnostico}",
+                                950
+                            ),
+                        ]);
+                        if (! $mantenimientoBloqueado->devolucion_id) {
+                            $mantenimientoBloqueado->update(['devolucion_id' => $devolucionExistente->id]);
+                        }
+                    } else {
+                        $devolucion = Devolucion::create([
+                            'asignacion_id' => $asignacionADevolver->id,
+                            'fecha_devolucion' => now()->toDateString(),
+                            'estado_devuelto' => 'Dañado / Defectuoso',
+                            'estado_anterior' => $mantenimientoBloqueado->estado_fisico_anterior ?? $dispositivo->estado,
+                            'recibido_por' => Auth::user()->name ?? 'Administración TI',
+                            'observaciones' => \Illuminate\Support\Str::limit("Devuelto por daño irreparable en revisión técnica: {$diagnostico}", 950),
+                        ]);
 
-                    $mantenimientoBloqueado->update(['devolucion_id' => $devolucion->id]);
+                        $mantenimientoBloqueado->update(['devolucion_id' => $devolucion->id]);
+                    }
                 }
 
                 $dispositivo->estado = 'Dañado / Defectuoso';
@@ -284,20 +309,26 @@ class MantenimientoDispositivoController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
+            $mensajeError = $e instanceof \Illuminate\Database\QueryException
+                ? 'Ocurrió un error en la base de datos al procesar el cierre del mantenimiento.'
+                : ($e instanceof \RuntimeException
+                    ? $e->getMessage()
+                    : 'Error inesperado al procesar el cierre del mantenimiento. Intente nuevamente.');
+
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Ocurrió un error al procesar el cierre del mantenimiento: '.($e instanceof \RuntimeException ? $e->getMessage() : 'Error inesperado. Intente nuevamente.'));
+                ->with('error', $mensajeError);
         }
     }
 
     /**
      * Cancelar un mantenimiento registrado por error.
      */
-    public function cancelar(MantenimientoDispositivo $mantenimiento): RedirectResponse
+    public function cancelar(Request $request, MantenimientoDispositivo $mantenimiento): RedirectResponse
     {
         Gate::authorize('admin');
 
-        return DB::transaction(function () use ($mantenimiento): RedirectResponse {
+        return DB::transaction(function () use ($request, $mantenimiento): RedirectResponse {
             $mantenimientoBloqueado = MantenimientoDispositivo::lockForUpdate()->findOrFail($mantenimiento->id);
 
             if ($mantenimientoBloqueado->estado !== MantenimientoDispositivo::ESTADO_EN_PROCESO) {
@@ -306,19 +337,35 @@ class MantenimientoDispositivoController extends Controller
 
             $dispositivo = Dispositivo::withTrashed()->lockForUpdate()->findOrFail($mantenimientoBloqueado->dispositivo_id);
 
+            // Bloquear cancelación si el bien está en bajas (🟡-4)
+            if ($dispositivo->trashed()) {
+                return redirect()->back()->with('error', 'No se puede cancelar el mantenimiento de un dispositivo que se encuentra en el archivo de bajas.');
+            }
+
+            $motivoCancelacion = trim((string) $request->input('motivo_cancelacion'));
+            $operador = Auth::user()?->name ?? 'Administración TI';
+            $fechaCancelacion = now()->format('d/m/Y h:i A');
+
+            $solucion = $motivoCancelacion !== ''
+                ? "Mantenimiento cancelado: {$motivoCancelacion}\n[Cancelado por {$operador} el {$fechaCancelacion}]"
+                : "Mantenimiento cancelado por {$operador} el {$fechaCancelacion}.";
+
             $mantenimientoBloqueado->update([
                 'estado' => MantenimientoDispositivo::ESTADO_CANCELADO,
                 'fecha_fin' => now(),
-                'solucion_aplicada' => 'Mantenimiento cancelado por el administrador.',
+                'solucion_aplicada' => $solucion,
             ]);
 
-            // Restaurar estado físico previo del dispositivo si estaba activo
-            if (! $dispositivo->trashed() && $mantenimientoBloqueado->estado_fisico_anterior) {
+            // Restaurar estado físico previo del dispositivo preservando Área Común (🟡-1 & 🟡-2)
+            if ($mantenimientoBloqueado->estado_fisico_anterior) {
                 $tieneAsignacion = $dispositivo->asignacionesActivas()->exists();
+                $asignacionActiva = $mantenimientoBloqueado->asignacion_id ? \App\Models\Asignacion::find($mantenimientoBloqueado->asignacion_id) : null;
+                $esAreaComun = (bool) ($mantenimientoBloqueado->es_area_comun || ($asignacionActiva?->es_area_comun ?? $dispositivo->esEquipoAreaComun()));
+
                 $dispositivo->estado = $mantenimientoBloqueado->estado_fisico_anterior;
                 $dispositivo->disponibilidad = Dispositivo::calcularDisponibilidad(
                     $dispositivo->estado,
-                    $dispositivo->esEquipoAreaComun(),
+                    $esAreaComun,
                     $tieneAsignacion
                 );
                 $dispositivo->save();

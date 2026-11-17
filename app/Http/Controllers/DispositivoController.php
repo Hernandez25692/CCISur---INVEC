@@ -54,9 +54,7 @@ class DispositivoController extends Controller
             $query->where('ubicacion', 'like', "%{$ubicacion}%");
         }
 
-        if ($request->boolean('en_taller')) {
-            $query->where('estado', 'En reparación / En revisión');
-        } elseif ($request->filled('estado')) {
+        if ($request->filled('estado')) {
             $estado = trim((string) $request->input('estado'));
             $estadoCompleto = array_search($estado, Dispositivo::ESTADOS_CORTOS, true) ?: $estado;
             $query->where(function (Builder $q) use ($estado, $estadoCompleto): void {
@@ -64,6 +62,13 @@ class DispositivoController extends Controller
                     ->orWhere('estado', $estado)
                     ->orWhere('estado', 'like', "{$estado}%");
             });
+
+            // Si se envió un estado explícito, limpiar en_taller para evitar inconsistencia de badge (🟡-5)
+            if ($request->has('en_taller')) {
+                $request->offsetUnset('en_taller');
+            }
+        } elseif ($request->boolean('en_taller')) {
+            $query->where('estado', 'En reparación / En revisión');
         }
 
         if ($request->filled('disponibilidad')) {
@@ -81,7 +86,7 @@ class DispositivoController extends Controller
 
         $hayFiltros = $hayFiltrosFormulario || $request->boolean('en_taller');
 
-        $dispositivos = $query->latest('id')->paginate(15)->withQueryString();
+        $dispositivos = $query->with('mantenimientoActivo')->latest('id')->paginate(15)->withQueryString();
         $inactivosCount = Dispositivo::onlyTrashed()->count();
         $enTallerCount = Dispositivo::where('estado', 'En reparación / En revisión')->count();
 
@@ -137,7 +142,7 @@ class DispositivoController extends Controller
                 Rule::unique('dispositivos', 'n_serie'),
             ],
             'ubicacion' => ['required', 'string', Rule::in(Dispositivo::UBICACIONES)],
-            'estado' => ['required', Rule::in(Dispositivo::ESTADOS)],
+            'estado' => ['required', Rule::in(Dispositivo::ESTADOS_MANUALES)],
             'fecha_registro' => ['required', 'date'],
             'es_area_comun' => ['nullable', 'boolean'],
             'especificaciones' => ['nullable', 'array'],
@@ -163,20 +168,38 @@ class DispositivoController extends Controller
 
         $validated['especificaciones'] = $this->procesarEspecificaciones($request);
 
-        $validated['disponibilidad'] = Dispositivo::calcularDisponibilidad(
-            $validated['estado'],
-            $request->boolean('es_area_comun'),
-            false
-        );
+        $esDefectuoso = $validated['estado'] === Dispositivo::ESTADO_DEFECTUOSO;
+        if ($esDefectuoso) {
+            $validated['motivo_baja'] = 'Ingresado al inventario en estado Dañado / Defectuoso';
+            $validated['baja_por_user_id'] = Auth::id();
+            $validated['disponibilidad'] = Dispositivo::DISPONIBILIDAD_NO_APLICA;
+        } else {
+            $validated['disponibilidad'] = Dispositivo::calcularDisponibilidad(
+                $validated['estado'],
+                $request->boolean('es_area_comun'),
+                false
+            );
+        }
 
         unset($validated['es_area_comun']);
 
-        DB::transaction(function () use ($validated): void {
+        $dispositivo = DB::transaction(function () use ($validated, $esDefectuoso): Dispositivo {
             $dispositivo = Dispositivo::create($validated);
             $anio = Carbon::parse($validated['fecha_registro'])->format('Y');
             $dispositivo->etiqueta = 'INV-DIS-'.$anio.'-'.str_pad((string) $dispositivo->id, 4, '0', STR_PAD_LEFT);
             $dispositivo->save();
+
+            if ($esDefectuoso) {
+                $dispositivo->delete();
+            }
+
+            return $dispositivo;
         });
+
+        if ($esDefectuoso) {
+            return redirect()->route('dispositivos.bajas')
+                ->with('warning', "Dispositivo {$dispositivo->etiqueta} registrado y trasladado directamente al Archivo de Bajas por haber ingresado en estado Dañado / Defectuoso.");
+        }
 
         return redirect()->route('dispositivos.index')->with('success', 'Dispositivo registrado correctamente.');
     }
@@ -217,7 +240,7 @@ class DispositivoController extends Controller
                 Rule::unique('dispositivos', 'n_serie')->ignore($dispositivo->id),
             ],
             'ubicacion' => ['required', 'string', Rule::in(Dispositivo::UBICACIONES)],
-            'estado' => [$tieneAsignacionActiva ? 'nullable' : 'required', Rule::in(Dispositivo::ESTADOS)],
+            'estado' => ['nullable', Rule::in(Dispositivo::ESTADOS_MANUALES)],
             'fecha_registro' => ['required', 'date'],
             'es_area_comun' => ['nullable', 'boolean'],
             'especificaciones' => ['nullable', 'array'],
@@ -244,31 +267,42 @@ class DispositivoController extends Controller
         $nuevasSpecs = $this->procesarEspecificaciones($request);
         $validated['especificaciones'] = $nuevasSpecs;
 
-        $tieneMantenimientoActivo = $dispositivo->mantenimientoActivo()->exists();
-
-        if ($tieneMantenimientoActivo) {
-            $validated['estado'] = 'En reparación / En revisión';
-            $validated['disponibilidad'] = $tieneAsignacionActiva
-                ? Dispositivo::DISPONIBILIDAD_ASIGNADO
-                : Dispositivo::DISPONIBILIDAD_NO_APLICA;
-        } elseif ($tieneAsignacionActiva) {
-            $validated['ubicacion'] = $dispositivo->ubicacion;
-            $validated['estado'] = $dispositivo->estado;
-            $validated['disponibilidad'] = Dispositivo::DISPONIBILIDAD_ASIGNADO;
-        } else {
-            $validated['disponibilidad'] = Dispositivo::calcularDisponibilidad(
-                $validated['estado'],
-                $request->boolean('es_area_comun'),
-                false
-            );
-        }
-
-        unset($validated['es_area_comun']);
-
-        DB::transaction(function () use ($dispositivo, $validated, $nuevasSpecs): void {
+        return DB::transaction(function () use ($request, $dispositivo, $validated, $nuevasSpecs): RedirectResponse {
             $dispositivoBloqueado = Dispositivo::lockForUpdate()->findOrFail($dispositivo->id);
-            $specsAnteriores = $dispositivoBloqueado->especificaciones;
 
+            $tieneAsignacionActiva = $dispositivoBloqueado->estaAsignado();
+            $tieneMantenimientoActivo = $dispositivoBloqueado->mantenimientoActivo()->exists();
+
+            if (! $tieneAsignacionActiva && ! $tieneMantenimientoActivo && empty($validated['estado'])) {
+                return redirect()->back()->withErrors(['estado' => 'El estado físico es obligatorio.'])->withInput();
+            }
+
+            if ($tieneMantenimientoActivo) {
+                $validated['estado'] = 'En reparación / En revisión';
+                $validated['disponibilidad'] = $tieneAsignacionActiva
+                    ? Dispositivo::DISPONIBILIDAD_ASIGNADO
+                    : Dispositivo::DISPONIBILIDAD_NO_APLICA;
+            } elseif ($tieneAsignacionActiva) {
+                $validated['ubicacion'] = $dispositivoBloqueado->ubicacion;
+                $validated['estado'] = $dispositivoBloqueado->estado;
+                $validated['disponibilidad'] = Dispositivo::DISPONIBILIDAD_ASIGNADO;
+            } else {
+                if ($validated['estado'] === Dispositivo::ESTADO_NUEVO && $dispositivoBloqueado->asignaciones()->exists()) {
+                    return redirect()->back()
+                        ->withErrors(['estado' => 'Un dispositivo que ya cuenta con historial de asignaciones no puede volver a registrarse como nuevo.'])
+                        ->withInput();
+                }
+
+                $validated['disponibilidad'] = Dispositivo::calcularDisponibilidad(
+                    $validated['estado'],
+                    $request->boolean('es_area_comun'),
+                    false
+                );
+            }
+
+            unset($validated['es_area_comun']);
+
+            $specsAnteriores = $dispositivoBloqueado->especificaciones;
             $cambiosDetectados = HistorialCambioHardware::detectarCambios($specsAnteriores ?? [], $nuevasSpecs ?? []);
 
             if (! empty($cambiosDetectados)) {
@@ -287,13 +321,25 @@ class DispositivoController extends Controller
             }
 
             $dispositivoBloqueado->update($validated);
+
+            if (! $tieneAsignacionActiva && ! $tieneMantenimientoActivo && $validated['estado'] === Dispositivo::ESTADO_DEFECTUOSO) {
+                $dispositivoBloqueado->update([
+                    'motivo_baja' => 'Actualizado a estado Dañado / Defectuoso en edición de ficha',
+                    'baja_por_user_id' => Auth::id(),
+                    'disponibilidad' => Dispositivo::DISPONIBILIDAD_NO_APLICA,
+                ]);
+                $dispositivoBloqueado->delete();
+
+                return redirect()->route('dispositivos.bajas')
+                    ->with('warning', "El dispositivo {$dispositivoBloqueado->etiqueta} fue trasladado al Archivo de Bajas por registrar estado Dañado / Defectuoso.");
+            }
+
+            if ($request->input('from') === 'historial') {
+                return redirect()->route('dispositivos.historial', $dispositivoBloqueado->id)->with('success', 'Dispositivo actualizado correctamente.');
+            }
+
+            return redirect()->route('dispositivos.index')->with('success', 'Dispositivo actualizado correctamente.');
         });
-
-        if ($request->input('from') === 'historial') {
-            return redirect()->route('dispositivos.historial', $dispositivo->id)->with('success', 'Dispositivo actualizado correctamente.');
-        }
-
-        return redirect()->route('dispositivos.index')->with('success', 'Dispositivo actualizado correctamente.');
     }
 
     public function show(Dispositivo $dispositivo): RedirectResponse
@@ -381,17 +427,7 @@ class DispositivoController extends Controller
             $query->where('ubicacion', 'like', "%{$ubicacion}%");
         }
 
-        if ($request->filled('estado')) {
-            $estado = trim((string) $request->input('estado'));
-            $estadoCompleto = array_search($estado, Dispositivo::ESTADOS_CORTOS, true) ?: $estado;
-            $query->where(function (Builder $q) use ($estado, $estadoCompleto): void {
-                $q->where('estado', $estadoCompleto)
-                    ->orWhere('estado', $estado)
-                    ->orWhere('estado', 'like', "{$estado}%");
-            });
-        }
-
-        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion', 'estado']))
+        $hayFiltros = collect($request->only(['nombre', 'tipo', 'marca', 'ubicacion']))
             ->filter(fn ($valor): bool => filled($valor))
             ->isNotEmpty();
 
@@ -401,16 +437,24 @@ class DispositivoController extends Controller
     }
 
     // Reactivar dispositivo dado de baja
-    public function reactivar(int $id): RedirectResponse
+    public function reactivar(Request $request, int $id): RedirectResponse
     {
         Gate::authorize('admin');
 
-        return DB::transaction(function () use ($id): RedirectResponse {
+        return DB::transaction(function () use ($request, $id): RedirectResponse {
             $dispositivo = Dispositivo::onlyTrashed()->lockForUpdate()->find($id);
 
             if (! $dispositivo) {
                 return redirect()->route('dispositivos.bajas')->with('info', 'El dispositivo ya fue reactivado o no se encuentra en bajas.');
             }
+
+            if ($dispositivo->mantenimientoActivo()->exists()) {
+                return redirect()->route('dispositivos.historial', $dispositivo->id)
+                    ->with('error', 'Este dispositivo tiene un mantenimiento en proceso en taller. Debe finalizar o cancelar el mantenimiento para reactivarlo.');
+            }
+
+            $enviarATaller = $request->boolean('enviar_a_taller');
+            $motivoTaller = trim((string) $request->input('motivo_taller'));
 
             $dispositivo->restore();
 
@@ -420,9 +464,35 @@ class DispositivoController extends Controller
                 'reactivado_por_user_id' => Auth::id(),
             ]);
 
+            if ($enviarATaller) {
+                $estadoPrevio = $dispositivo->estado;
+                $dispositivo->estado = 'En reparación / En revisión';
+                $dispositivo->disponibilidad = Dispositivo::DISPONIBILIDAD_NO_APLICA;
+                $dispositivo->save();
+
+                \App\Models\MantenimientoDispositivo::create([
+                    'dispositivo_id' => $dispositivo->id,
+                    'user_id' => Auth::id(),
+                    'tipo' => \App\Models\MantenimientoDispositivo::TIPO_DIAGNOSTICO,
+                    'motivo_falla' => $motivoTaller !== '' ? $motivoTaller : 'Reingreso a taller por reactivación desde archivo de bajas',
+                    'estado' => \App\Models\MantenimientoDispositivo::ESTADO_EN_PROCESO,
+                    'fecha_inicio' => now(),
+                    'estado_fisico_anterior' => $estadoPrevio ?? Dispositivo::ESTADO_DEFECTUOSO,
+                    'es_area_comun' => false,
+                ]);
+
+                return redirect()->route('dispositivos.historial', ['dispositivo' => $dispositivo->id, 'tab' => 'bitacora'])
+                    ->with('success', "Dispositivo {$dispositivo->etiqueta} reactivado y enviado directamente a taller técnico.");
+            }
+
             // Al restaurar, recalcular disponibilidad según su estado físico actual
             $dispositivo->disponibilidad = Dispositivo::calcularDisponibilidad($dispositivo->estado, false, false);
             $dispositivo->save();
+
+            if ($request->input('from') === 'historial') {
+                return redirect()->route('dispositivos.historial', $dispositivo->id)
+                    ->with('success', "Dispositivo {$dispositivo->etiqueta} reactivado correctamente.");
+            }
 
             return redirect()->route('dispositivos.bajas')->with('success', "Dispositivo {$dispositivo->etiqueta} reactivado correctamente.");
         });

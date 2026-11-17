@@ -43,6 +43,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/mobiliario/bajas', [\App\Http\Controllers\MobiliarioController::class, 'bajas'])->name('mobiliario.bajas');
     Route::get('/mobiliario/exportar', [\App\Http\Controllers\MobiliarioController::class, 'exportar'])->name('mobiliario.exportar');
     Route::post('/mobiliario/{id}/reactivar', [\App\Http\Controllers\MobiliarioController::class, 'reactivar'])->name('mobiliario.reactivar');
+    Route::post('/mobiliario/{mobiliario}/mantenimientos', [\App\Http\Controllers\MantenimientoMobiliarioController::class, 'store'])->name('mobiliario.mantenimientos.store');
+    Route::post('/mobiliario/mantenimientos/{mantenimiento}/finalizar', [\App\Http\Controllers\MantenimientoMobiliarioController::class, 'finalizar'])->name('mobiliario.mantenimientos.finalizar');
+    Route::post('/mobiliario/mantenimientos/{mantenimiento}/cancelar', [\App\Http\Controllers\MantenimientoMobiliarioController::class, 'cancelar'])->name('mobiliario.mantenimientos.cancelar');
     Route::get('/mobiliario/{mobiliario}/historial', [\App\Http\Controllers\MobiliarioController::class, 'historial'])->withTrashed()->name('mobiliario.historial');
     Route::resource('mobiliario', MobiliarioController::class);
 
@@ -53,7 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dispositivos/{dispositivo}/historial', [\App\Http\Controllers\DispositivoController::class, 'historial'])->withTrashed()->name('dispositivos.historial');
     Route::post('/dispositivos/cambios-hardware/{cambio}/revertir', [\App\Http\Controllers\DispositivoController::class, 'revertirCambioHardware'])->name('dispositivos.cambios-hardware.revertir');
     Route::get('/dispositivos/cambios-hardware/{cambio}/constancia-pdf', [\App\Http\Controllers\DispositivoController::class, 'constanciaCambioHardwarePdf'])->name('dispositivos.cambios-hardware.pdf');
-    Route::post('/dispositivos/{dispositivo}/mantenimientos', [\App\Http\Controllers\MantenimientoDispositivoController::class, 'store'])->withTrashed()->name('dispositivos.mantenimientos.store');
+    Route::post('/dispositivos/{dispositivo}/mantenimientos', [\App\Http\Controllers\MantenimientoDispositivoController::class, 'store'])->name('dispositivos.mantenimientos.store');
     Route::post('/dispositivos/mantenimientos/{mantenimiento}/finalizar', [\App\Http\Controllers\MantenimientoDispositivoController::class, 'finalizar'])->name('dispositivos.mantenimientos.finalizar');
     Route::post('/dispositivos/mantenimientos/{mantenimiento}/cancelar', [\App\Http\Controllers\MantenimientoDispositivoController::class, 'cancelar'])->name('dispositivos.mantenimientos.cancelar');
     Route::resource('dispositivos', DispositivoController::class);
