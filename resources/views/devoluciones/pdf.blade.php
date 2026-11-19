@@ -391,7 +391,17 @@
     <table class="info-table">
         <tr>
             <th style="width: 25%;">Observaciones:</th>
-            <td>{{ !empty($devolucion->observaciones_pdf) ? $devolucion->observaciones_pdf : 'El bien se recibe formalmente en las instalaciones de CCISUR a satisfacción de la administración sin novedades adicionales.' }}</td>
+            <td>
+                @if (!empty($devolucion->observaciones_pdf))
+                    {{ $devolucion->observaciones_pdf }}
+                @elseif ($devolucion->estado_devuelto === 'Dañado / Defectuoso')
+                    El bien se recibe formalmente con averías físicas o fallas no reparables, procediendo a su desincorporación y pase al archivo de bajas.
+                @elseif ($devolucion->estado_devuelto === 'En reparación / En revisión')
+                    El bien se recibe formalmente para su respectiva inspección y revisión técnica en taller.
+                @else
+                    El bien se recibe formalmente en las instalaciones de CCISUR a satisfacción de la administración sin novedades adicionales.
+                @endif
+            </td>
         </tr>
     </table>
 

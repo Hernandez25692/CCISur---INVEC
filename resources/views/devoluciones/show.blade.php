@@ -282,7 +282,15 @@
                     <div class="p-4 rounded-xl border border-gray-200 bg-white">
                         <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Observaciones Registradas</p>
                         <p class="text-xs text-gray-600 italic">
-                            {{ $devolucion->observaciones_pdf ?: 'Sin observaciones adicionales registradas al momento de la entrega.' }}
+                            @if (!empty($devolucion->observaciones_pdf))
+                                {{ $devolucion->observaciones_pdf }}
+                            @elseif ($devolucion->estado_devuelto === 'Dañado / Defectuoso')
+                                El bien se recibe formalmente con averías físicas o fallas no reparables, procediendo a su desincorporación y pase al archivo de bajas.
+                            @elseif ($devolucion->estado_devuelto === 'En reparación / En revisión')
+                                El bien se recibe formalmente para su respectiva inspección y revisión técnica en taller.
+                            @else
+                                Sin observaciones adicionales registradas al momento de la entrega.
+                            @endif
                         </p>
                     </div>
 

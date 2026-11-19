@@ -438,7 +438,12 @@ class DevolucionController extends Controller
             'fecha_devolucion' => $reglasFecha,
             'estado_devuelto' => ['required', 'string', Rule::in($estadosPermitidos)],
             'recibido_por' => ['nullable', 'string', 'max:255'],
-            'observaciones' => ['nullable', 'string', 'max:1000'],
+            'observaciones' => [
+                Rule::requiredIf(fn () => $request->input('estado_devuelto') === 'En reparación / En revisión'),
+                'nullable',
+                'string',
+                'max:1000',
+            ],
         ], [
             'asignacion_id.required' => 'Debe seleccionar una asignación para registrar la devolución.',
             'asignacion_id.exists' => 'La asignación seleccionada no es válida o se encuentra anulada.',
@@ -452,6 +457,7 @@ class DevolucionController extends Controller
             'estado_devuelto.required' => 'Debe evaluar el estado físico en que se recibe el bien.',
             'estado_devuelto.in' => 'El estado físico seleccionado no es válido para devolución (un bien devuelto ya no puede recibirse como nuevo).',
             'recibido_por.required' => 'El nombre de quien recibe es obligatorio.',
+            'observaciones.required' => 'Debe indicar la falla técnica o motivo de revisión para registrar el ingreso a taller.',
         ]);
 
         $validated['recibido_por'] = Auth::user()->name;

@@ -253,14 +253,37 @@
                 {{-- Observaciones --}}
                 <div>
                     <label for="observaciones" class="block text-xs font-semibold text-gray-700 mb-1">
-                        Observaciones de Recepción
+                        <span x-show="estadoSeleccionado === 'En reparación / En revisión'">
+                            Motivo de Envío a Taller / Falla Detectada <span class="text-red-500">*</span>
+                        </span>
+                        <span x-show="estadoSeleccionado === 'Dañado / Defectuoso'">
+                            Detalle del Daño o Avería <span class="text-gray-400 font-normal">(Opcional)</span>
+                        </span>
+                        <span x-show="estadoSeleccionado !== 'En reparación / En revisión' && estadoSeleccionado !== 'Dañado / Defectuoso'">
+                            Observaciones de Recepción <span class="text-gray-400 font-normal">(Opcional)</span>
+                        </span>
                     </label>
                     <textarea name="observaciones" 
                               id="observaciones" 
                               rows="3" 
-                              placeholder="Indique si se reciben accesorios (cargador, cables, funda), detalles físicos o motivos de la devolución..."
-                              class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs placeholder-gray-400">{{ old('observaciones') }}</textarea>
-                    <p class="text-[11px] text-gray-400 mt-1">Estas observaciones quedarán registradas formalmente en el Acta de Devolución.</p>
+                              :required="estadoSeleccionado === 'En reparación / En revisión'"
+                              :placeholder="placeholderObservaciones"
+                              class="block w-full py-2 px-3 text-xs rounded-lg border-gray-300 focus:border-brand-navy focus:ring-brand-navy shadow-xs placeholder-gray-400 @error('observaciones') border-red-500 @enderror">{{ old('observaciones') }}</textarea>
+
+                    {{-- Mensaje de ayuda contextual según estado --}}
+                    <div x-show="estadoSeleccionado === 'En reparación / En revisión'" class="mt-1.5 p-2.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-800 text-[11px] flex items-center gap-2">
+                        <i class="fas fa-tools text-purple-600 shrink-0"></i>
+                        <span><strong>Registro para Taller:</strong> Esta descripción se asignará automáticamente como el motivo de falla y diagnóstico inicial en el ticket de Taller.</span>
+                    </div>
+                    <p x-show="estadoSeleccionado === 'Dañado / Defectuoso'" class="text-[11px] text-gray-500 mt-1">
+                        Si se deja en blanco, el acta registrará formalmente que el bien se recibe con averías no reparables para su pase a bajas.
+                    </p>
+                    <p x-show="estadoSeleccionado !== 'En reparación / En revisión' && estadoSeleccionado !== 'Dañado / Defectuoso'" class="text-[11px] text-gray-400 mt-1">
+                        Estas observaciones quedarán registradas formalmente en el Acta de Devolución. Si se deja en blanco, se registrará entrega a satisfacción sin novedades.
+                    </p>
+                    @error('observaciones')
+                        <p class="text-[11px] text-red-600 mt-1 font-semibold">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- Botones de pie --}}
@@ -297,6 +320,16 @@
                     return (this.asignacionSeleccionada?.tipo === 'mobiliario')
                         ? this.estadosMobiliario
                         : this.estadosDispositivo;
+                },
+
+                get placeholderObservaciones() {
+                    if (this.estadoSeleccionado === 'En reparación / En revisión') {
+                        return 'Describa la falla o problema técnico detectado (ej: no enciende, sobrecalentamiento, bisagra rota)...';
+                    }
+                    if (this.estadoSeleccionado === 'Dañado / Defectuoso') {
+                        return 'Indique el daño o rotura del bien (ej: pantalla quebrada, caída accidental, daño irreparable)...';
+                    }
+                    return 'Indique si se reciben accesorios (cargador, cables, funda), detalles físicos o motivos de la devolución...';
                 },
 
                 get asignacionesFiltradas() {
