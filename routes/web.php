@@ -69,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/asignaciones/bajas', [AsignacionController::class, 'bajas'])->name('asignaciones.bajas');
     Route::get('/asignaciones/exportar', [AsignacionController::class, 'exportar'])->name('asignaciones.exportar');
     Route::post('/asignaciones/{id}/restore', [AsignacionController::class, 'restore'])->name('asignaciones.restore');
+    Route::get('/asignaciones/{id}/restore', fn ($id) => redirect()->route('asignaciones.show', $id));
     Route::resource('asignaciones', AsignacionController::class)->except(['edit', 'update'])->parameters([
         'asignaciones' => 'asignacion',
     ]);
@@ -90,6 +91,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/devoluciones/bajas', [\App\Http\Controllers\DevolucionController::class, 'bajas'])->name('devoluciones.bajas');
     Route::get('/devoluciones/exportar', [\App\Http\Controllers\DevolucionController::class, 'exportar'])->name('devoluciones.exportar');
     Route::post('/devoluciones/{id}/restore', [\App\Http\Controllers\DevolucionController::class, 'restore'])->name('devoluciones.restore');
+    Route::get('/devoluciones/{id}/restore', fn ($id) => redirect()->route('devoluciones.show', $id));
     Route::resource('devoluciones', \App\Http\Controllers\DevolucionController::class)
         ->except(['edit', 'update'])
         ->parameters(['devoluciones' => 'devolucion']);

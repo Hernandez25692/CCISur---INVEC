@@ -391,7 +391,7 @@
     <table class="info-table">
         <tr>
             <th style="width: 25%;">Observaciones:</th>
-            <td>{{ !empty($devolucion->observaciones) ? $devolucion->observaciones : 'El bien se recibe formalmente en las instalaciones de CCISUR a satisfacción de la administración sin novedades adicionales.' }}</td>
+            <td>{{ !empty($devolucion->observaciones_pdf) ? $devolucion->observaciones_pdf : 'El bien se recibe formalmente en las instalaciones de CCISUR a satisfacción de la administración sin novedades adicionales.' }}</td>
         </tr>
     </table>
 

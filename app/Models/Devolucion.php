@@ -345,4 +345,33 @@ class Devolucion extends Model
     {
         return $this->motivoNoReactivable($user) === null;
     }
+
+    /**
+     * Observaciones oficiales de la devolución para PDF y vista limpia, excluyendo notas internas de reactivación.
+     */
+    public function getObservacionesPdfAttribute(): ?string
+    {
+        if (empty($this->observaciones)) {
+            return null;
+        }
+
+        $limpio = preg_replace('/(\r?\n)?\[Reactivación [^\]]+\]:?[^\r\n]*/u', '', $this->observaciones);
+        $limpio = trim((string) $limpio);
+
+        return $limpio !== '' ? $limpio : null;
+    }
+
+    /**
+     * Notas internas de reactivación de la devolución para consulta en la vista de detalle.
+     */
+    public function getNotasReactivacionAttribute(): array
+    {
+        if (empty($this->observaciones)) {
+            return [];
+        }
+
+        preg_match_all('/\[Reactivación [^\]]+\]:?[^\r\n]*/u', $this->observaciones, $matches);
+
+        return $matches[0] ?? [];
+    }
 }

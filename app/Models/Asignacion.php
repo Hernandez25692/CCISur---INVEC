@@ -273,6 +273,35 @@ class Asignacion extends Model
     }
 
     /**
+     * Observaciones oficiales del acta para PDF y vista limpia, excluyendo notas internas de reactivación.
+     */
+    public function getObservacionesPdfAttribute(): ?string
+    {
+        if (empty($this->observaciones)) {
+            return null;
+        }
+
+        $limpio = preg_replace('/(\r?\n)?\[Reactivación [^\]]+\]:?[^\r\n]*/u', '', $this->observaciones);
+        $limpio = trim((string) $limpio);
+
+        return $limpio !== '' ? $limpio : null;
+    }
+
+    /**
+     * Notas internas de reactivación del acta para consulta en la vista de detalle.
+     */
+    public function getNotasReactivacionAttribute(): array
+    {
+        if (empty($this->observaciones)) {
+            return [];
+        }
+
+        preg_match_all('/\[Reactivación [^\]]+\]:?[^\r\n]*/u', $this->observaciones, $matches);
+
+        return $matches[0] ?? [];
+    }
+
+    /**
      * Evalúa las reglas de reactivabilidad y memoiza el resultado en la instancia.
      */
     public function evaluarReactivabilidad(?User $user = null, ?bool $tieneAsignacionActiva = null): void

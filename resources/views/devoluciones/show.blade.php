@@ -282,9 +282,25 @@
                     <div class="p-4 rounded-xl border border-gray-200 bg-white">
                         <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Observaciones Registradas</p>
                         <p class="text-xs text-gray-600 italic">
-                            {{ $devolucion->observaciones ?: 'Sin observaciones adicionales registradas al momento de la entrega.' }}
+                            {{ $devolucion->observaciones_pdf ?: 'Sin observaciones adicionales registradas al momento de la entrega.' }}
                         </p>
                     </div>
+
+                    @if (!empty($devolucion->notas_reactivacion))
+                        <div class="p-4 rounded-xl border border-blue-200 bg-blue-50/70 text-xs text-blue-900 shadow-xs">
+                            <p class="font-bold flex items-center gap-1.5 mb-1.5 text-blue-950">
+                                <i class="fas fa-history text-blue-600"></i> Historial de Reactivación del Acta
+                            </p>
+                            <div class="space-y-1.5 mt-2">
+                                @foreach ($devolucion->notas_reactivacion as $nota)
+                                    <div class="font-mono text-xs text-blue-800 bg-white/80 p-2.5 rounded-lg border border-blue-200/60 shadow-xs flex items-center gap-2">
+                                        <i class="fas fa-info-circle text-blue-500 text-xs shrink-0"></i>
+                                        <span>{{ $nota }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Cláusula de Finiquito --}}

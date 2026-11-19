@@ -211,9 +211,27 @@
                 <div class="border-t border-gray-100 pt-4">
                     <p class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Observaciones</p>
                     <p class="text-xs text-gray-700 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        {{ $asignacion->observaciones ?: 'Sin observaciones particulares asentadas al momento de la entrega.' }}
+                        {{ $asignacion->observaciones_pdf ?: 'Sin observaciones particulares asentadas al momento de la entrega.' }}
                     </p>
                 </div>
+
+                @if (!empty($asignacion->notas_reactivacion))
+                    <div class="border-t border-gray-100 pt-4">
+                        <div class="rounded-xl border border-blue-200 bg-blue-50/70 p-4 text-xs text-blue-900 shadow-xs">
+                            <p class="font-bold flex items-center gap-1.5 mb-1.5 text-blue-950">
+                                <i class="fas fa-history text-blue-600"></i> Historial de Reactivación del Acta
+                            </p>
+                            <div class="space-y-1.5 mt-2">
+                                @foreach ($asignacion->notas_reactivacion as $nota)
+                                    <div class="font-mono text-xs text-blue-800 bg-white/80 p-2.5 rounded-lg border border-blue-200/60 shadow-xs flex items-center gap-2">
+                                        <i class="fas fa-info-circle text-blue-500 text-xs shrink-0"></i>
+                                        <span>{{ $nota }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
 
             {{-- Pie de página con retorno limpio --}}

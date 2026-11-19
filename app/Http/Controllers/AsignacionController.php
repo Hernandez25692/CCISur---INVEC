@@ -562,7 +562,7 @@ class AsignacionController extends Controller
             }
 
             $adminName = Auth::user()?->name ?? 'Administración';
-            $anuladoPorName = $asignacion->anuladoPor()->withTrashed()->first()?->name ?? ($asignacion->anuladoPor?->name ?? 'Administración');
+            $anuladoPorName = $asignacion->anuladoPor?->name ?? 'Administración';
             $fechaReactivacion = now()->format('d/m/Y h:i A');
             $notaReactivacion = "[Reactivación {$fechaReactivacion} por {$adminName}]: Acta reactivada tras haber sido anulada previamente por {$anuladoPorName}.";
             $asignacion->observaciones = trim(($asignacion->observaciones ?? '')."\n".$notaReactivacion);

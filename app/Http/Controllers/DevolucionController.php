@@ -814,7 +814,7 @@ class DevolucionController extends Controller
                 }
 
                 $adminName = Auth::user()?->name ?? 'Administración';
-                $anuladoPorName = $devolucion->anuladoPor()->withTrashed()->first()?->name ?? ($devolucion->anuladoPor?->name ?? 'Administración');
+                $anuladoPorName = $devolucion->anuladoPor?->name ?? 'Administración';
                 $fechaReactivacion = now()->format('d/m/Y h:i A');
                 $notaReactivacion = "[Reactivación {$fechaReactivacion} por {$adminName}]: Acta reactivada tras haber sido anulada previamente por {$anuladoPorName}.";
                 $devolucion->observaciones = trim(($devolucion->observaciones ?? '')."\n".$notaReactivacion);

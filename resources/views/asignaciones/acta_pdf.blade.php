@@ -339,7 +339,7 @@
     <table class="info-table">
         <tr>
             <th style="width: 25%;">Observaciones:</th>
-            <td>{{ !empty($asignacion->observaciones) ? $asignacion->observaciones : 'El bien se entrega en óptimas condiciones para el desempeño de sus labores ordinarias.' }}</td>
+            <td>{{ !empty($asignacion->observaciones_pdf) ? $asignacion->observaciones_pdf : 'El bien se entrega en óptimas condiciones para el desempeño de sus labores ordinarias.' }}</td>
         </tr>
     </table>
 
