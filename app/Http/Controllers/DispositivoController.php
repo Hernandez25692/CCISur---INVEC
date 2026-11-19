@@ -287,10 +287,24 @@ class DispositivoController extends Controller
                 $validated['estado'] = $dispositivoBloqueado->estado;
                 $validated['disponibilidad'] = Dispositivo::DISPONIBILIDAD_ASIGNADO;
             } else {
-                if ($validated['estado'] === Dispositivo::ESTADO_NUEVO && $dispositivoBloqueado->asignaciones()->exists()) {
-                    return redirect()->back()
-                        ->withErrors(['estado' => 'Un dispositivo que ya cuenta con historial de asignaciones no puede volver a registrarse como nuevo.'])
-                        ->withInput();
+                if ($validated['estado'] === Dispositivo::ESTADO_NUEVO) {
+                    if ($dispositivoBloqueado->estado !== Dispositivo::ESTADO_NUEVO) {
+                        return redirect()->back()
+                            ->withErrors(['estado' => 'Un dispositivo que no se encuentra en estado nuevo no puede cambiar su condición a nuevo.'])
+                            ->withInput();
+                    }
+
+                    if ($dispositivoBloqueado->asignaciones()->exists()) {
+                        return redirect()->back()
+                            ->withErrors(['estado' => 'Un dispositivo que ya cuenta con historial de asignaciones no puede volver a registrarse como nuevo.'])
+                            ->withInput();
+                    }
+
+                    if ($dispositivoBloqueado->mantenimientos()->exists()) {
+                        return redirect()->back()
+                            ->withErrors(['estado' => 'Un dispositivo con historial de taller o mantenimiento no puede registrarse como nuevo.'])
+                            ->withInput();
+                    }
                 }
 
                 $validated['disponibilidad'] = Dispositivo::calcularDisponibilidad(

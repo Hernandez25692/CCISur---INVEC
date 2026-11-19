@@ -201,10 +201,24 @@ class MobiliarioController extends Controller
                 $validated['estado'] = $mobiliarioBloqueado->estado;
                 $validated['disponibilidad'] = Mobiliario::DISPONIBILIDAD_ASIGNADO;
             } else {
-                if ($validated['estado'] === Mobiliario::ESTADO_NUEVO && $mobiliarioBloqueado->asignaciones()->exists()) {
-                    return redirect()->back()
-                        ->withErrors(['estado' => 'Un mueble que ya cuenta con historial de asignaciones no puede volver a registrarse como nuevo.'])
-                        ->withInput();
+                if ($validated['estado'] === Mobiliario::ESTADO_NUEVO) {
+                    if ($mobiliarioBloqueado->estado !== Mobiliario::ESTADO_NUEVO) {
+                        return redirect()->back()
+                            ->withErrors(['estado' => 'Un mueble que no se encuentra en estado nuevo no puede cambiar su condición a nuevo.'])
+                            ->withInput();
+                    }
+
+                    if ($mobiliarioBloqueado->asignaciones()->exists()) {
+                        return redirect()->back()
+                            ->withErrors(['estado' => 'Un mueble que ya cuenta con historial de asignaciones no puede volver a registrarse como nuevo.'])
+                            ->withInput();
+                    }
+
+                    if ($mobiliarioBloqueado->mantenimientos()->exists()) {
+                        return redirect()->back()
+                            ->withErrors(['estado' => 'Un mueble con historial de taller o mantenimiento no puede registrarse como nuevo.'])
+                            ->withInput();
+                    }
                 }
 
                 $validated['disponibilidad'] = Mobiliario::calcularDisponibilidad(

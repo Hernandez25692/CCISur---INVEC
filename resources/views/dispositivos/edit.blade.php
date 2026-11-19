@@ -211,13 +211,15 @@
             @else
                 <div>
                     @php
-                        $tieneHistorialAsignaciones = $dispositivo->asignaciones()->exists();
+                        $puedeConservarNuevo = $dispositivo->estado === \App\Models\Dispositivo::ESTADO_NUEVO
+                            && ! $dispositivo->asignaciones()->exists()
+                            && ! $dispositivo->mantenimientos()->exists();
                     @endphp
                     <label for="estado" class="block text-sm font-medium text-brand-navy">Estado Físico</label>
                     <select name="estado" id="estado" required
                         class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('estado') border-red-500 @enderror">
                         @foreach (\App\Models\Dispositivo::ESTADOS_MANUALES as $est)
-                            @if ($est === \App\Models\Dispositivo::ESTADO_NUEVO && $tieneHistorialAsignaciones)
+                            @if ($est === \App\Models\Dispositivo::ESTADO_NUEVO && ! $puedeConservarNuevo)
                                 @continue
                             @endif
                             <option value="{{ $est }}" @selected(old('estado', $dispositivo->estado) === $est)>
@@ -225,9 +227,9 @@
                             </option>
                         @endforeach
                     </select>
-                    @if ($tieneHistorialAsignaciones)
+                    @if (! $puedeConservarNuevo)
                         <p class="mt-1 text-xs text-amber-700">
-                            <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>El estado <strong>Nuevo</strong> no está disponible porque este dispositivo ya cuenta con historial de asignaciones previas.
+                            <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>El estado <strong>Nuevo</strong> solo aplica a equipos de primer ingreso que no han tenido custodios ni reparaciones en taller.
                         </p>
                     @endif
                     <p class="mt-1 text-xs text-gray-500">
