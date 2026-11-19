@@ -66,9 +66,23 @@
                         </div>
                     </div>
                     @can('admin')
-                        <button type="button" id="btn-reactivar-devolucion" class="shrink-0 px-3 py-2 bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-sm transition">
-                            <i class="fas fa-redo-alt mr-1"></i> Reactivar Devolución
-                        </button>
+                        @php
+                            $motivoNoReactivable = $devolucion->motivoNoReactivable(auth()->user());
+                        @endphp
+                        @if ($motivoNoReactivable)
+                            <span class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-rose-100/90 text-rose-800 text-xs font-semibold rounded-lg border border-rose-300 cursor-not-allowed select-none max-w-sm text-center"
+                                title="{{ $motivoNoReactivable }}">
+                                <i class="fas fa-lock text-xs"></i>
+                                <span>{{ $motivoNoReactivable }}</span>
+                            </span>
+                        @else
+                            <button type="button" id="btn-reactivar-devolucion"
+                                data-es-superadmin="{{ auth()->user()?->esSuperAdmin() ? '1' : '0' }}"
+                                data-dias-anulado="{{ $devolucion->deleted_at ? (int) $devolucion->deleted_at->diffInDays(now()) : 0 }}"
+                                class="shrink-0 px-3 py-2 bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                                <i class="fas fa-redo-alt mr-1"></i> Reactivar Devolución
+                            </button>
+                        @endif
                     @endcan
                 </div>
             </div>
@@ -293,23 +307,52 @@
                 const btn = document.getElementById('btn-reactivar-devolucion');
                 if (btn) {
                     btn.addEventListener('click', () => {
+                        const esSuperAdmin = btn.getAttribute('data-es-superadmin') === '1';
+                        const diasAnulado = parseInt(btn.getAttribute('data-dias-anulado') || '0', 10);
+
+                        let avisoEspecial = '';
+                        if (esSuperAdmin && diasAnulado > 10) {
+                            avisoEspecial = `
+                                <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-2.5 mb-3 text-left flex items-start gap-2">
+                                    <i class="fas fa-shield-alt text-amber-600 mt-0.5"></i>
+                                    <span><strong>Autorización Especial:</strong> Esta devolución tiene ${diasAnulado} días de anulada (plazo estándar de 10 días vencido). Como Superadministrador, usted puede autorizar la reactivación extemporánea con su contraseña.</span>
+                                </div>
+                            `;
+                        }
+
                         Swal.fire({
                             title: '¿Reactivar esta Devolución?',
-                            text: 'Al reactivar el acta, la devolución volverá a ser válida y el bien actualizará su estado en el inventario.',
+                            html: `
+                                ${avisoEspecial}
+                                <p class="text-sm text-gray-600 mb-3">
+                                    Al reactivar el acta, la devolución volverá a ser válida y el bien actualizará su estado en el inventario.
+                                </p>
+                                <div class="text-left mt-3">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        Ingrese su contraseña de usuario para autorizar <span class="text-red-500">*</span>:
+                                    </label>
+                                    <input type="password" id="swal-password-reactivar-dev" class="w-full text-xs p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-gold focus:border-brand-navy" placeholder="Su contraseña actual de sesión...">
+                                </div>
+                            `,
                             icon: 'question',
-                            input: 'password',
-                            inputPlaceholder: 'Ingrese su contraseña de administrador...',
                             showCancelButton: true,
                             confirmButtonText: 'Sí, Reactivar Devolución',
                             cancelButtonText: 'Cancelar',
                             confirmButtonColor: '#002855',
                             cancelButtonColor: '#6B7280',
-                            preConfirm: (password) => {
+                            focusConfirm: false,
+                            preConfirm: () => {
+                                const password = document.getElementById('swal-password-reactivar-dev')?.value;
                                 if (!password) {
                                     Swal.showValidationMessage('Debe ingresar su contraseña para autorizar la reactivación.');
                                     return false;
                                 }
                                 return password;
+                            },
+                            customClass: {
+                                popup: 'rounded-xl text-left',
+                                confirmButton: 'rounded-lg text-xs font-semibold px-4 py-2',
+                                cancelButton: 'rounded-lg text-xs font-semibold px-4 py-2'
                             }
                         }).then((result) => {
                             if (result.isConfirmed && result.value) {

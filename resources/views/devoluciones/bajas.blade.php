@@ -180,7 +180,7 @@
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha Anulación</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Anulado Por</th>
                                 <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Motivo</th>
-                                <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Acciones</th>
+                                <th scope="col" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
@@ -192,6 +192,10 @@
                                         : ($asig->dispositivo ?? \App\Models\Dispositivo::withTrashed()->find($asig->id_referencia))) : null;
 
                                     $correlativo = 'DEV-INV-' . ($dev->fecha_devolucion ? $dev->fecha_devolucion->format('Y') : date('Y')) . '-' . str_pad((string) $dev->id, 4, '0', STR_PAD_LEFT);
+
+                                    $codigoBloqueo = $dev->codigoNoReactivable(auth()->user());
+                                    $motivoNoReactivable = $dev->motivoNoReactivable(auth()->user());
+                                    $etiquetaBloqueo = $codigoBloqueo ? (\App\Models\Devolucion::ETIQUETAS_BLOQUEO_REACTIVACION[$codigoBloqueo] ?? 'No reactivable') : null;
                                 @endphp
                                 <tr class="even:bg-gray-50/50 hover:bg-rose-50/40 transition-colors">
                                     {{-- Correlativo --}}
@@ -266,26 +270,36 @@
                                     </td>
 
                                     {{-- Acciones --}}
-                                    <td class="px-4 py-3 whitespace-nowrap text-right">
-                                        <div class="inline-flex items-center justify-end gap-1.5">
+                                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                                        <div class="inline-flex items-center justify-center gap-2">
                                             <a href="{{ route('devoluciones.show', $dev->id) }}"
-                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-100 text-brand-navy text-xs font-semibold hover:bg-gray-200 transition"
+                                                class="inline-flex items-center justify-center gap-1 w-16 py-1.5 rounded-lg bg-gray-100 text-brand-navy text-xs font-semibold hover:bg-gray-200 transition"
                                                 title="Ver detalle del acta y auditoría">
                                                 <i class="fas fa-eye text-xs"></i>
                                                 <span>Ver</span>
                                             </a>
 
                                             @can('admin')
-                                                <button type="button"
-                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition btn-reactivar-devolucion"
-                                                    title="Reactivar acta de devolución"
-                                                    data-id="{{ $dev->id }}"
-                                                    data-correlativo="{{ $correlativo }}"
-                                                    data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
-                                                    data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}">
-                                                    <i class="fas fa-undo text-xs"></i>
-                                                    <span>Reactivar</span>
-                                                </button>
+                                                @if ($motivoNoReactivable)
+                                                    <span class="inline-flex items-center justify-center gap-1.5 w-36 py-1.5 rounded-lg bg-gray-100 text-gray-500 text-xs font-semibold cursor-not-allowed select-none"
+                                                        title="{{ $motivoNoReactivable }}">
+                                                        <i class="fas fa-lock text-xs shrink-0"></i>
+                                                        <span class="truncate">{{ $etiquetaBloqueo }}</span>
+                                                    </span>
+                                                @else
+                                                    <button type="button"
+                                                        class="inline-flex items-center justify-center gap-1.5 w-36 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition btn-reactivar-devolucion"
+                                                        title="Reactivar acta de devolución"
+                                                        data-id="{{ $dev->id }}"
+                                                        data-correlativo="{{ $correlativo }}"
+                                                        data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
+                                                        data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}"
+                                                        data-es-superadmin="{{ auth()->user()?->esSuperAdmin() ? '1' : '0' }}"
+                                                        data-dias-anulado="{{ $dev->deleted_at ? (int) $dev->deleted_at->diffInDays(now()) : 0 }}">
+                                                        <i class="fas fa-undo text-xs shrink-0"></i>
+                                                        <span>Reactivar</span>
+                                                    </button>
+                                                @endif
                                             @endcan
                                         </div>
                                     </td>
@@ -305,6 +319,10 @@
                                 : ($asig->dispositivo ?? \App\Models\Dispositivo::withTrashed()->find($asig->id_referencia))) : null;
 
                             $correlativo = 'DEV-INV-' . ($dev->fecha_devolucion ? $dev->fecha_devolucion->format('Y') : date('Y')) . '-' . str_pad((string) $dev->id, 4, '0', STR_PAD_LEFT);
+
+                            $codigoBloqueo = $dev->codigoNoReactivable(auth()->user());
+                            $motivoNoReactivable = $dev->motivoNoReactivable(auth()->user());
+                            $etiquetaBloqueo = $codigoBloqueo ? (\App\Models\Devolucion::ETIQUETAS_BLOQUEO_REACTIVACION[$codigoBloqueo] ?? 'No reactivable') : null;
                         @endphp
                         <div class="p-4 space-y-3">
                             <div class="flex items-start justify-between gap-2">
@@ -338,14 +356,23 @@
                                 </a>
 
                                 @can('admin')
-                                    <button type="button"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition btn-reactivar-devolucion"
-                                        data-id="{{ $dev->id }}"
-                                        data-correlativo="{{ $correlativo }}"
-                                        data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
-                                        data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}">
-                                        <i class="fas fa-undo text-[11px]"></i> Reactivar
-                                    </button>
+                                    @if ($motivoNoReactivable)
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 text-xs font-semibold cursor-not-allowed select-none"
+                                            title="{{ $motivoNoReactivable }}">
+                                            <i class="fas fa-lock text-[11px]"></i> {{ $etiquetaBloqueo }}
+                                        </span>
+                                    @else
+                                        <button type="button"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition btn-reactivar-devolucion"
+                                            data-id="{{ $dev->id }}"
+                                            data-correlativo="{{ $correlativo }}"
+                                            data-bien="{{ $item->nombre ?? 'Bien institucional' }}"
+                                            data-etiqueta="{{ $item->etiqueta ?? 'S/E' }}"
+                                            data-es-superadmin="{{ auth()->user()?->esSuperAdmin() ? '1' : '0' }}"
+                                            data-dias-anulado="{{ $dev->deleted_at ? (int) $dev->deleted_at->diffInDays(now()) : 0 }}">
+                                            <i class="fas fa-undo text-[11px]"></i> Reactivar
+                                        </button>
+                                    @endif
                                 @endcan
                             </div>
                         </div>
@@ -385,10 +412,23 @@
                     const correlativo = escapeHtml(btn.getAttribute('data-correlativo') || '');
                     const bien = escapeHtml(btn.getAttribute('data-bien') || 'Bien institucional');
                     const etiqueta = escapeHtml(btn.getAttribute('data-etiqueta') || '');
+                    const esSuperAdmin = btn.getAttribute('data-es-superadmin') === '1';
+                    const diasAnulado = parseInt(btn.getAttribute('data-dias-anulado') || '0', 10);
+
+                    let avisoEspecial = '';
+                    if (esSuperAdmin && diasAnulado > 10) {
+                        avisoEspecial = `
+                            <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-2.5 mb-3 text-left flex items-start gap-2">
+                                <i class="fas fa-shield-alt text-amber-600 mt-0.5"></i>
+                                <span><strong>Autorización Especial:</strong> Esta devolución tiene ${diasAnulado} días de anulada (plazo estándar de 10 días vencido). Como Superadministrador, usted puede autorizar la reactivación extemporánea con su contraseña.</span>
+                            </div>
+                        `;
+                    }
 
                     Swal.fire({
                         title: '¿Reactivar Acta de Devolución?',
                         html: `
+                            ${avisoEspecial}
                             <p class="text-sm text-gray-600 mb-3">
                                 Al reactivar el acta <strong>${correlativo}</strong> (${bien} - ${etiqueta}), el bien volverá al estado de devolución formal en el inventario.
                             </p>

@@ -195,8 +195,9 @@ class DevolucionController extends Controller
         $query = Devolucion::onlyTrashed()->with([
             'anuladoPor',
             'asignacion.empleado',
-            'asignacion.mobiliario',
-            'asignacion.dispositivo',
+            'asignacion.mobiliario.mantenimientoActivo',
+            'asignacion.dispositivo.mantenimientoActivo',
+            'asignacion.devolucion',
         ]);
 
         if ($buscar !== '') {
@@ -266,6 +267,43 @@ class DevolucionController extends Controller
         }
 
         $devoluciones = $query->latest('deleted_at')->paginate(10)->withQueryString();
+
+        // Precálculo masivo en 1 sola consulta para evitar cualquier N+1 al evaluar reasignaciones
+        $dispositivoIds = [];
+        $mobiliarioIds = [];
+        foreach ($devoluciones as $dev) {
+            if ($asig = $dev->asignacion) {
+                if ($asig->tipo === Asignacion::TIPO_DISPOSITIVO) {
+                    $dispositivoIds[] = $asig->id_referencia;
+                } else {
+                    $mobiliarioIds[] = $asig->id_referencia;
+                }
+            }
+        }
+        $dispositivoIds = array_values(array_unique(array_filter($dispositivoIds)));
+        $mobiliarioIds = array_values(array_unique(array_filter($mobiliarioIds)));
+
+        $asignacionesActivas = Asignacion::whereDoesntHave('devolucion')
+            ->where(function ($q) use ($dispositivoIds, $mobiliarioIds) {
+                if (! empty($dispositivoIds)) {
+                    $q->orWhere(fn ($sub) => $sub->where('tipo', Asignacion::TIPO_DISPOSITIVO)->whereIn('id_referencia', $dispositivoIds));
+                }
+                if (! empty($mobiliarioIds)) {
+                    $q->orWhere(fn ($sub) => $sub->where('tipo', Asignacion::TIPO_MOBILIARIO)->whereIn('id_referencia', $mobiliarioIds));
+                }
+            })
+            ->get(['id', 'tipo', 'id_referencia'])
+            ->groupBy(fn ($a) => "{$a->tipo}_{$a->id_referencia}");
+
+        foreach ($devoluciones as $dev) {
+            $otraActiva = false;
+            if ($asig = $dev->asignacion) {
+                $clave = "{$asig->tipo}_{$asig->id_referencia}";
+                $grupo = $asignacionesActivas->get($clave);
+                $otraActiva = $grupo ? $grupo->where('id', '!=', $asig->id)->isNotEmpty() : false;
+            }
+            $dev->evaluarReactivabilidad($request->user(), $otraActiva);
+        }
 
         return view('devoluciones.bajas', compact('devoluciones', 'totalAnuladas', 'buscar', 'tipo'));
     }
@@ -495,9 +533,10 @@ class DevolucionController extends Controller
         $devolucion->load([
             'anuladoPor',
             'asignacion.empleado',
-            'asignacion.mobiliario',
-            'asignacion.dispositivo',
+            'asignacion.mobiliario.mantenimientoActivo',
+            'asignacion.dispositivo.mantenimientoActivo',
             'asignacion.cambiosHardwareVigentes',
+            'asignacion.devolucion',
         ]);
 
         $asignacion = $devolucion->asignacion;
@@ -718,31 +757,38 @@ class DevolucionController extends Controller
         }
 
         try {
-            $error = DB::transaction(function () use ($id): ?string {
+            $error = DB::transaction(function () use ($id, $request): ?string {
                 // Orden canónico de locks: Asignación -> Item -> Devolución (🟡-1)
-                $devolucionPrevia = Devolucion::onlyTrashed()->findOrFail($id);
-                $asignacion = Asignacion::withTrashed()->where('id', $devolucionPrevia->asignacion_id)->lockForUpdate()->firstOrFail();
-
-                if ($asignacion->trashed()) {
-                    return 'No se puede reactivar: la asignación asociada se encuentra anulada. Primero debe reactivar la asignación.';
+                $devolucionPrevia = Devolucion::onlyTrashed()->where('id', $id)->first();
+                if (! $devolucionPrevia) {
+                    return 'Esta devolución ya fue reactivada o no existe en el archivo de bajas.';
                 }
+
+                $asignacion = Asignacion::withTrashed()->where('id', $devolucionPrevia->asignacion_id)->lockForUpdate()->firstOrFail();
 
                 $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
                     ? Mobiliario::withTrashed()->where('id', $asignacion->id_referencia)->lockForUpdate()->first()
                     : Dispositivo::withTrashed()->where('id', $asignacion->id_referencia)->lockForUpdate()->first();
 
-                if ($item && $item->estaEnMantenimiento()) {
-                    return 'No se puede reactivar la devolución: el bien se encuentra actualmente en taller o mantenimiento activo.';
+                $devolucion = Devolucion::onlyTrashed()->where('id', $id)->lockForUpdate()->first();
+                if (! $devolucion) {
+                    return 'Esta devolución ya fue reactivada por otro usuario.';
                 }
 
-                if ($item && $item->trashed()) {
-                    return 'No se puede reactivar la devolución: el bien se encuentra en el archivo de bajas. Debe reactivarlo formalmente antes.';
+                // Asociar relaciones bloqueadas para evitar lecturas stale o redundantes
+                $devolucion->setRelation('asignacion', $asignacion);
+                if ($item) {
+                    if ($asignacion->tipo === Asignacion::TIPO_MOBILIARIO) {
+                        $asignacion->setRelation('mobiliario', $item);
+                    } else {
+                        $asignacion->setRelation('dispositivo', $item);
+                    }
                 }
 
-                $devolucion = Devolucion::onlyTrashed()->where('id', $id)->lockForUpdate()->firstOrFail();
-
-                if ($asignacion->devolucion()->exists()) {
-                    return 'No se puede reactivar: esta asignación ya cuenta con otra acta de devolución activa.';
+                // Verificación estricta de reglas de negocio BAJO LOCKS PESIMISTAS (elimina TOCTOU)
+                $motivoBloqueo = $devolucion->motivoNoReactivable($request->user());
+                if ($motivoBloqueo) {
+                    return $motivoBloqueo;
                 }
 
                 $adminName = Auth::user()?->name ?? 'Administración';
