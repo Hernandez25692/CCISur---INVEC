@@ -104,6 +104,11 @@ class Asignacion extends Model
         return $this->hasMany(MantenimientoDispositivo::class, 'asignacion_id');
     }
 
+    public function mantenimientosMobiliario(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MantenimientoMobiliario::class, 'asignacion_id');
+    }
+
     public function getNombreBienAttribute(): string
     {
         $bien = $this->tipo === self::TIPO_MOBILIARIO ? $this->mobiliario : $this->dispositivo;

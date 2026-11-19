@@ -763,7 +763,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-gray-100">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">
-                                            🛠️ Mantenimiento #{{ str_pad($m->id, 5, '0', STR_PAD_LEFT) }}
+                                            🛠️ Mantenimiento #{{ $m->numero_secuencial }}
                                         </span>
                                         <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full {{ $m->clase_estado }}">
                                             {{ $m->estado_formateado }}

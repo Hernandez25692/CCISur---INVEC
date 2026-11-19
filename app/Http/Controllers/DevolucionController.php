@@ -507,7 +507,9 @@ class DevolucionController extends Controller
 
         $correlativo = 'DEV-INV-'.($devolucion->fecha_devolucion ? $devolucion->fecha_devolucion->format('Y') : date('Y')).'-'.str_pad($devolucion->id, 4, '0', STR_PAD_LEFT);
 
-        return view('devoluciones.show', compact('devolucion', 'asignacion', 'item', 'correlativo'));
+        $mantenimientosCustodia = $this->obtenerMantenimientosCustodia($asignacion, $item);
+
+        return view('devoluciones.show', compact('devolucion', 'asignacion', 'item', 'correlativo', 'mantenimientosCustodia'));
     }
 
     public function pdf(Devolucion $devolucion)
@@ -526,9 +528,49 @@ class DevolucionController extends Controller
 
         $correlativo = 'DEV-INV-'.($devolucion->fecha_devolucion ? $devolucion->fecha_devolucion->format('Y') : date('Y')).'-'.str_pad($devolucion->id, 4, '0', STR_PAD_LEFT);
 
-        $pdf = Pdf::loadView('devoluciones.pdf', compact('devolucion', 'asignacion', 'item', 'correlativo'));
+        $mantenimientosCustodia = $this->obtenerMantenimientosCustodia($asignacion, $item);
+
+        $pdf = Pdf::loadView('devoluciones.pdf', compact('devolucion', 'asignacion', 'item', 'correlativo', 'mantenimientosCustodia'));
 
         return $pdf->stream("{$correlativo}.pdf");
+    }
+
+    /**
+     * Obtener los mantenimientos ocurridos durante la custodia de una asignación con su número secuencial precalculado en memoria.
+     */
+    private function obtenerMantenimientosCustodia(?Asignacion $asignacion, mixed $item): \Illuminate\Support\Collection
+    {
+        if (! $asignacion || ! $item || ! method_exists($item, 'mantenimientos')) {
+            return collect();
+        }
+
+        $esMobiliario = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO;
+
+        // 1. Obtener todos los mantenimientos históricos del bien en estricto orden cronológico ascendente (ID ASC)
+        // ->reorder() elimina el order by descendente por defecto definido en la relación del modelo
+        $todosMantenimientos = $item->mantenimientos()
+            ->reorder()
+            ->orderBy('id')
+            ->get();
+
+        $mapaSecuencial = [];
+        foreach ($todosMantenimientos as $index => $m) {
+            $mapaSecuencial[$m->id] = $index + 1;
+        }
+
+        // 2. Obtener los mantenimientos vinculados a esta asignación según el tipo de bien (Dispositivo o Mobiliario)
+        $mantenimientosCustodia = $esMobiliario
+            ? $asignacion->mantenimientosMobiliario()->orderBy('id')->get()
+            : $asignacion->mantenimientos()->orderBy('id')->get();
+
+        // 3. Asignar el número secuencial en memoria a cada mantenimiento de custodia
+        foreach ($mantenimientosCustodia as $mCustodia) {
+            if (isset($mapaSecuencial[$mCustodia->id])) {
+                $mCustodia->numero_secuencial = $mapaSecuencial[$mCustodia->id];
+            }
+        }
+
+        return $mantenimientosCustodia;
     }
 
     public function destroy(Request $request, Devolucion $devolucion): RedirectResponse

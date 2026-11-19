@@ -338,13 +338,8 @@
         </tr>
         @endif
     </table>
-    @php
-        $mantenimientosCustodia = ($asignacion->tipo === 'dispositivo')
-            ? $asignacion->mantenimientos()->where('estado', '!=', 'cancelado')->get()
-            : collect();
-    @endphp
 
-    @if ($asignacion->tipo === 'dispositivo' && (($asignacion->cambiosHardwareVigentes && $asignacion->cambiosHardwareVigentes->isNotEmpty()) || $mantenimientosCustodia->isNotEmpty()))
+    @if ((($asignacion->cambiosHardwareVigentes && $asignacion->cambiosHardwareVigentes->isNotEmpty()) || $mantenimientosCustodia->isNotEmpty()))
     <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 3px solid #af9731; border-radius: 3px; padding: 4px 7px; margin-top: -3px; margin-bottom: 6px; font-size: 8px; line-height: 1.3;">
         <strong style="color: #0f172a; text-transform: uppercase;">Nota de Trazabilidad Técnica (Intervenciones en Custodia):</strong>
         <span style="color: #475569;">Durante el período en poder del custodio se realizaron y autorizaron las siguientes intervenciones:</span>
@@ -365,7 +360,7 @@
             @endforeach
             @foreach ($mantenimientosCustodia as $mCustodia)
                 <li>
-                    <strong>Mantenimiento #{{ str_pad($mCustodia->id, 5, '0', STR_PAD_LEFT) }}</strong> ({{ $mCustodia->fecha_inicio?->format('d/m/Y') }}):
+                    <strong>Mantenimiento #{{ $mCustodia->numero_secuencial }}</strong> ({{ $mCustodia->fecha_inicio?->format('d/m/Y') }})@if ($mCustodia->estado === 'cancelado') <em style="color: #64748b;">[Cancelado]</em>@endif:
                     Tipo: {{ $mCustodia->tipo }} · Falla: {{ $mCustodia->motivo_falla }}
                     @if ($mCustodia->solucion_aplicada)
                         · Solución: <em>{{ $mCustodia->solucion_aplicada }}</em>

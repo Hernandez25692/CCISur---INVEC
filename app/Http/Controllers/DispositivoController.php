@@ -540,6 +540,12 @@ class DispositivoController extends Controller
         $mantenimientos = $dispositivo->mantenimientos()
             ->with(['user', 'empleado', 'devolucion', 'asignacion.empleado'])
             ->get();
+
+        $mantenimientosAsc = $mantenimientos->sortBy('id')->values();
+        foreach ($mantenimientosAsc as $index => $mant) {
+            $mant->numero_secuencial = $index + 1;
+        }
+
         $totalMantenimientos = $mantenimientos->count();
         $mantenimientoActivo = $mantenimientos->firstWhere('estado', \App\Models\MantenimientoDispositivo::ESTADO_EN_PROCESO);
 

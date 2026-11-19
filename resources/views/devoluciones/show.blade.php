@@ -195,13 +195,7 @@
                             </div>
                         </div>
 
-                        @php
-                            $mantenimientosCustodia = ($asignacion->tipo === 'dispositivo')
-                                ? $asignacion->mantenimientos()->where('estado', '!=', 'cancelado')->get()
-                                : collect();
-                        @endphp
-
-                        @if ($asignacion->tipo === 'dispositivo' && (($asignacion->cambiosHardwareVigentes && $asignacion->cambiosHardwareVigentes->isNotEmpty()) || $mantenimientosCustodia->isNotEmpty()))
+                        @if ((($asignacion->cambiosHardwareVigentes && $asignacion->cambiosHardwareVigentes->isNotEmpty()) || $mantenimientosCustodia->isNotEmpty()))
                             <div class="mt-4 p-4 rounded-xl border border-amber-200 bg-amber-50/60 space-y-3">
                                 <div class="flex items-center gap-2 text-xs font-bold text-amber-900 uppercase tracking-wider">
                                     <i class="fas fa-tools text-brand-gold-600" aria-hidden="true"></i>
@@ -235,7 +229,10 @@
                                     @foreach ($mantenimientosCustodia as $mCustodia)
                                         <li class="p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                             <div>
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 font-mono">🛠️ Mantenimiento #{{ str_pad($mCustodia->id, 5, '0', STR_PAD_LEFT) }}</span>
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 font-mono">🛠️ Mantenimiento #{{ $mCustodia->numero_secuencial }}</span>
+                                                @if ($mCustodia->estado === 'cancelado')
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-300 ml-1">Cancelado</span>
+                                                @endif
                                                 <span class="text-gray-500 text-xs ml-1">({{ $mCustodia->fecha_inicio?->format('d/m/Y') }}):</span>
                                                 <span class="text-gray-800 font-medium ml-1">{{ $mCustodia->tipo }} - Falla: {{ $mCustodia->motivo_falla }}</span>
                                                 @if ($mCustodia->solucion_aplicada)

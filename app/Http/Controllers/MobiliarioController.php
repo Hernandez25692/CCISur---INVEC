@@ -420,6 +420,12 @@ class MobiliarioController extends Controller
         $mantenimientos = $mobiliario->mantenimientos()
             ->with(['user', 'asignacion.empleado'])
             ->get();
+
+        $mantenimientosAsc = $mantenimientos->sortBy('id')->values();
+        foreach ($mantenimientosAsc as $index => $mant) {
+            $mant->numero_secuencial = $index + 1;
+        }
+
         $totalMantenimientos = $mantenimientos->count();
         $mantenimientoActivo = $mantenimientos->firstWhere('estado', \App\Models\MantenimientoMobiliario::ESTADO_EN_PROCESO);
 

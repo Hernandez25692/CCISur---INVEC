@@ -138,4 +138,37 @@ class MantenimientoDispositivo extends Model
     {
         return $this->estado === self::ESTADO_IRREPARABLE;
     }
+
+    /**
+     * Número de orden secuencial en memoria para evitar modificar el array $attributes.
+     */
+    public ?int $numero_secuencial_temp = null;
+
+    /**
+     * Obtener el número de orden secuencial de entrada a taller exclusivo de este dispositivo (#1, #2, #3...).
+     */
+    public function getNumeroSecuencialAttribute(): int
+    {
+        if ($this->numero_secuencial_temp !== null) {
+            return $this->numero_secuencial_temp;
+        }
+
+        if (isset($this->attributes['numero_secuencial'])) {
+            return (int) $this->attributes['numero_secuencial'];
+        }
+
+        return static::where('dispositivo_id', $this->dispositivo_id)
+            ->where('id', '<=', $this->id)
+            ->count();
+    }
+
+    /**
+     * Mutador para asignar el número secuencial sin marcar el modelo como 'dirty'.
+     */
+    public function setNumeroSecuencialAttribute(?int $value): static
+    {
+        $this->numero_secuencial_temp = $value;
+
+        return $this;
+    }
 }
