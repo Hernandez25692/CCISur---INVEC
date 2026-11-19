@@ -386,7 +386,24 @@ class DevolucionController extends Controller
         $preseleccionadoId = $request->input('asignacion_id');
         $preseleccionado = null;
         if ($preseleccionadoId) {
+            $asignacionSolicitada = Asignacion::withTrashed()->find($preseleccionadoId);
+            if (! $asignacionSolicitada) {
+                return redirect()->route('devoluciones.create')
+                    ->with('error', 'La asignación solicitada no existe.');
+            }
+            if ($asignacionSolicitada->trashed()) {
+                return redirect()->route('asignaciones.show', $asignacionSolicitada->id)
+                    ->with('error', 'No se puede registrar una devolución para una asignación que se encuentra anulada.');
+            }
+            if ($asignacionSolicitada->devolucion()->exists()) {
+                return redirect()->route('devoluciones.show', $asignacionSolicitada->devolucion->id)
+                    ->with('error', 'Esta asignación ya cuenta con un acta de devolución registrada.');
+            }
             $preseleccionado = $asignacionesData->firstWhere('id', (int) $preseleccionadoId);
+            if (! $preseleccionado) {
+                return redirect()->route('asignaciones.show', $asignacionSolicitada->id)
+                    ->with('error', 'El bien asociado a esta asignación se encuentra actualmente en taller o mantenimiento activo.');
+            }
         }
 
         $estados = Devolucion::ESTADOS_DEVOLUCION;
@@ -415,7 +432,7 @@ class DevolucionController extends Controller
         $validated = $request->validate([
             'asignacion_id' => [
                 'required',
-                'exists:asignacions,id',
+                Rule::exists('asignacions', 'id')->whereNull('deleted_at'),
                 Rule::unique('devoluciones', 'asignacion_id')->withoutTrashed(),
             ],
             'fecha_devolucion' => $reglasFecha,
@@ -424,7 +441,7 @@ class DevolucionController extends Controller
             'observaciones' => ['nullable', 'string', 'max:1000'],
         ], [
             'asignacion_id.required' => 'Debe seleccionar una asignación para registrar la devolución.',
-            'asignacion_id.exists' => 'La asignación seleccionada no es válida.',
+            'asignacion_id.exists' => 'La asignación seleccionada no es válida o se encuentra anulada.',
             'asignacion_id.unique' => 'Esta asignación ya cuenta con un acta de devolución registrada.',
             'fecha_devolucion.required' => 'La fecha de devolución es obligatoria.',
             'fecha_devolucion.date' => 'La fecha de devolución debe ser una fecha válida.',
@@ -441,9 +458,14 @@ class DevolucionController extends Controller
 
         try {
             $devolucion = DB::transaction(function () use ($validated) {
-                $asignacion = Asignacion::where('id', $validated['asignacion_id'])
+                $asignacion = Asignacion::withTrashed()
+                    ->where('id', $validated['asignacion_id'])
                     ->lockForUpdate()
                     ->firstOrFail();
+
+                if ($asignacion->trashed()) {
+                    throw new \RuntimeException('Acción denegada: No se puede registrar una devolución para una asignación que fue anulada.');
+                }
 
                 // Verificación atómica dentro del bloqueo por si hubo concurrencia
                 if ($asignacion->devolucion()->exists()) {

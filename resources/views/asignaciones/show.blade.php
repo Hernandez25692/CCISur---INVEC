@@ -43,12 +43,14 @@
                     <i class="fas fa-file-pdf text-brand-gold text-xs" aria-hidden="true"></i>
                     Descargar Acta PDF
                 </a>
-                @if (! $asignacion->devolucion)
-                    <a href="{{ route('devoluciones.create', ['asignacion_id' => $asignacion->id]) }}"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
-                        <i class="fas fa-undo text-xs" aria-hidden="true"></i>
-                        Devolver Bien
-                    </a>
+                @if (! $asignacion->trashed() && ! $asignacion->devolucion)
+                    @can('admin')
+                        <a href="{{ route('devoluciones.create', ['asignacion_id' => $asignacion->id]) }}"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                            <i class="fas fa-undo text-xs" aria-hidden="true"></i>
+                            Devolver Bien
+                        </a>
+                    @endcan
                 @endif
             </div>
         </div>
