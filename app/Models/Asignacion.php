@@ -17,6 +17,37 @@ class Asignacion extends Model
 
     public const TIPO_DISPOSITIVO = 'dispositivo';
 
+    public const CODIGO_BLOQUEO_NO_PERMITIDO = 'no_permitido';
+
+    public const CODIGO_BLOQUEO_BIEN_INEXISTENTE = 'bien_inexistente';
+
+    public const CODIGO_BLOQUEO_ASIGNACION_ACTIVA = 'asignacion_activa';
+
+    public const CODIGO_BLOQUEO_EN_TALLER = 'en_taller';
+
+    public const CODIGO_BLOQUEO_ESTADO_NO_ASIGNABLE = 'estado_no_asignable';
+
+    public const CODIGO_BLOQUEO_COLABORADOR_BAJA = 'colaborador_baja';
+
+    public const CODIGO_BLOQUEO_SEDE_DISTINTA = 'sede_distinta';
+
+    public const ETIQUETAS_BLOQUEO_REACTIVACION = [
+        self::CODIGO_BLOQUEO_ASIGNACION_ACTIVA => 'Ya asignado',
+        self::CODIGO_BLOQUEO_EN_TALLER => 'En taller',
+        self::CODIGO_BLOQUEO_BIEN_INEXISTENTE => 'Bien inexistente',
+        self::CODIGO_BLOQUEO_ESTADO_NO_ASIGNABLE => 'Estado no asignable',
+        self::CODIGO_BLOQUEO_COLABORADOR_BAJA => 'Colaborador de baja',
+        self::CODIGO_BLOQUEO_SEDE_DISTINTA => 'Sede distinta',
+        self::CODIGO_BLOQUEO_NO_PERMITIDO => 'No reactivable',
+    ];
+
+    /**
+     * Cache temporal en memoria para evitar recálculos en la misma petición/renderizado.
+     */
+    public ?string $motivo_no_reactivable_temp = null;
+
+    public ?string $codigo_no_reactivable_temp = null;
+
     protected $fillable = [
         'tipo',
         'id_referencia',
@@ -202,5 +233,125 @@ class Asignacion extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Devuelve el código estructurado de bloqueo o null si es reactivable.
+     */
+    public function codigoNoReactivable(?User $user = null, ?bool $tieneAsignacionActiva = null): ?string
+    {
+        if ($this->codigo_no_reactivable_temp !== null) {
+            return $this->codigo_no_reactivable_temp ?: null;
+        }
+
+        $this->evaluarReactivabilidad($user, $tieneAsignacionActiva);
+
+        return $this->codigo_no_reactivable_temp ?: null;
+    }
+
+    /**
+     * Devuelve el motivo por el cual esta asignación anulada no puede ser reactivada por el usuario,
+     * o null si es completamente válida para reactivación.
+     */
+    public function motivoNoReactivable(?User $user = null, ?bool $tieneAsignacionActiva = null): ?string
+    {
+        if ($this->motivo_no_reactivable_temp !== null) {
+            return $this->motivo_no_reactivable_temp ?: null;
+        }
+
+        $this->evaluarReactivabilidad($user, $tieneAsignacionActiva);
+
+        return $this->motivo_no_reactivable_temp ?: null;
+    }
+
+    /**
+     * Determina si la asignación anulada es apta para ser reactivada.
+     */
+    public function puedeSerReactivadaPor(?User $user = null): bool
+    {
+        return $this->motivoNoReactivable($user) === null;
+    }
+
+    /**
+     * Evalúa las reglas de reactivabilidad y memoiza el resultado en la instancia.
+     */
+    public function evaluarReactivabilidad(?User $user = null, ?bool $tieneAsignacionActiva = null): void
+    {
+        if (! $this->trashed()) {
+            $this->codigo_no_reactivable_temp = self::CODIGO_BLOQUEO_NO_PERMITIDO;
+            $this->motivo_no_reactivable_temp = 'Esta asignación se encuentra activa y no requiere reactivación.';
+
+            return;
+        }
+
+        $item = $this->tipo === self::TIPO_MOBILIARIO
+            ? ($this->relationLoaded('mobiliario') ? $this->mobiliario : Mobiliario::withTrashed()->find($this->id_referencia))
+            : ($this->relationLoaded('dispositivo') ? $this->dispositivo : Dispositivo::withTrashed()->find($this->id_referencia));
+
+        if (! $item || $item->trashed()) {
+            $this->codigo_no_reactivable_temp = self::CODIGO_BLOQUEO_BIEN_INEXISTENTE;
+            $this->motivo_no_reactivable_temp = 'El bien asociado ya no existe o fue dado de baja definitivamente en el inventario.';
+
+            return;
+        }
+
+        // 1. Verificar si el bien ya cuenta con una asignación activa actualmente
+        $asignado = $tieneAsignacionActiva !== null
+            ? $tieneAsignacionActiva
+            : $item->estaAsignado();
+
+        if ($asignado) {
+            $etiqueta = $item->etiqueta ?? 'Sin etiqueta';
+            $this->codigo_no_reactivable_temp = self::CODIGO_BLOQUEO_ASIGNACION_ACTIVA;
+            $this->motivo_no_reactivable_temp = "El bien ({$etiqueta}) ya cuenta con una asignación activa en el inventario.";
+
+            return;
+        }
+
+        // 2. Verificar si está en taller / mantenimiento activo
+        $enMantenimiento = $item->relationLoaded('mantenimientoActivo')
+            ? ($item->mantenimientoActivo !== null)
+            : $item->estaEnMantenimiento();
+
+        if ($enMantenimiento) {
+            $etiqueta = $item->etiqueta ?? 'Sin etiqueta';
+            $this->codigo_no_reactivable_temp = self::CODIGO_BLOQUEO_EN_TALLER;
+            $this->motivo_no_reactivable_temp = "El bien ({$etiqueta}) se encuentra actualmente en taller o mantenimiento activo.";
+
+            return;
+        }
+
+        // 3. Estado físico asignable
+        if (! $item::esEstadoAsignable($item->estado)) {
+            $this->codigo_no_reactivable_temp = self::CODIGO_BLOQUEO_ESTADO_NO_ASIGNABLE;
+            $this->motivo_no_reactivable_temp = "El bien se encuentra en un estado físico no asignable ({$item->estado}).";
+
+            return;
+        }
+
+        // 4. Colaborador y sede (si no es área común)
+        if (! $this->es_area_comun && $this->empleado_id) {
+            $empleado = $this->relationLoaded('empleado')
+                ? $this->empleado
+                : Empleado::withTrashed()->find($this->empleado_id);
+
+            if (! $empleado || $empleado->trashed()) {
+                $nombreColaborador = $this->destinatario_texto;
+                $this->codigo_no_reactivable_temp = self::CODIGO_BLOQUEO_COLABORADOR_BAJA;
+                $this->motivo_no_reactivable_temp = "El colaborador ({$nombreColaborador}) asociado a esta asignación fue dado de baja en la institución.";
+
+                return;
+            }
+
+            if ($item->ubicacion !== $empleado->ubicacion) {
+                $this->codigo_no_reactivable_temp = self::CODIGO_BLOQUEO_SEDE_DISTINTA;
+                $this->motivo_no_reactivable_temp = "El bien pertenece a la Sede {$item->ubicacion} y el colaborador a la Sede {$empleado->ubicacion}.";
+
+                return;
+            }
+        }
+
+        $this->codigo_no_reactivable_temp = '';
+        $this->motivo_no_reactivable_temp = '';
     }
 }

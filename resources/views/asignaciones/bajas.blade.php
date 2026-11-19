@@ -272,14 +272,18 @@
                                             </a>
 
                                             @can('admin')
+                                                @php
+                                                    $motivoBloqueo = $item->motivoNoReactivable(auth()->user());
+                                                @endphp
                                                 <button type="button"
-                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition btn-reactivar-asignacion"
-                                                    title="Reactivar asignación"
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg {{ $motivoBloqueo ? 'bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white' }} text-xs font-semibold transition btn-reactivar-asignacion"
+                                                    title="{{ $motivoBloqueo ?: 'Reactivar asignación' }}"
                                                     data-id="{{ $item->id }}"
                                                     data-correlativo="{{ $correlativo }}"
                                                     data-bien="{{ $ref->nombre ?? 'Bien institucional' }}"
-                                                    data-etiqueta="{{ $ref->etiqueta ?? 'S/E' }}">
-                                                    <i class="fas fa-undo text-xs"></i>
+                                                    data-etiqueta="{{ $ref->etiqueta ?? 'S/E' }}"
+                                                    data-motivo-bloqueo="{{ $motivoBloqueo ?? '' }}">
+                                                    <i class="fas {{ $motivoBloqueo ? 'fa-lock' : 'fa-undo' }} text-xs"></i>
                                                     <span>Reactivar</span>
                                                 </button>
                                             @endcan
@@ -330,13 +334,18 @@
                                 </a>
 
                                 @can('admin')
+                                    @php
+                                        $motivoBloqueo = $item->motivoNoReactivable(auth()->user());
+                                    @endphp
                                     <button type="button"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-600 hover:text-white transition btn-reactivar-asignacion"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg {{ $motivoBloqueo ? 'bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white' }} text-xs font-semibold transition btn-reactivar-asignacion"
+                                        title="{{ $motivoBloqueo ?: 'Reactivar asignación' }}"
                                         data-id="{{ $item->id }}"
                                         data-correlativo="{{ $correlativo }}"
                                         data-bien="{{ $ref->nombre ?? 'Bien institucional' }}"
-                                        data-etiqueta="{{ $ref->etiqueta ?? 'S/E' }}">
-                                        <i class="fas fa-undo text-[11px]"></i> Reactivar
+                                        data-etiqueta="{{ $ref->etiqueta ?? 'S/E' }}"
+                                        data-motivo-bloqueo="{{ $motivoBloqueo ?? '' }}">
+                                        <i class="fas {{ $motivoBloqueo ? 'fa-lock' : 'fa-undo' }} text-[11px]"></i> Reactivar
                                     </button>
                                 @endcan
                             </div>
@@ -373,6 +382,21 @@
 
             botonesReactivar.forEach(btn => {
                 btn.addEventListener('click', () => {
+                    const motivoBloqueo = btn.getAttribute('data-motivo-bloqueo');
+                    if (motivoBloqueo) {
+                        Swal.fire({
+                            title: 'No se puede reactivar la asignación',
+                            text: motivoBloqueo,
+                            icon: 'warning',
+                            confirmButtonColor: '#002855',
+                            confirmButtonText: 'Entendido',
+                            customClass: {
+                                confirmButton: 'rounded-lg text-xs font-semibold px-4 py-2'
+                            }
+                        });
+                        return;
+                    }
+
                     const id = btn.getAttribute('data-id');
                     const correlativo = escapeHtml(btn.getAttribute('data-correlativo') || '');
                     const bien = escapeHtml(btn.getAttribute('data-bien') || 'Bien institucional');

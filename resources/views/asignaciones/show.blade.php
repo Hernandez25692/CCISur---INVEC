@@ -75,7 +75,12 @@
                         </div>
                     </div>
                     @can('admin')
-                        <button type="button" id="btn-reactivar-asignacion" class="shrink-0 px-3 py-2 bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                        @php
+                            $motivoNoReactivable = $asignacion->motivoNoReactivable(auth()->user());
+                        @endphp
+                        <button type="button" id="btn-reactivar-asignacion"
+                            data-motivo-bloqueo="{{ $motivoNoReactivable ?? '' }}"
+                            class="shrink-0 px-3 py-2 bg-rose-700 hover:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-sm transition">
                             <i class="fas fa-redo-alt mr-1"></i> Reactivar Asignación
                         </button>
                     @endcan
@@ -231,6 +236,21 @@
                 const btn = document.getElementById('btn-reactivar-asignacion');
                 if (btn) {
                     btn.addEventListener('click', () => {
+                        const motivoBloqueo = btn.getAttribute('data-motivo-bloqueo');
+                        if (motivoBloqueo) {
+                            Swal.fire({
+                                title: 'No se puede reactivar la asignación',
+                                text: motivoBloqueo,
+                                icon: 'warning',
+                                confirmButtonColor: '#002855',
+                                confirmButtonText: 'Entendido',
+                                customClass: {
+                                    confirmButton: 'rounded-lg text-xs font-semibold px-4 py-2'
+                                }
+                            });
+                            return;
+                        }
+
                         Swal.fire({
                             title: '¿Reactivar esta Asignación?',
                             text: 'Al reactivar el acta, el bien asociado volverá a quedar Asignado a su custodio anterior.',

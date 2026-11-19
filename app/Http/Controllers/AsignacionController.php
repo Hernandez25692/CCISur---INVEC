@@ -130,7 +130,12 @@ class AsignacionController extends Controller
         $buscar = trim((string) $request->input('buscar'));
         $totalAnuladas = Asignacion::onlyTrashed()->count();
 
-        $query = Asignacion::onlyTrashed()->with(['anuladoPor', 'empleado', 'mobiliario', 'dispositivo']);
+        $query = Asignacion::onlyTrashed()->with([
+            'anuladoPor',
+            'empleado',
+            'mobiliario.mantenimientoActivo',
+            'dispositivo.mantenimientoActivo',
+        ]);
 
         if ($tipo && in_array($tipo, [Asignacion::TIPO_MOBILIARIO, Asignacion::TIPO_DISPOSITIVO], true)) {
             $query->where('tipo', $tipo);
@@ -183,6 +188,37 @@ class AsignacionController extends Controller
         }
 
         $asignaciones = $query->latest('deleted_at')->paginate(15)->withQueryString();
+
+        // Precálculo masivo en 1 sola consulta para evitar N+1 al evaluar asignaciones activas
+        $dispositivoIds = [];
+        $mobiliarioIds = [];
+        foreach ($asignaciones as $asig) {
+            if ($asig->tipo === Asignacion::TIPO_DISPOSITIVO) {
+                $dispositivoIds[] = $asig->id_referencia;
+            } else {
+                $mobiliarioIds[] = $asig->id_referencia;
+            }
+        }
+        $dispositivoIds = array_values(array_unique(array_filter($dispositivoIds)));
+        $mobiliarioIds = array_values(array_unique(array_filter($mobiliarioIds)));
+
+        $asignacionesActivas = Asignacion::whereDoesntHave('devolucion')
+            ->where(function ($q) use ($dispositivoIds, $mobiliarioIds) {
+                if (! empty($dispositivoIds)) {
+                    $q->orWhere(fn ($sub) => $sub->where('tipo', Asignacion::TIPO_DISPOSITIVO)->whereIn('id_referencia', $dispositivoIds));
+                }
+                if (! empty($mobiliarioIds)) {
+                    $q->orWhere(fn ($sub) => $sub->where('tipo', Asignacion::TIPO_MOBILIARIO)->whereIn('id_referencia', $mobiliarioIds));
+                }
+            })
+            ->get(['id', 'tipo', 'id_referencia'])
+            ->groupBy(fn ($a) => "{$a->tipo}_{$a->id_referencia}");
+
+        foreach ($asignaciones as $asig) {
+            $clave = "{$asig->tipo}_{$asig->id_referencia}";
+            $tieneActiva = $asignacionesActivas->has($clave);
+            $asig->evaluarReactivabilidad($request->user(), $tieneActiva);
+        }
 
         return view('asignaciones.bajas', compact('asignaciones', 'tipo', 'buscar', 'totalAnuladas'));
     }
@@ -399,7 +435,12 @@ class AsignacionController extends Controller
      */
     public function show(Asignacion $asignacion): View
     {
-        $asignacion->load(['anuladoPor', 'empleado', 'mobiliario', 'dispositivo']);
+        $asignacion->load([
+            'anuladoPor',
+            'empleado',
+            'mobiliario.mantenimientoActivo',
+            'dispositivo.mantenimientoActivo',
+        ]);
 
         $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
             ? Mobiliario::withTrashed()->find($asignacion->id_referencia)
@@ -488,11 +529,15 @@ class AsignacionController extends Controller
             return redirect()->back()->with('error', 'La contraseña ingresada es incorrecta. La asignación NO fue reactivada.');
         }
 
-        $error = DB::transaction(function () use ($id): ?string {
+        $error = DB::transaction(function () use ($id, $request): ?string {
             $asignacion = Asignacion::onlyTrashed()
                 ->where('id', $id)
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->first();
+
+            if (! $asignacion) {
+                return 'Esta asignación ya ha sido reactivada previamente o no existe.';
+            }
 
             $item = $asignacion->tipo === Asignacion::TIPO_MOBILIARIO
                 ? Mobiliario::where('id', $asignacion->id_referencia)->lockForUpdate()->first()
@@ -502,29 +547,18 @@ class AsignacionController extends Controller
                 return 'No se puede reactivar: el bien asociado ya no existe en el inventario.';
             }
 
-            if ($item->estaAsignado()) {
-                return 'Acción denegada: El bien ya cuenta con una asignación activa actualmente en el inventario.';
-            }
+            $asignacion->setRelation($asignacion->tipo, $item);
 
-            if ($item->estaEnMantenimiento()) {
-                return 'Acción denegada: El bien se encuentra actualmente en taller o mantenimiento activo.';
-            }
-
-            if (! $item::esEstadoAsignable($item->estado)) {
-                return 'Acción denegada: El bien se encuentra en un estado físico no asignable ('.$item->estado.').';
-            }
-
-            // Validar coherencia de sede y que el colaborador no esté dado de baja
             if (! $asignacion->es_area_comun && $asignacion->empleado_id) {
                 $empleado = Empleado::withTrashed()->where('id', $asignacion->empleado_id)->lockForUpdate()->first();
-
-                if (! $empleado || $empleado->trashed()) {
-                    return 'No se puede reactivar: el colaborador asociado a esta asignación fue dado de baja o no existe.';
+                if ($empleado) {
+                    $asignacion->setRelation('empleado', $empleado);
                 }
+            }
 
-                if ($item->ubicacion !== $empleado->ubicacion) {
-                    return "No se puede reactivar: el bien pertenece a la Sede {$item->ubicacion} y el colaborador a la Sede {$empleado->ubicacion}.";
-                }
+            $motivo = $asignacion->motivoNoReactivable($request->user());
+            if ($motivo) {
+                return 'Acción denegada: '.$motivo;
             }
 
             $adminName = Auth::user()?->name ?? 'Administración';
