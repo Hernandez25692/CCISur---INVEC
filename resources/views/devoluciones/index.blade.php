@@ -276,16 +276,16 @@
             {{-- Tabla para pantallas medianas y grandes (>= md) --}}
             <div class="hidden md:block overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
-                    <thead class="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider">
+                    <thead class="bg-gray-50 text-gray-700 font-semibold uppercase tracking-wider text-[11px]">
                         <tr>
-                            <th scope="col" class="px-4 py-3.5 whitespace-nowrap">Correlativo</th>
-                            <th scope="col" class="px-4 py-3.5">Custodio Saliente</th>
-                            <th scope="col" class="px-4 py-3.5">Tipo</th>
-                            <th scope="col" class="px-4 py-3.5">Bien Devuelto</th>
-                            <th scope="col" class="px-4 py-3.5">Etiqueta</th>
-                            <th scope="col" class="px-4 py-3.5">Estado al Recibir</th>
-                            <th scope="col" class="px-4 py-3.5">Fecha</th>
-                            <th scope="col" class="px-4 py-3.5 text-center">Acciones</th>
+                            <th scope="col" class="px-2.5 py-3 whitespace-nowrap">Correlativo</th>
+                            <th scope="col" class="px-2.5 py-3">Custodio Saliente</th>
+                            <th scope="col" class="px-2 py-3 text-center">Tipo</th>
+                            <th scope="col" class="px-2.5 py-3">Bien Devuelto</th>
+                            <th scope="col" class="px-2 py-3 text-center whitespace-nowrap">Etiqueta</th>
+                            <th scope="col" class="px-2 py-3 text-center whitespace-nowrap">Estado al Recibir</th>
+                            <th scope="col" class="px-2 py-3 text-center whitespace-nowrap">Fecha</th>
+                            <th scope="col" class="px-2 py-3 text-center whitespace-nowrap">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
@@ -298,36 +298,42 @@
 
                                 $correlativo = 'DEV-INV-' . ($dev->fecha_devolucion ? $dev->fecha_devolucion->format('Y') : date('Y')) . '-' . str_pad((string) $dev->id, 4, '0', STR_PAD_LEFT);
                                 $clasesEstado = \App\Models\Dispositivo::ESTADOS_CLASES[$dev->estado_devuelto] ?? 'bg-gray-50 text-gray-700 ring-gray-600/20';
+                                $estadoCorto = match ($dev->estado_devuelto) {
+                                    'En reparación / En revisión' => 'En reparación',
+                                    'Usado / Segunda mano' => 'Usado',
+                                    'Dañado / Defectuoso' => 'Dañado',
+                                    default => $dev->estado_devuelto ?? 'No especificado',
+                                };
                             @endphp
                             <tr class="hover:bg-brand-navy-50/30 transition">
                                 {{-- Correlativo --}}
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-2.5 py-2.5 whitespace-nowrap">
                                     <div class="font-mono font-bold text-brand-navy">{{ $correlativo }}</div>
                                     <div class="text-[11px] text-gray-400 mt-0.5">Acta #{{ $dev->id }}</div>
                                 </td>
 
                                 {{-- Custodio Saliente / Área --}}
-                                <td class="px-4 py-3">
+                                <td class="px-2.5 py-2.5">
                                     @if ($asig && $asig->es_area_comun)
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-7 h-7 rounded-lg bg-amber-50 text-brand-gold-700 flex items-center justify-center shrink-0">
-                                                <i class="fas fa-building text-xs" aria-hidden="true"></i>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-6 h-6 rounded-md bg-amber-50 text-brand-gold-700 flex items-center justify-center shrink-0">
+                                                <i class="fas fa-building text-[10px]" aria-hidden="true"></i>
                                             </span>
                                             <div>
-                                                <p class="font-bold text-gray-900">Área Común</p>
-                                                <p class="text-[11px] text-gray-500">{{ $asig->area }}</p>
+                                                <p class="font-bold text-gray-900 leading-tight">Área Común</p>
+                                                <p class="text-[11px] text-gray-500 leading-tight">{{ $asig->area }}</p>
                                             </div>
                                         </div>
                                     @elseif ($asig && $asig->empleado)
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-7 h-7 rounded-lg bg-brand-navy text-brand-gold flex items-center justify-center font-bold text-xs shrink-0">
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="w-6 h-6 rounded-md bg-brand-navy text-brand-gold flex items-center justify-center font-bold text-[10px] shrink-0">
                                                 {{ strtoupper(substr($asig->empleado->nombre_completo, 0, 1)) }}
                                             </div>
                                             <div>
-                                                <p class="font-semibold text-brand-navy">
+                                                <p class="font-semibold text-brand-navy leading-tight" title="{{ $asig->empleado->nombre_completo }}">
                                                     {{ $asig->empleado->nombre_completo }}
                                                 </p>
-                                                <p class="text-[11px] text-gray-500">
+                                                <p class="text-[11px] text-gray-500 leading-tight">
                                                     <span class="font-mono">{{ $asig->empleado->codigo }}</span> &bull; {{ $asig->area }}
                                                 </p>
                                             </div>
@@ -338,15 +344,15 @@
                                 </td>
 
                                 {{-- Tipo --}}
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-2 py-2.5 whitespace-nowrap text-center">
                                     @if ($asig && $asig->tipo === 'dispositivo')
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20">
-                                            <i class="fas fa-laptop text-[10px]" aria-hidden="true"></i>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20" title="Dispositivo">
+                                            <i class="fas fa-laptop text-[9px]" aria-hidden="true"></i>
                                             Dispositivo
                                         </span>
                                     @elseif ($asig && $asig->tipo === 'mobiliario')
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
-                                            <i class="fas fa-chair text-[10px]" aria-hidden="true"></i>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20" title="Mobiliario">
+                                            <i class="fas fa-chair text-[9px]" aria-hidden="true"></i>
                                             Mobiliario
                                         </span>
                                     @else
@@ -355,9 +361,9 @@
                                 </td>
 
                                 {{-- Bien Devuelto --}}
-                                <td class="px-4 py-3">
-                                    <div class="font-medium text-gray-900">{{ $item->nombre ?? 'N/A' }}</div>
-                                    <div class="text-[11px] text-gray-500">
+                                <td class="px-2.5 py-2.5">
+                                    <div class="font-medium text-gray-900 leading-tight">{{ $item->nombre ?? 'N/A' }}</div>
+                                    <div class="text-[11px] text-gray-500 leading-tight">
                                         @if ($asig && $asig->tipo === 'dispositivo' && !empty($item?->marca))
                                             <span>{{ $item->marca }} {{ $item->modelo ?? '' }}</span>
                                         @else
@@ -367,26 +373,26 @@
                                 </td>
 
                                 {{-- Etiqueta / Placa --}}
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span class="font-mono font-semibold text-brand-navy bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                                <td class="px-2 py-2.5 whitespace-nowrap text-center">
+                                    <span class="font-mono font-semibold text-brand-navy bg-gray-100 px-1.5 py-0.5 rounded text-[11px] border border-gray-200">
                                         {{ $item->etiqueta ?? 'Sin placa' }}
                                     </span>
                                 </td>
 
                                 {{-- Estado al Recibir --}}
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset {{ $clasesEstado }}">
-                                        {{ $dev->estado_devuelto ?? 'No especificado' }}
+                                <td class="px-2 py-2.5 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset {{ $clasesEstado }}" title="{{ $dev->estado_devuelto }}">
+                                        {{ $estadoCorto }}
                                     </span>
                                 </td>
 
                                 {{-- Fecha Devolución --}}
-                                <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                                <td class="px-2 py-2.5 whitespace-nowrap text-center text-gray-600">
                                     {{ $dev->fecha_devolucion ? $dev->fecha_devolucion->format('d/m/Y') : '---' }}
                                 </td>
 
                                 {{-- Acciones --}}
-                                <td class="px-4 py-3 whitespace-nowrap text-center">
+                                <td class="px-2 py-2.5 whitespace-nowrap text-center">
                                     @if ($dev->trashed())
                                         <div class="inline-flex items-center gap-1.5">
                                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20">
