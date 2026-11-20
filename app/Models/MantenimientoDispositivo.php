@@ -114,6 +114,28 @@ class MantenimientoDispositivo extends Model
         return null;
     }
 
+    public function getTieneCustodiaActivaAttribute(): bool
+    {
+        if ($this->devolucion_id !== null) {
+            return false;
+        }
+
+        if ($this->asignacion && $this->asignacion->devolucion()->exists()) {
+            return false;
+        }
+
+        if ($this->asignacion && $this->asignacion->trashed()) {
+            return false;
+        }
+
+        return ! empty($this->asignacion_id) || ! empty($this->empleado_id);
+    }
+
+    public function getProvieneDeDevolucionAttribute(): bool
+    {
+        return $this->devolucion_id !== null || ($this->asignacion && $this->asignacion->devolucion()->exists());
+    }
+
     public function scopeEnProceso(Builder $query): void
     {
         $query->where('estado', self::ESTADO_EN_PROCESO);

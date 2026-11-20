@@ -93,8 +93,10 @@
                         </p>
                         <p class="text-amber-800 text-[11px]">
                             Ingresado el {{ $mantenimientoActivo->fecha_inicio?->format('d/m/Y h:i A') }} por {{ $mantenimientoActivo->user?->name ?? 'Administración' }}
-                            @if ($mantenimientoActivo->custodio_texto)
+                            @if ($mantenimientoActivo->tiene_custodia_activa)
                                 · <strong>Custodio actual:</strong> {{ $mantenimientoActivo->custodio_texto }} (mantiene custodia del mueble)
+                            @elseif ($mantenimientoActivo->custodio_texto)
+                                · <strong>Sin custodio actual</strong> (Devuelto por: {{ $mantenimientoActivo->custodio_texto }})
                             @else
                                 · <strong>Ubicación:</strong> En bodega institucional
                             @endif
@@ -116,8 +118,8 @@
                             data-swal-bien="{{ $mobiliario->nombre }}"
                             data-swal-etiqueta="{{ $mobiliario->etiqueta }}"
                             data-swal-estado-anterior="{{ $mantenimientoActivo->estado_fisico_anterior ?? $mobiliario->estado }}"
-                            data-swal-tiene-custodio="{{ ! empty($mantenimientoActivo->custodio_texto) ? 'true' : 'false' }}"
-                            data-swal-custodio-nombre="{{ $mantenimientoActivo->custodio_texto ?? '' }}">
+                            data-swal-tiene-custodio="{{ $mantenimientoActivo->tiene_custodia_activa ? 'true' : 'false' }}"
+                            data-swal-custodio-nombre="{{ $mantenimientoActivo->tiene_custodia_activa ? ($mantenimientoActivo->custodio_texto ?? '') : '' }}">
                             @csrf
                             <input type="hidden" name="from" value="historial">
                             <button type="submit"
@@ -925,9 +927,13 @@
                                     <i class="fas fa-info-circle text-emerald-600" aria-hidden="true"></i>
                                     Continuidad de Custodia:
                                 </p>
-                                @if ($mantenimientoActivo->custodio_texto)
+                                @if ($mantenimientoActivo->tiene_custodia_activa)
                                     <p class="text-[11px] text-emerald-800">
                                         El mueble continuará asignado normalmente a <strong>{{ $mantenimientoActivo->custodio_texto }}</strong> sin requerir trámites ni actas adicionales.
+                                    </p>
+                                @elseif ($mantenimientoActivo->custodio_texto)
+                                    <p class="text-[11px] text-emerald-800">
+                                        El mueble fue devuelto formalmente (por <strong>{{ $mantenimientoActivo->custodio_texto }}</strong>). Al finalizar reparado, volverá a estar <strong>disponible en bodega institucional (Sin Asignar)</strong> para futuras entregas.
                                     </p>
                                 @else
                                     <p class="text-[11px] text-emerald-800">
@@ -989,8 +995,10 @@
                                     Acciones automáticas que se ejecutarán:
                                 </p>
                                 <ul class="list-disc list-inside text-[11px] text-red-900 space-y-1">
-                                    @if ($mantenimientoActivo->custodio_texto)
+                                    @if ($mantenimientoActivo->tiene_custodia_activa)
                                         <li>Se liberará la custodia de <strong>{{ $mantenimientoActivo->custodio_texto }}</strong> emitiendo el Acta de Devolución por daño irreparable.</li>
+                                    @elseif ($mantenimientoActivo->proviene_de_devolucion)
+                                        <li>La custodia del colaborador ya fue liberada previamente en el Acta de Devolución.</li>
                                     @endif
                                     <li>El mueble pasará automáticamente al <strong>Archivo de Bajas</strong> bajo estado <em>Dañado / Defectuoso</em> con este diagnóstico técnico.</li>
                                 </ul>

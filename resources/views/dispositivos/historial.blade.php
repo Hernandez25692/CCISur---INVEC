@@ -86,8 +86,10 @@
                         </p>
                         <p class="text-amber-800 text-[11px]">
                             Ingresado el {{ $mantenimientoActivo->fecha_inicio?->format('d/m/Y h:i A') }} por {{ $mantenimientoActivo->user?->name ?? 'Usuario TI' }}
-                            @if ($mantenimientoActivo->custodio_texto)
+                            @if ($mantenimientoActivo->tiene_custodia_activa)
                                 · <strong>Custodio actual:</strong> {{ $mantenimientoActivo->custodio_texto }}
+                            @elseif ($mantenimientoActivo->custodio_texto)
+                                · <strong>Sin custodio actual</strong> (Devuelto por: {{ $mantenimientoActivo->custodio_texto }})
                             @else
                                 · <strong>Ubicación:</strong> En bodega / Sin asignar
                             @endif
@@ -109,8 +111,8 @@
                             data-swal-bien="{{ $dispositivo->nombre }}"
                             data-swal-etiqueta="{{ $dispositivo->etiqueta }}"
                             data-swal-estado-anterior="{{ $mantenimientoActivo->estado_fisico_anterior ?? $dispositivo->estado }}"
-                            data-swal-tiene-custodio="{{ ! empty($mantenimientoActivo->custodio_texto) ? 'true' : 'false' }}"
-                            data-swal-custodio-nombre="{{ $mantenimientoActivo->custodio_texto ?? '' }}">
+                            data-swal-tiene-custodio="{{ $mantenimientoActivo->tiene_custodia_activa ? 'true' : 'false' }}"
+                            data-swal-custodio-nombre="{{ $mantenimientoActivo->tiene_custodia_activa ? ($mantenimientoActivo->custodio_texto ?? '') : '' }}">
                             @csrf
                             <input type="hidden" name="from" value="historial">
                             <button type="submit"
@@ -139,7 +141,7 @@
                         @if ($mantenimientoActivo)
                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-600/30">
                                 <i class="fas fa-tools text-[10px] text-amber-600 animate-pulse" aria-hidden="true"></i>
-                                En taller / mantenimiento @if ($mantenimientoActivo->custodio_texto) (Custodio: {{ $mantenimientoActivo->custodio_texto }}) @else (En bodega) @endif
+                                En taller / mantenimiento @if ($mantenimientoActivo->tiene_custodia_activa) (Custodio: {{ $mantenimientoActivo->custodio_texto }}) @elseif ($mantenimientoActivo->custodio_texto) (Devuelto por: {{ $mantenimientoActivo->custodio_texto }}) @else (En bodega) @endif
                             </span>
                         @elseif ($dispositivo->trashed())
                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20">
@@ -1574,9 +1576,13 @@
                                     <i class="fas fa-info-circle text-emerald-600" aria-hidden="true"></i>
                                     Continuidad de Custodia:
                                 </p>
-                                @if ($mantenimientoActivo->custodio_texto)
+                                @if ($mantenimientoActivo->tiene_custodia_activa)
                                     <p class="text-[11px] text-emerald-800">
                                         El dispositivo continuará asignado normalmente a <strong>{{ $mantenimientoActivo->custodio_texto }}</strong> sin requerir trámites ni actas adicionales.
+                                    </p>
+                                @elseif ($mantenimientoActivo->custodio_texto)
+                                    <p class="text-[11px] text-emerald-800">
+                                        El dispositivo fue devuelto formalmente (por <strong>{{ $mantenimientoActivo->custodio_texto }}</strong>). Al finalizar reparado, volverá a estar <strong>disponible en bodega (Sin Asignar)</strong> para futuras entregas.
                                     </p>
                                 @else
                                     <p class="text-[11px] text-emerald-800">
@@ -1604,8 +1610,10 @@
                                     Acciones automáticas que se ejecutarán:
                                 </p>
                                 <ul class="list-disc list-inside text-[11px] text-amber-900 space-y-1">
-                                    @if ($mantenimientoActivo->custodio_texto)
+                                    @if ($mantenimientoActivo->tiene_custodia_activa)
                                         <li>Se liberará la custodia de <strong>{{ $mantenimientoActivo->custodio_texto }}</strong> emitiendo el Acta de Devolución por daño irreparable.</li>
+                                    @elseif ($mantenimientoActivo->proviene_de_devolucion)
+                                        <li>La custodia del colaborador ya fue liberada previamente en el Acta de Devolución.</li>
                                     @endif
                                     <li>El dispositivo pasará automáticamente al <strong>Archivo de Bajas</strong> bajo estado <em>Dañado / Defectuoso</em> con este diagnóstico técnico.</li>
                                 </ul>
