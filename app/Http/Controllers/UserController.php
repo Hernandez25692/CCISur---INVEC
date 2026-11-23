@@ -45,7 +45,7 @@ class UserController extends Controller
 
         $hayFiltros = filled($buscar) || filled($rol) || ($estado !== null && $estado !== '');
 
-        $usuarios = $query->orderByRaw("CASE WHEN id = ? THEN 0 ELSE 1 END", [auth()->id()])
+        $usuarios = $query->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [auth()->id()])
             ->latest('id')
             ->paginate(15)
             ->withQueryString();
@@ -182,13 +182,13 @@ class UserController extends Controller
         if ($usuario->esUltimoSuperadminActivo()) {
             if ($validated['rol'] !== User::ROL_SUPERADMIN) {
                 return back()
-                    ->withInput()
+                    ->withInput($request->except(['superadmin_password']))
                     ->with('error', 'No puedes cambiar el rol porque este usuario es el único Superadministrador activo del sistema.');
             }
 
             if ($request->has('activo') && ! $request->boolean('activo')) {
                 return back()
-                    ->withInput()
+                    ->withInput($request->except(['superadmin_password']))
                     ->with('error', 'No puedes deshabilitar al único Superadministrador activo del sistema.');
             }
         }

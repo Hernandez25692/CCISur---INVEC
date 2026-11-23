@@ -40,9 +40,9 @@ class PasswordController extends Controller
                 ], 422);
             }
 
-            return redirect()->to(route('profile.edit') . '#seccion-password')
+            return redirect()->to(route('profile.edit').'#seccion-password')
                 ->withErrors($validator, 'updatePassword')
-                ->withInput();
+                ->withInput($request->except(['current_password', 'password', 'password_confirmation']));
         }
 
         $validated = $validator->validated();
@@ -110,7 +110,8 @@ class PasswordController extends Controller
                 ], 422);
             }
 
-            return back()->withErrors($validator, 'primerPassword')->withInput();
+            return back()->withErrors($validator, 'primerPassword')
+                ->withInput($request->except(['password', 'password_confirmation']));
         }
 
         $validated = $validator->validated();
