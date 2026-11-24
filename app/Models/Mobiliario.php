@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Models\Concerns\TieneEstadoInventario;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Mobiliario extends Model
@@ -25,8 +27,72 @@ class Mobiliario extends Model
         'Estantería',
         'Gabinete',
         'Banco',
-        'Otro',
     ];
+
+    public static function tiposDisponibles(): array
+    {
+        try {
+            $enBd = self::withTrashed()
+                ->whereNotNull('tipo')
+                ->where('tipo', '!=', '')
+                ->where('tipo', '!=', 'Otro')
+                ->distinct()
+                ->pluck('tipo')
+                ->all();
+        } catch (\Throwable) {
+            $enBd = [];
+        }
+
+        $tiposMap = [];
+        foreach (array_merge(self::TIPOS, $enBd) as $t) {
+            $tTrim = trim($t);
+            if ($tTrim === '') {
+                continue;
+            }
+            $lower = mb_strtolower($tTrim);
+            if (! isset($tiposMap[$lower])) {
+                $tiposMap[$lower] = $tTrim;
+            }
+        }
+
+        $tipos = array_values($tiposMap);
+        natcasesort($tipos);
+
+        return array_values($tipos);
+    }
+
+    public static function normalizarTipo(?string $tipo): string
+    {
+        $tipo = trim((string) $tipo);
+        if ($tipo === '') {
+            return '';
+        }
+
+        $tipoLower = mb_strtolower($tipo);
+
+        foreach (self::tiposDisponibles() as $conocido) {
+            if (mb_strtolower($conocido) === $tipoLower) {
+                return $conocido;
+            }
+        }
+
+        $palabras = explode(' ', $tipo);
+        $resultado = [];
+
+        foreach ($palabras as $p) {
+            $pTrim = trim($p);
+            if ($pTrim === '') {
+                continue;
+            }
+            if (in_array(mb_strtolower($pTrim), ['de', 'del', 'la', 'el', 'en', 'para', 'y', 'o', 'a'], true)) {
+                $resultado[] = mb_strtolower($pTrim);
+            } else {
+                $resultado[] = mb_convert_case($pTrim, MB_CASE_TITLE, 'UTF-8');
+            }
+        }
+
+        return ucfirst(implode(' ', $resultado));
+    }
 
     public const MOTIVOS_BAJA_SUGERIDOS = [
         'Daño irreparable / Falla técnica definitiva',
@@ -53,12 +119,12 @@ class Mobiliario extends Model
         'fecha_registro' => 'date',
     ];
 
-    public function mantenimientos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function mantenimientos(): HasMany
     {
         return $this->hasMany(MantenimientoMobiliario::class, 'mobiliario_id')->latest('fecha_inicio')->latest('id');
     }
 
-    public function mantenimientoActivo(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function mantenimientoActivo(): HasOne
     {
         return $this->hasOne(MantenimientoMobiliario::class, 'mobiliario_id')
             ->where('estado', MantenimientoMobiliario::ESTADO_EN_PROCESO)

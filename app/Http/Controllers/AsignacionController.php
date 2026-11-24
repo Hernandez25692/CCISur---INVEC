@@ -79,7 +79,7 @@ class AsignacionController extends Controller
         // Búsqueda inteligente con escape de comodines
         if ($buscar !== '') {
             $buscarSafe = addcslashes($buscar, '%_\\');
-            $buscarIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($buscar), '%_\\');
+            $buscarIdentidad = addcslashes(Empleado::normalizarIdentidad($buscar), '%_\\');
 
             $query->where(function ($q) use ($buscarSafe, $buscarIdentidad): void {
                 $q->whereHas('empleado', function ($sub) use ($buscarSafe, $buscarIdentidad): void {
@@ -158,7 +158,7 @@ class AsignacionController extends Controller
 
         if ($buscar !== '') {
             $buscarSafe = addcslashes($buscar, '%_\\');
-            $buscarIdentidad = addcslashes(\App\Models\Empleado::normalizarIdentidad($buscar), '%_\\');
+            $buscarIdentidad = addcslashes(Empleado::normalizarIdentidad($buscar), '%_\\');
 
             $query->where(function ($q) use ($buscarSafe, $buscarIdentidad): void {
                 $q->whereHas('empleado', function ($sub) use ($buscarSafe, $buscarIdentidad): void {
@@ -268,8 +268,8 @@ class AsignacionController extends Controller
             ]);
 
         // Categorías institucionales predefinidas
-        $categoriasDispositivos = Dispositivo::TIPOS;
-        $categoriasMobiliario = Mobiliario::TIPOS;
+        $categoriasDispositivos = Dispositivo::tiposDisponibles();
+        $categoriasMobiliario = Mobiliario::tiposDisponibles();
 
         // Preselección si viene por URL
         $itemPreseleccionado = null;

@@ -9,6 +9,46 @@
             x-data="{
                 tipoSeleccionado: @js(old('tipo', '')),
                 tiposOpcionales: @js(\App\Models\Dispositivo::TIPOS_SERIE_OPCIONAL),
+                todosTipos: @js($tipos),
+                tipoAbierto: false,
+                get tiposFiltrados() {
+                    const q = (this.tipoSeleccionado || '').trim().toLowerCase();
+                    if (!q) {
+                        return this.todosTipos;
+                    }
+                    return this.todosTipos.filter(t => t.toLowerCase().includes(q));
+                },
+                get tipoCoincidenciaExacta() {
+                    const q = (this.tipoSeleccionado || '').trim().toLowerCase();
+                    return this.todosTipos.find(t => t.toLowerCase() === q);
+                },
+                seleccionarTipo(t) {
+                    this.tipoSeleccionado = t;
+                    this.tipoAbierto = false;
+                },
+                normalizarTipoTexto(txt) {
+                    if (!txt) return '';
+                    const trim = txt.trim();
+                    const match = this.todosTipos.find(t => t.toLowerCase() === trim.toLowerCase());
+                    if (match) return match;
+                    const acronimos = ['UPS', 'AP', 'HDMI', 'PC', 'USB', 'DVR', 'NVR', 'POS'];
+                    const menores = ['de', 'del', 'la', 'el', 'en', 'para', 'y', 'o', 'a'];
+                    return trim.split(/\s+/).map((p, idx) => {
+                        const up = p.toUpperCase();
+                        if (acronimos.includes(up)) return up;
+                        const low = p.toLowerCase();
+                        if (idx > 0 && menores.includes(low)) return low;
+                        return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+                    }).join(' ');
+                },
+                onBlurTipo() {
+                    setTimeout(() => {
+                        this.tipoAbierto = false;
+                        if (this.tipoSeleccionado) {
+                            this.tipoSeleccionado = this.normalizarTipoTexto(this.tipoSeleccionado);
+                        }
+                    }, 200);
+                },
                 get serieObligatoria() {
                     return !this.tipoSeleccionado || !this.tiposOpcionales.includes(this.tipoSeleccionado);
                 },
@@ -28,7 +68,7 @@
                     return this.tipoSeleccionado === 'No-break / UPS';
                 },
                 get muestraEspecificaciones() {
-                    return this.tipoSeleccionado !== '';
+                    return (this.tipoSeleccionado || '').trim() !== '';
                 }
             }"
             class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-5">
@@ -47,17 +87,58 @@
 
             <!-- Tipo y Número de Serie -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div class="relative">
                     <label for="tipo" class="block text-sm font-medium text-brand-navy">Tipo de Dispositivo</label>
-                    <select name="tipo" id="tipo" x-model="tipoSeleccionado" required
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('tipo') border-red-500 @enderror">
-                        <option value="">-- Seleccionar tipo --</option>
-                        @foreach (\App\Models\Dispositivo::TIPOS as $tipoOption)
-                            <option value="{{ $tipoOption }}" @selected(old('tipo') === $tipoOption)>
-                                {{ $tipoOption }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <div class="relative mt-1">
+                        <input type="text" name="tipo" id="tipo"
+                            x-model="tipoSeleccionado"
+                            @focus="tipoAbierto = true"
+                            @input="tipoAbierto = true"
+                            @blur="onBlurTipo()"
+                            @keydown.escape="tipoAbierto = false"
+                            autocomplete="off"
+                            required
+                            placeholder="Buscar o escribir tipo (ej. Laptop, Router...)"
+                            class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-brand-gold focus:ring-brand-gold text-sm @error('tipo') border-red-500 @enderror">
+
+                        <button type="button" @mousedown.prevent @click="tipoAbierto = !tipoAbierto" tabindex="-1" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-150" :class="tipoAbierto ? 'rotate-180' : ''" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    <!-- Dropdown de tipos -->
+                    <div x-show="tipoAbierto" x-cloak
+                        @mousedown.outside="tipoAbierto = false"
+                        class="absolute z-30 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto text-sm divide-y divide-gray-100">
+
+                        <div class="py-1">
+                            <template x-for="t in tiposFiltrados" :key="t">
+                                <button type="button"
+                                    @click="seleccionarTipo(t)"
+                                    class="w-full text-left px-3 py-1.5 hover:bg-amber-50 hover:text-brand-navy flex items-center justify-between text-gray-700 transition-colors">
+                                    <span x-text="t"></span>
+                                    <span x-show="(tipoSeleccionado || '').toLowerCase() === t.toLowerCase()" class="text-amber-600 font-bold text-xs">✓</span>
+                                </button>
+                            </template>
+                            <template x-if="tiposFiltrados.length === 0">
+                                <div class="px-3 py-2 text-xs text-gray-500 italic">
+                                    No se encontraron categorías con "<span x-text="tipoSeleccionado"></span>".
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Opción de agregar / crear tipo nuevo -->
+                        <template x-if="(tipoSeleccionado || '').trim() !== '' && !tipoCoincidenciaExacta">
+                            <div class="p-1.5 bg-gray-50">
+                                <button type="button"
+                                    @click="seleccionarTipo(normalizarTipoTexto(tipoSeleccionado))"
+                                    class="w-full text-left px-2 py-1.5 rounded text-xs font-semibold text-brand-navy hover:bg-amber-100 flex items-center gap-1.5">
+                                    <i class="fas fa-plus-circle text-amber-600"></i>
+                                    <span>Crear categoría "<strong x-text="normalizarTipoTexto(tipoSeleccionado)"></strong>"</span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
                     @error('tipo')
                         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -80,11 +161,116 @@
 
             <!-- Marca y Modelo -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div x-data="{
+                    todasMarcas: @js($marcas),
+                    marcasPorTipo: @js($marcasPorTipo),
+                    busqueda: @js(old('marca', '')),
+                    abierto: false,
+                    get sugeridas() {
+                        if (!tipoSeleccionado || !this.marcasPorTipo[tipoSeleccionado]) {
+                            return [];
+                        }
+                        return this.marcasPorTipo[tipoSeleccionado];
+                    },
+                    get marcasFiltradas() {
+                        const q = (this.busqueda || '').trim().toLowerCase();
+                        if (!q) {
+                            return this.todasMarcas;
+                        }
+                        return this.todasMarcas.filter(m => m.toLowerCase().includes(q));
+                    },
+                    get coincidenciaExacta() {
+                        const q = (this.busqueda || '').trim().toLowerCase();
+                        return this.todasMarcas.find(m => m.toLowerCase() === q);
+                    },
+                    seleccionar(marca) {
+                        this.busqueda = marca;
+                        this.abierto = false;
+                    },
+                    normalizarTexto(txt) {
+                        if (!txt) return '';
+                        const trim = txt.trim();
+                        const match = this.todasMarcas.find(m => m.toLowerCase() === trim.toLowerCase());
+                        if (match) return match;
+                        if (trim.length <= 3 && /^[a-zA-Z0-9]+$/.test(trim)) return trim.toUpperCase();
+                        return trim.charAt(0).toUpperCase() + trim.slice(1).toLowerCase();
+                    },
+                    onBlur() {
+                        setTimeout(() => {
+                            this.abierto = false;
+                            if (this.busqueda) {
+                                this.busqueda = this.normalizarTexto(this.busqueda);
+                            }
+                        }, 200);
+                    }
+                }" class="relative">
                     <label for="marca" class="block text-sm font-medium text-brand-navy">Marca</label>
-                    <input type="text" name="marca" id="marca" value="{{ old('marca') }}" required
-                        placeholder="Ej. HP, Dell, Lenovo, Epson"
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('marca') border-red-500 @enderror">
+                    <div class="relative mt-1">
+                        <input type="text" name="marca" id="marca"
+                            x-model="busqueda"
+                            @focus="abierto = true"
+                            @input="abierto = true"
+                            @blur="onBlur()"
+                            @keydown.escape="abierto = false"
+                            autocomplete="off"
+                            required
+                            placeholder="Buscar o escribir marca (ej. HP, Dell...)"
+                            class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-brand-gold focus:ring-brand-gold text-sm @error('marca') border-red-500 @enderror">
+
+                        <button type="button" @mousedown.prevent @click="abierto = !abierto" tabindex="-1" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-150" :class="abierto ? 'rotate-180' : ''" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    <!-- Dropdown de marcas -->
+                    <div x-show="abierto" x-cloak
+                        @mousedown.outside="abierto = false"
+                        class="absolute z-30 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto text-sm divide-y divide-gray-100">
+
+                        <div class="py-1">
+                            <template x-for="marca in marcasFiltradas" :key="marca">
+                                <button type="button"
+                                    @click="seleccionar(marca)"
+                                    class="w-full text-left px-3 py-1.5 hover:bg-amber-50 hover:text-brand-navy flex items-center justify-between text-gray-700 transition-colors">
+                                    <span x-text="marca"></span>
+                                    <span x-show="(busqueda || '').toLowerCase() === marca.toLowerCase()" class="text-amber-600 font-bold text-xs">✓</span>
+                                </button>
+                            </template>
+                            <template x-if="marcasFiltradas.length === 0">
+                                <div class="px-3 py-2 text-xs text-gray-500 italic">
+                                    No se encontraron marcas registradas con "<span x-text="busqueda"></span>".
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Opción de agregar / usar marca nueva -->
+                        <template x-if="(busqueda || '').trim() !== '' && !coincidenciaExacta">
+                            <div class="p-1.5 bg-gray-50">
+                                <button type="button"
+                                    @click="seleccionar(normalizarTexto(busqueda))"
+                                    class="w-full text-left px-2 py-1.5 rounded text-xs font-semibold text-brand-navy hover:bg-amber-100 flex items-center gap-1.5">
+                                    <i class="fas fa-plus-circle text-amber-600"></i>
+                                    <span>Usar "<strong x-text="normalizarTexto(busqueda)"></strong>" como marca nueva</span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Sugerencias rápidas por tipo de dispositivo seleccionado -->
+                    <div x-show="sugeridas.length > 0" class="mt-1.5 flex flex-wrap items-center gap-1">
+                        <span class="text-[11px] text-gray-400">Sugeridas:</span>
+                        <template x-for="sug in sugeridas" :key="sug">
+                            <button type="button"
+                                @click="seleccionar(sug)"
+                                class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium border transition-colors"
+                                :class="(busqueda || '').toLowerCase() === sug.toLowerCase()
+                                    ? 'bg-amber-500 text-white border-amber-600'
+                                    : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300'"
+                                x-text="sug">
+                            </button>
+                        </template>
+                    </div>
+
                     @error('marca')
                         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Models\Concerns\TieneEstadoInventario;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Dispositivo extends Model
@@ -38,9 +40,8 @@ class Dispositivo extends Model
         'Sistema de sonido',
         'Pantalla interactiva',
         'Control remoto',
-        'Cargador de laptop',
         'Cable HDMI',
-        'Otro',
+        'Adaptador / Convertidor',
     ];
 
     public const TIPOS_SERIE_OPCIONAL = [
@@ -51,9 +52,8 @@ class Dispositivo extends Model
         'Micrófono',
         'Sistema de sonido',
         'Control remoto',
-        'Cargador de laptop',
         'Cable HDMI',
-        'Otro',
+        'Adaptador / Convertidor',
     ];
 
     public const OPCIONES_RAM = [
@@ -159,6 +159,185 @@ class Dispositivo extends Model
         'Reemplazo por renovación institucional',
     ];
 
+    public const MARCAS_COMUNES = [
+        'HP',
+        'Dell',
+        'Lenovo',
+        'Epson',
+        'Canon',
+        'Brother',
+        'Samsung',
+        'LG',
+        'Apple',
+        'Asus',
+        'Acer',
+        'Cisco',
+        'TP-Link',
+        'Ubiquiti',
+        'Logitech',
+        'Genius',
+        'Kingston',
+        'SanDisk',
+        'APC',
+        'Forza',
+        'CDP',
+        'Sony',
+    ];
+
+    public const MARCAS_POR_TIPO = [
+        'Laptop' => ['HP', 'Dell', 'Lenovo', 'Apple', 'Asus', 'Acer'],
+        'Computadora de escritorio' => ['HP', 'Dell', 'Lenovo', 'Apple', 'Asus', 'Acer'],
+        'Servidor' => ['Dell', 'HP', 'Lenovo', 'Cisco'],
+        'Tablet' => ['Apple', 'Samsung', 'Lenovo'],
+        'Impresora' => ['Epson', 'HP', 'Canon', 'Brother'],
+        'Escáner' => ['Epson', 'Canon', 'HP', 'Brother'],
+        'Monitor' => ['Samsung', 'LG', 'Dell', 'HP', 'Asus'],
+        'Pantalla interactiva' => ['Samsung', 'LG'],
+        'Proyector' => ['Epson', 'Sony', 'Canon'],
+        'Switch de red' => ['Cisco', 'TP-Link', 'Ubiquiti'],
+        'Router' => ['Cisco', 'TP-Link', 'Ubiquiti'],
+        'Access Point (AP)' => ['Ubiquiti', 'Cisco', 'TP-Link'],
+        'No-break / UPS' => ['APC', 'Forza', 'CDP'],
+        'Disco duro externo' => ['Kingston', 'SanDisk'],
+        'Teclado' => ['Logitech', 'Genius', 'HP', 'Dell'],
+        'Mouse' => ['Logitech', 'Genius', 'HP', 'Dell'],
+        'Cámara Web' => ['Logitech', 'Genius'],
+        'Micrófono' => ['Logitech', 'Sony', 'Genius'],
+        'Sistema de sonido' => ['Logitech', 'Sony', 'Genius'],
+        'Cable HDMI' => ['Genérico'],
+        'Control remoto' => ['Epson', 'Samsung', 'LG', 'Genérico'],
+        'Adaptador / Convertidor' => ['Genérico', 'Apple', 'Dell', 'HP'],
+    ];
+
+    public static function marcasDisponibles(): array
+    {
+        try {
+            $enBd = self::withTrashed()
+                ->whereNotNull('marca')
+                ->where('marca', '!=', '')
+                ->distinct()
+                ->pluck('marca')
+                ->all();
+        } catch (\Throwable) {
+            $enBd = [];
+        }
+
+        $marcasMap = [];
+        foreach (array_merge(self::MARCAS_COMUNES, $enBd) as $m) {
+            $mTrim = trim($m);
+            if ($mTrim === '') {
+                continue;
+            }
+            $lower = mb_strtolower($mTrim);
+            if (! isset($marcasMap[$lower])) {
+                $marcasMap[$lower] = $mTrim;
+            }
+        }
+
+        $marcas = array_values($marcasMap);
+        natcasesort($marcas);
+
+        return array_values($marcas);
+    }
+
+    public static function normalizarMarca(?string $marca): string
+    {
+        $marca = trim((string) $marca);
+        if ($marca === '') {
+            return '';
+        }
+
+        $marcaLower = mb_strtolower($marca);
+
+        // 1. Coincidencia insensible a mayúsculas/minúsculas con marcas conocidas o en BD
+        foreach (self::marcasDisponibles() as $conocida) {
+            if (mb_strtolower($conocida) === $marcaLower) {
+                return $conocida;
+            }
+        }
+
+        // 2. Siglas cortas (<= 3 letras, ej: IBM, APC, CDP, MSI, AOC)
+        if (mb_strlen($marca) <= 3 && ctype_alpha(str_replace(['.', '-', ' '], '', $marca))) {
+            return mb_strtoupper($marca);
+        }
+
+        // 3. Caso general: Title Case (ej: "anker" -> "Anker")
+        return mb_convert_case($marca, MB_CASE_TITLE, 'UTF-8');
+    }
+
+    public static function tiposDisponibles(): array
+    {
+        try {
+            $enBd = self::withTrashed()
+                ->whereNotNull('tipo')
+                ->where('tipo', '!=', '')
+                ->where('tipo', '!=', 'Otro')
+                ->distinct()
+                ->pluck('tipo')
+                ->all();
+        } catch (\Throwable) {
+            $enBd = [];
+        }
+
+        $tiposMap = [];
+        foreach (array_merge(self::TIPOS, $enBd) as $t) {
+            $tTrim = trim($t);
+            if ($tTrim === '') {
+                continue;
+            }
+            $lower = mb_strtolower($tTrim);
+            if (! isset($tiposMap[$lower])) {
+                $tiposMap[$lower] = $tTrim;
+            }
+        }
+
+        $tipos = array_values($tiposMap);
+        natcasesort($tipos);
+
+        return array_values($tipos);
+    }
+
+    public static function normalizarTipo(?string $tipo): string
+    {
+        $tipo = trim((string) $tipo);
+        if ($tipo === '') {
+            return '';
+        }
+
+        $tipoLower = mb_strtolower($tipo);
+
+        // 1. Coincidencia insensible con tipos conocidos
+        foreach (self::tiposDisponibles() as $conocido) {
+            if (mb_strtolower($conocido) === $tipoLower) {
+                return $conocido;
+            }
+        }
+
+        // 2. Acrónimos y términos comunes en mayúsculas
+        $acronimos = ['UPS', 'AP', 'HDMI', 'PC', 'USB', 'DVR', 'NVR', 'POS'];
+        $palabras = explode(' ', $tipo);
+        $resultado = [];
+
+        foreach ($palabras as $p) {
+            $pTrim = trim($p);
+            if ($pTrim === '') {
+                continue;
+            }
+            $pUpper = mb_strtoupper($pTrim);
+            if (in_array($pUpper, $acronimos, true)) {
+                $resultado[] = $pUpper;
+            } elseif (in_array(mb_strtolower($pTrim), ['de', 'del', 'la', 'el', 'en', 'para', 'y', 'o', 'a'], true)) {
+                $resultado[] = mb_strtolower($pTrim);
+            } else {
+                $resultado[] = mb_convert_case($pTrim, MB_CASE_TITLE, 'UTF-8');
+            }
+        }
+
+        $tipoNormalizado = implode(' ', $resultado);
+
+        return ucfirst($tipoNormalizado);
+    }
+
     protected $fillable = [
         'nombre',
         'tipo',
@@ -225,17 +404,17 @@ class Dispositivo extends Model
         return $limpio;
     }
 
-    public function cambiosHardware(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function cambiosHardware(): HasMany
     {
         return $this->hasMany(HistorialCambioHardware::class, 'dispositivo_id')->latest('id');
     }
 
-    public function mantenimientos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function mantenimientos(): HasMany
     {
         return $this->hasMany(MantenimientoDispositivo::class, 'dispositivo_id')->latest('fecha_inicio')->latest('id');
     }
 
-    public function mantenimientoActivo(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function mantenimientoActivo(): HasOne
     {
         return $this->hasOne(MantenimientoDispositivo::class, 'dispositivo_id')
             ->where('estado', MantenimientoDispositivo::ESTADO_EN_PROCESO)

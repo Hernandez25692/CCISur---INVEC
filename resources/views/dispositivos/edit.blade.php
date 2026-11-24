@@ -109,10 +109,116 @@
 
             <!-- Marca y Modelo -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div x-data="{
+                    todasMarcas: @js($marcas),
+                    marcasPorTipo: @js($marcasPorTipo),
+                    busqueda: @js(old('marca', $dispositivo->marca)),
+                    abierto: false,
+                    get sugeridas() {
+                        if (!tipoSeleccionado || !this.marcasPorTipo[tipoSeleccionado]) {
+                            return [];
+                        }
+                        return this.marcasPorTipo[tipoSeleccionado];
+                    },
+                    get marcasFiltradas() {
+                        const q = (this.busqueda || '').trim().toLowerCase();
+                        if (!q) {
+                            return this.todasMarcas;
+                        }
+                        return this.todasMarcas.filter(m => m.toLowerCase().includes(q));
+                    },
+                    get coincidenciaExacta() {
+                        const q = (this.busqueda || '').trim().toLowerCase();
+                        return this.todasMarcas.find(m => m.toLowerCase() === q);
+                    },
+                    seleccionar(marca) {
+                        this.busqueda = marca;
+                        this.abierto = false;
+                    },
+                    normalizarTexto(txt) {
+                        if (!txt) return '';
+                        const trim = txt.trim();
+                        const match = this.todasMarcas.find(m => m.toLowerCase() === trim.toLowerCase());
+                        if (match) return match;
+                        if (trim.length <= 3 && /^[a-zA-Z0-9]+$/.test(trim)) return trim.toUpperCase();
+                        return trim.charAt(0).toUpperCase() + trim.slice(1).toLowerCase();
+                    },
+                    onBlur() {
+                        setTimeout(() => {
+                            this.abierto = false;
+                            if (this.busqueda) {
+                                this.busqueda = this.normalizarTexto(this.busqueda);
+                            }
+                        }, 200);
+                    }
+                }" class="relative">
                     <label for="marca" class="block text-sm font-medium text-brand-navy">Marca</label>
-                    <input type="text" name="marca" id="marca" value="{{ old('marca', $dispositivo->marca) }}" required
-                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('marca') border-red-500 @enderror">
+                    <div class="relative mt-1">
+                        <input type="text" name="marca" id="marca"
+                            x-model="busqueda"
+                            @focus="abierto = true"
+                            @input="abierto = true"
+                            @blur="onBlur()"
+                            @keydown.escape="abierto = false"
+                            autocomplete="off"
+                            required
+                            placeholder="Buscar o escribir marca (ej. HP, Dell...)"
+                            class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-brand-gold focus:ring-brand-gold text-sm @error('marca') border-red-500 @enderror">
+
+                        <button type="button" @mousedown.prevent @click="abierto = !abierto" tabindex="-1" class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-150" :class="abierto ? 'rotate-180' : ''" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    <!-- Dropdown de marcas -->
+                    <div x-show="abierto" x-cloak
+                        @mousedown.outside="abierto = false"
+                        class="absolute z-30 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto text-sm divide-y divide-gray-100">
+
+                        <div class="py-1">
+                            <template x-for="marca in marcasFiltradas" :key="marca">
+                                <button type="button"
+                                    @click="seleccionar(marca)"
+                                    class="w-full text-left px-3 py-1.5 hover:bg-amber-50 hover:text-brand-navy flex items-center justify-between text-gray-700 transition-colors">
+                                    <span x-text="marca"></span>
+                                    <span x-show="(busqueda || '').toLowerCase() === marca.toLowerCase()" class="text-amber-600 font-bold text-xs">✓</span>
+                                </button>
+                            </template>
+                            <template x-if="marcasFiltradas.length === 0">
+                                <div class="px-3 py-2 text-xs text-gray-500 italic">
+                                    No se encontraron marcas registradas con "<span x-text="busqueda"></span>".
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Opción de agregar / usar marca nueva -->
+                        <template x-if="(busqueda || '').trim() !== '' && !coincidenciaExacta">
+                            <div class="p-1.5 bg-gray-50">
+                                <button type="button"
+                                    @click="seleccionar(normalizarTexto(busqueda))"
+                                    class="w-full text-left px-2 py-1.5 rounded text-xs font-semibold text-brand-navy hover:bg-amber-100 flex items-center gap-1.5">
+                                    <i class="fas fa-plus-circle text-amber-600"></i>
+                                    <span>Usar "<strong x-text="normalizarTexto(busqueda)"></strong>" como marca nueva</span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Sugerencias rápidas por tipo de dispositivo seleccionado -->
+                    <div x-show="sugeridas.length > 0" class="mt-1.5 flex flex-wrap items-center gap-1">
+                        <span class="text-[11px] text-gray-400">Sugeridas:</span>
+                        <template x-for="sug in sugeridas" :key="sug">
+                            <button type="button"
+                                @click="seleccionar(sug)"
+                                class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium border transition-colors"
+                                :class="(busqueda || '').toLowerCase() === sug.toLowerCase()
+                                    ? 'bg-amber-500 text-white border-amber-600'
+                                    : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300'"
+                                x-text="sug">
+                            </button>
+                        </template>
+                    </div>
+
                     @error('marca')
                         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                     @enderror

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\DispositivosExport;
 use App\Models\Dispositivo;
 use App\Models\HistorialCambioHardware;
+use App\Models\MantenimientoDispositivo;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -116,7 +117,11 @@ class DispositivoController extends Controller
     {
         Gate::authorize('admin');
 
-        return view('dispositivos.create');
+        $tipos = Dispositivo::tiposDisponibles();
+        $marcas = Dispositivo::marcasDisponibles();
+        $marcasPorTipo = Dispositivo::MARCAS_POR_TIPO;
+
+        return view('dispositivos.create', compact('tipos', 'marcas', 'marcasPorTipo'));
     }
 
     // Guardar nuevo dispositivo
@@ -124,15 +129,18 @@ class DispositivoController extends Controller
     {
         Gate::authorize('admin');
 
+        $tipoNormalizado = Dispositivo::normalizarTipo($request->input('tipo'));
+
         $request->merge([
+            'tipo' => $tipoNormalizado,
             'n_serie' => Dispositivo::normalizarSerie($request->input('n_serie')),
         ]);
 
-        $requiereSerie = Dispositivo::requiereSerie($request->input('tipo'));
+        $requiereSerie = Dispositivo::requiereSerie($tipoNormalizado);
 
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
-            'tipo' => ['required', 'string', Rule::in(Dispositivo::TIPOS)],
+            'tipo' => ['required', 'string', 'max:100'],
             'marca' => ['required', 'string', 'max:255'],
             'modelo' => ['required', 'string', 'max:255'],
             'n_serie' => [
@@ -166,6 +174,8 @@ class DispositivoController extends Controller
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
 
+        $validated['tipo'] = $tipoNormalizado;
+        $validated['marca'] = Dispositivo::normalizarMarca($validated['marca']);
         $validated['especificaciones'] = $this->procesarEspecificaciones($request);
 
         $esDefectuoso = $validated['estado'] === Dispositivo::ESTADO_DEFECTUOSO;
@@ -210,8 +220,10 @@ class DispositivoController extends Controller
         Gate::authorize('admin');
 
         $dispositivo->loadCount('asignacionesActivas');
+        $marcas = Dispositivo::marcasDisponibles();
+        $marcasPorTipo = Dispositivo::MARCAS_POR_TIPO;
 
-        return view('dispositivos.edit', compact('dispositivo'));
+        return view('dispositivos.edit', compact('dispositivo', 'marcas', 'marcasPorTipo'));
     }
 
     // Actualizar registro
@@ -230,7 +242,7 @@ class DispositivoController extends Controller
 
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
-            'tipo' => ['required', 'string', Rule::in(Dispositivo::TIPOS)],
+            'tipo' => ['required', 'string', 'max:100'],
             'marca' => ['required', 'string', 'max:255'],
             'modelo' => ['required', 'string', 'max:255'],
             'n_serie' => [
@@ -264,6 +276,7 @@ class DispositivoController extends Controller
             'tipo.required' => 'Debe seleccionar un tipo de dispositivo.',
         ]);
 
+        $validated['marca'] = Dispositivo::normalizarMarca($validated['marca']);
         $nuevasSpecs = $this->procesarEspecificaciones($request);
         $validated['especificaciones'] = $nuevasSpecs;
 
@@ -484,12 +497,12 @@ class DispositivoController extends Controller
                 $dispositivo->disponibilidad = Dispositivo::DISPONIBILIDAD_NO_APLICA;
                 $dispositivo->save();
 
-                \App\Models\MantenimientoDispositivo::create([
+                MantenimientoDispositivo::create([
                     'dispositivo_id' => $dispositivo->id,
                     'user_id' => Auth::id(),
-                    'tipo' => \App\Models\MantenimientoDispositivo::TIPO_DIAGNOSTICO,
+                    'tipo' => MantenimientoDispositivo::TIPO_DIAGNOSTICO,
                     'motivo_falla' => $motivoTaller !== '' ? $motivoTaller : 'Reingreso a taller por reactivación desde archivo de bajas',
-                    'estado' => \App\Models\MantenimientoDispositivo::ESTADO_EN_PROCESO,
+                    'estado' => MantenimientoDispositivo::ESTADO_EN_PROCESO,
                     'fecha_inicio' => now(),
                     'estado_fisico_anterior' => $estadoPrevio ?? Dispositivo::ESTADO_DEFECTUOSO,
                     'es_area_comun' => false,
@@ -561,7 +574,7 @@ class DispositivoController extends Controller
         }
 
         $totalMantenimientos = $mantenimientos->count();
-        $mantenimientoActivo = $mantenimientos->firstWhere('estado', \App\Models\MantenimientoDispositivo::ESTADO_EN_PROCESO);
+        $mantenimientoActivo = $mantenimientos->firstWhere('estado', MantenimientoDispositivo::ESTADO_EN_PROCESO);
 
         // Construir bitácora técnica unificada
         $eventosTecnicos = collect();

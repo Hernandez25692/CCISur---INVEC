@@ -21,15 +21,98 @@
             </div>
 
             <!-- Tipo -->
-            <div>
+            <div x-data="{
+                todosTipos: @js($tipos),
+                busqueda: @js(old('tipo', '')),
+                abierto: false,
+                get tiposFiltrados() {
+                    const q = (this.busqueda || '').trim().toLowerCase();
+                    if (!q) {
+                        return this.todosTipos;
+                    }
+                    return this.todosTipos.filter(t => t.toLowerCase().includes(q));
+                },
+                get coincidenciaExacta() {
+                    const q = (this.busqueda || '').trim().toLowerCase();
+                    return this.todosTipos.find(t => t.toLowerCase() === q);
+                },
+                seleccionar(t) {
+                    this.busqueda = t;
+                    this.abierto = false;
+                },
+                normalizarTexto(txt) {
+                    if (!txt) return '';
+                    const trim = txt.trim();
+                    const match = this.todosTipos.find(t => t.toLowerCase() === trim.toLowerCase());
+                    if (match) return match;
+                    const menores = ['de', 'del', 'la', 'el', 'en', 'para', 'y', 'o', 'a'];
+                    return trim.split(/\s+/).map((p, idx) => {
+                        const low = p.toLowerCase();
+                        if (idx > 0 && menores.includes(low)) return low;
+                        return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+                    }).join(' ');
+                },
+                onBlur() {
+                    setTimeout(() => {
+                        this.abierto = false;
+                        if (this.busqueda) {
+                            this.busqueda = this.normalizarTexto(this.busqueda);
+                        }
+                    }, 200);
+                }
+            }" class="relative">
                 <label for="tipo" class="block text-sm font-medium text-brand-navy">Tipo de Mobiliario</label>
-                <select name="tipo" id="tipo" required
-                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-gold focus:ring-brand-gold @error('tipo') border-red-500 @enderror">
-                    <option value="">-- Seleccionar tipo --</option>
-                    @foreach (\App\Models\Mobiliario::TIPOS as $tipo)
-                        <option value="{{ $tipo }}" @selected(old('tipo') === $tipo)>{{ $tipo }}</option>
-                    @endforeach
-                </select>
+                <div class="relative mt-1">
+                    <input type="text" name="tipo" id="tipo"
+                        x-model="busqueda"
+                        @focus="abierto = true"
+                        @input="abierto = true"
+                        @blur="onBlur()"
+                        @keydown.escape="abierto = false"
+                        autocomplete="off"
+                        required
+                        placeholder="Buscar o escribir tipo (ej. Escritorio, Silla, Podio...)"
+                        class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-brand-gold focus:ring-brand-gold text-sm @error('tipo') border-red-500 @enderror">
+
+                    <button type="button" @mousedown.prevent @click="abierto = !abierto" tabindex="-1"
+                        class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-600 focus:outline-none">
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-150" :class="abierto ? 'rotate-180' : ''" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <!-- Dropdown de tipos -->
+                <div x-show="abierto" x-cloak
+                    @mousedown.outside="abierto = false"
+                    class="absolute z-30 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto text-sm divide-y divide-gray-100">
+
+                    <div class="py-1">
+                        <template x-for="t in tiposFiltrados" :key="t">
+                            <button type="button"
+                                @click="seleccionar(t)"
+                                class="w-full text-left px-3 py-1.5 hover:bg-amber-50 hover:text-brand-navy flex items-center justify-between text-gray-700 transition-colors">
+                                <span x-text="t"></span>
+                                <span x-show="(busqueda || '').toLowerCase() === t.toLowerCase()" class="text-amber-600 font-bold text-xs">✓</span>
+                            </button>
+                        </template>
+                        <template x-if="tiposFiltrados.length === 0">
+                            <div class="px-3 py-2 text-xs text-gray-500 italic">
+                                No se encontraron categorías con "<span x-text="busqueda"></span>".
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Opción de agregar / crear tipo nuevo -->
+                    <template x-if="(busqueda || '').trim() !== '' && !coincidenciaExacta">
+                        <div class="p-1.5 bg-gray-50">
+                            <button type="button"
+                                @click="seleccionar(normalizarTexto(busqueda))"
+                                class="w-full text-left px-2 py-1.5 rounded text-xs font-semibold text-brand-navy hover:bg-amber-100 flex items-center gap-1.5">
+                                <i class="fas fa-plus-circle text-amber-600"></i>
+                                <span>Crear categoría "<strong x-text="normalizarTexto(busqueda)"></strong>"</span>
+                            </button>
+                        </div>
+                    </template>
+                </div>
                 @error('tipo')
                     <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
                 @enderror

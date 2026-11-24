@@ -57,17 +57,79 @@
                             placeholder="Ej. Silla, Mesa o INV-MOB">
                     </div>
 
-                    <div>
+                    <!-- Filtro Tipo con búsqueda rápida -->
+                    <div x-data="{
+                        todosTipos: @js(\App\Models\Mobiliario::tiposDisponibles()),
+                        busqueda: @js(request('tipo', '')),
+                        abierto: false,
+                        get tiposFiltrados() {
+                            const q = (this.busqueda || '').trim().toLowerCase();
+                            if (!q) {
+                                return this.todosTipos;
+                            }
+                            return this.todosTipos.filter(t => t.toLowerCase().includes(q));
+                        },
+                        seleccionar(t) {
+                            this.busqueda = t;
+                            this.abierto = false;
+                        },
+                        limpiar() {
+                            this.busqueda = '';
+                            this.abierto = false;
+                        }
+                    }" class="relative">
                         <label for="filtro_tipo" class="block text-xs font-semibold text-brand-navy uppercase tracking-wider mb-1">
                             Tipo
                         </label>
-                        <select id="filtro_tipo" name="tipo"
-                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
-                            <option value="">Todos</option>
-                            @foreach (\App\Models\Mobiliario::TIPOS as $tipo)
-                                <option value="{{ $tipo }}" @selected(request('tipo') === $tipo)>{{ $tipo }}</option>
-                            @endforeach
-                        </select>
+                        <div class="relative">
+                            <input type="text" id="filtro_tipo" name="tipo"
+                                x-model="busqueda"
+                                @focus="abierto = true"
+                                @input="abierto = true"
+                                @keydown.escape="abierto = false"
+                                autocomplete="off"
+                                placeholder="Todos (escribir para buscar...)"
+                                class="block w-full rounded-lg border-gray-300 pr-14 text-sm shadow-sm focus:border-brand-gold focus:ring-brand-gold">
+
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-2 gap-1 text-gray-400">
+                                <button type="button" x-show="busqueda" x-cloak @click="limpiar()"
+                                    title="Quitar filtro de tipo"
+                                    class="p-0.5 hover:text-red-500 focus:outline-none">
+                                    <i class="fas fa-times text-xs"></i>
+                                </button>
+                                <button type="button" @mousedown.prevent @click="abierto = !abierto" tabindex="-1"
+                                    class="p-0.5 hover:text-gray-600 focus:outline-none">
+                                    <i class="fas fa-chevron-down text-xs transition-transform duration-150" :class="abierto ? 'rotate-180' : ''"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown de tipos en filtro -->
+                        <div x-show="abierto" x-cloak
+                            @mousedown.outside="abierto = false"
+                            class="absolute z-30 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-56 overflow-y-auto text-sm divide-y divide-gray-100">
+                            <div class="py-1">
+                                <button type="button"
+                                    @click="limpiar()"
+                                    class="w-full text-left px-3 py-1.5 hover:bg-gray-100 flex items-center justify-between text-gray-500 text-xs italic">
+                                    <span>-- Todos los tipos --</span>
+                                    <span x-show="!busqueda" class="text-brand-navy font-bold">✓</span>
+                                </button>
+                                <template x-for="t in tiposFiltrados" :key="t">
+                                    <button type="button"
+                                        @click="seleccionar(t)"
+                                        class="w-full text-left px-3 py-1.5 hover:bg-amber-50 hover:text-brand-navy flex items-center justify-between text-gray-700 transition-colors">
+                                        <span x-text="t"></span>
+                                        <span x-show="(busqueda || '').toLowerCase() === t.toLowerCase()" class="text-amber-600 font-bold text-xs">✓</span>
+                                    </button>
+                                </template>
+                                <template x-if="tiposFiltrados.length === 0">
+                                    <div class="px-3 py-2 text-xs text-gray-400 italic">
+                                        No hay tipos que coincidan
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
                     </div>
 
                     <div>

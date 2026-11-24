@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\MobiliarioExport;
+use App\Models\MantenimientoMobiliario;
 use App\Models\Mobiliario;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -103,7 +104,9 @@ class MobiliarioController extends Controller
     {
         Gate::authorize('admin');
 
-        return view('mobiliario.create');
+        $tipos = Mobiliario::tiposDisponibles();
+
+        return view('mobiliario.create', compact('tipos'));
     }
 
     // Guardar nuevo mobiliario
@@ -111,14 +114,21 @@ class MobiliarioController extends Controller
     {
         Gate::authorize('admin');
 
+        $tipoNormalizado = Mobiliario::normalizarTipo($request->input('tipo'));
+        $request->merge(['tipo' => $tipoNormalizado]);
+
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
-            'tipo' => ['required', 'string', Rule::in(Mobiliario::TIPOS)],
+            'tipo' => ['required', 'string', 'max:100'],
             'ubicacion' => ['required', 'string', Rule::in(Mobiliario::UBICACIONES)],
             'estado' => ['required', Rule::in(Mobiliario::ESTADOS_MANUALES)],
             'fecha_registro' => ['required', 'date'],
             'es_area_comun' => ['nullable', 'boolean'],
+        ], [
+            'tipo.required' => 'Debe seleccionar o indicar un tipo de mobiliario.',
         ]);
+
+        $validated['tipo'] = $tipoNormalizado;
 
         $esDefectuoso = $validated['estado'] === Mobiliario::ESTADO_DEFECTUOSO;
         if ($esDefectuoso) {
@@ -162,8 +172,9 @@ class MobiliarioController extends Controller
         Gate::authorize('admin');
 
         $mobiliario->loadCount('asignacionesActivas');
+        $tipos = Mobiliario::tiposDisponibles();
 
-        return view('mobiliario.edit', compact('mobiliario'));
+        return view('mobiliario.edit', compact('mobiliario', 'tipos'));
     }
 
     // Actualizar registro
@@ -171,14 +182,21 @@ class MobiliarioController extends Controller
     {
         Gate::authorize('admin');
 
+        $tipoNormalizado = Mobiliario::normalizarTipo($request->input('tipo'));
+        $request->merge(['tipo' => $tipoNormalizado]);
+
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
-            'tipo' => ['required', 'string', Rule::in(Mobiliario::TIPOS)],
+            'tipo' => ['required', 'string', 'max:100'],
             'ubicacion' => ['required', 'string', Rule::in(Mobiliario::UBICACIONES)],
             'estado' => ['nullable', Rule::in(Mobiliario::ESTADOS_MANUALES)],
             'fecha_registro' => ['required', 'date'],
             'es_area_comun' => ['nullable', 'boolean'],
+        ], [
+            'tipo.required' => 'Debe seleccionar o indicar un tipo de mobiliario.',
         ]);
+
+        $validated['tipo'] = $tipoNormalizado;
 
         return DB::transaction(function () use ($request, $mobiliario, $validated): RedirectResponse {
             $mobiliarioBloqueado = Mobiliario::lockForUpdate()->findOrFail($mobiliario->id);
@@ -371,12 +389,12 @@ class MobiliarioController extends Controller
                 $mobiliario->disponibilidad = Mobiliario::DISPONIBILIDAD_NO_APLICA;
                 $mobiliario->save();
 
-                \App\Models\MantenimientoMobiliario::create([
+                MantenimientoMobiliario::create([
                     'mobiliario_id' => $mobiliario->id,
                     'user_id' => Auth::id(),
-                    'tipo' => \App\Models\MantenimientoMobiliario::TIPO_MECANICA,
+                    'tipo' => MantenimientoMobiliario::TIPO_MECANICA,
                     'motivo_falla' => $motivoTaller !== '' ? $motivoTaller : 'Reingreso a taller por reactivación desde archivo de bajas',
-                    'estado' => \App\Models\MantenimientoMobiliario::ESTADO_EN_PROCESO,
+                    'estado' => MantenimientoMobiliario::ESTADO_EN_PROCESO,
                     'fecha_inicio' => now(),
                     'estado_fisico_anterior' => $estadoPrevio ?? Mobiliario::ESTADO_DEFECTUOSO,
                     'es_area_comun' => false,
@@ -441,7 +459,7 @@ class MobiliarioController extends Controller
         }
 
         $totalMantenimientos = $mantenimientos->count();
-        $mantenimientoActivo = $mantenimientos->firstWhere('estado', \App\Models\MantenimientoMobiliario::ESTADO_EN_PROCESO);
+        $mantenimientoActivo = $mantenimientos->firstWhere('estado', MantenimientoMobiliario::ESTADO_EN_PROCESO);
 
         return view('mobiliario.historial', compact(
             'mobiliario',
